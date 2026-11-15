@@ -30,10 +30,10 @@ const row = (susp, defect) => ({
   accz: 1,
   defect,
 });
-// API 2 answer: carriers of the run card, each with its sets (seq) and their strip numbers
-const carriers = (...sets) => [{ carrier: 7, sets }];
-const set1 = { seq: 1, strips: ['Strip-1', 'Strip-2', 'Strip-3'] };
-const set2 = { seq: 2, strips: ['Strip-4', 'Strip-5', 'Strip-6'] };
+// API 2 answer: carriers of the run card with their strip numbers (3 consecutive strips = one set)
+const carriers = (...strips) => [{ carrier: 7, strips }];
+const set1 = ['Strip-1', 'Strip-2', 'Strip-3'];
+const set2 = ['Strip-4', 'Strip-5', 'Strip-6'];
 
 describe('Productivity dashboard', () => {
   it('walks date -> run card -> carrier and summarises the carrier', async () => {
@@ -46,7 +46,7 @@ describe('Productivity dashboard', () => {
         const data = u.includes('runcards')
           ? [{ rc: 'RC-1-01' }]
           : u.includes('carriers')
-            ? carriers(set1)
+            ? carriers(...set1)
             : Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : i === 30 ? 0b10000 : 0));
         return { ok: true, json: async () => data };
       })
@@ -60,7 +60,9 @@ describe('Productivity dashboard', () => {
     expect(container.textContent).toContain('LM-5');
     expect(screen.getByText('MI')).toBeTruthy();
     expect(container.querySelectorAll('canvas')).toHaveLength(6);
-    expect(calls.some((c) => c.includes('/api/mddp/parts?rc=RC-1-01&seq=1'))).toBe(true);
+    expect(calls.some((c) => c.includes('/api/mddp/parts?rc=RC-1-01&strip=Strip-1,Strip-2,Strip-3'))).toBe(
+      true
+    );
     const n = calls.length;
     await new Promise((r) => setTimeout(r, 50));
     expect(calls.length).toBe(n); // loaded once, no polling
@@ -73,7 +75,7 @@ describe('Productivity dashboard', () => {
         const data = u.includes('runcards')
           ? [{ rc: 'RC-1-01' }]
           : u.includes('carriers')
-            ? carriers(set1, set2)
+            ? carriers(...set1, ...set2)
             : Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : 0));
         return { ok: true, json: async () => data };
       })
@@ -94,12 +96,12 @@ describe('Productivity dashboard', () => {
         const data = u.includes('runcards')
           ? [{ rc: 'RC-1-01' }]
           : u.includes('carriers')
-            ? carriers(set1, set2)
+            ? carriers(...set1, ...set2)
             : Array.from({ length: 60 }, (_, i) => row(i + 1, 0));
         return { ok: true, json: async () => data };
       })
     );
-    localStorage.setItem('prod.sets', JSON.stringify([2]));
+    localStorage.setItem('prod.sets', JSON.stringify(['Strip-4']));
     const { container, unmount } = render(<ProductivityPage />);
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(1));
     expect(container.textContent).toContain('Set 2 · Carrier 07');

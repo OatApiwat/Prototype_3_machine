@@ -5,31 +5,6 @@ const DEFECTS = 6;   // bit 0..5 = ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5, MI
 /** Strip no as the API shows it: "Strip-76" (stored as a number) */
 const stripName = (n) => 'Strip-' + n;
 
-const bit = (mask, i) => ((mask | 0) >> i) & 1;
-
-/**
- * One entry per carrier visit (seq = position in the run card; carrier numbers are reused, so seq is the key):
- * { seq, carrier, strips: [strip numbers], start, end, pieces, defective, cnt: [count per defect type] }
- */
-function visitsOf(rows) {
-  const by = new Map();
-  for (const r of rows) {
-    if (r.seq == null || r.carrier == null) continue; // incomplete point: cannot be placed on a carrier
-    let c = by.get(r.seq);
-    if (!c) {
-      c = { seq: r.seq, carrier: r.carrier, strips: [], start: r.t, end: r.t, pieces: 0, defective: 0, cnt: Array(DEFECTS).fill(0) };
-      by.set(r.seq, c);
-    }
-    c.pieces++;
-    if (r.defect > 0) c.defective++;
-    for (let i = 0; i < DEFECTS; i++) c.cnt[i] += bit(r.defect, i);
-    if (!c.strips.includes(r.strip_no)) c.strips.push(r.strip_no);
-    c.start = Math.min(c.start, r.t);
-    c.end = Math.max(c.end, r.t);
-  }
-  return [...by.values()].map((c) => ({ ...c, strips: c.strips.sort((a, b) => a - b) })).sort((a, b) => a.seq - b.seq);
-}
-
 /**
  * Query range of /api/mddp/runcards: calendar dates ("YYYY-MM-DD", from = start of that day, to = end of that day, in the time zone
  * `tzMin` minutes east of UTC) or epoch ms. Returns { from, to } in ms, or null when a value is not understood.
@@ -51,22 +26,28 @@ function rangeOf(from, to, tzMin, now = Date.now()) {
 }
 
 /**
- * Carriers of a run card, each with its sets (one entry per visit, `seq` = key for /parts) and the Strip numbers of every set:
- * [{ carrier, sets: [{ seq, strips: [strip numbers] }] }]   (carriers and their sets in ascending order)
+ * Carriers of a run card with their Strip numbers: [{ carrier, strips: ["Strip-1", ...] }]
+ * (carriers and strips in ascending order; a carrier used several times lists the strips of every use)
  */
 function carriersOf(rows) {
   const by = new Map();
-  for (const v of visitsOf(rows)) {
-    if (!by.has(v.carrier)) by.set(v.carrier, { carrier: v.carrier, sets: [] });
-    by.get(v.carrier).sets.push({ seq: v.seq, strips: v.strips.map(stripName) });
+  for (const r of rows) {
+    if (r.carrier == null || r.strip_no == null) continue; // incomplete point: cannot be placed on a carrier
+    if (!by.has(r.carrier)) by.set(r.carrier, new Set());
+    by.get(r.carrier).add(r.strip_no);
   }
-  return [...by.values()].sort((a, b) => a.carrier - b.carrier);
+  return [...by.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([carrier, set]) => ({ carrier, strips: [...set].sort((a, b) => a - b).map(stripName) }));
 }
 
-const partsOf = (rows, seq) =>
-  rows
-    .filter((r) => r.seq === seq)
-    .sort((a, b) => a.susp - b.susp)
-    .map((r) => ({ ...r, strip_no: stripName(r.strip_no) }));
+/** pieces of the given strips ("Strip-76", ...), one row per piece in strip then part order */
+const partsOf = (rows, strips) => {
+  const want = new Set(strips);
+  return rows
+    .filter((r) => want.has(stripName(r.strip_no)))
+    .sort((a, b) => a.strip_no - b.strip_no || a.part - b.part)
+    .map(({ seq, strip, susp, ...r }) => ({ ...r, strip_no: stripName(r.strip_no) })); // eslint-disable-line no-unused-vars
+};
 
-module.exports = { stripName, carriersOf, visitsOf, partsOf, rangeOf, DEFECTS };
+module.exports = { stripName, carriersOf, partsOf, rangeOf };

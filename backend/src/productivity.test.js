@@ -1,44 +1,23 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { carriersOf, visitsOf, partsOf, rangeOf } = require('./productivity');
+const { carriersOf, partsOf, rangeOf } = require('./productivity');
 
-const row = (seq, carrier, strip, part, defect, t) => ({ seq, carrier, strip, strip_no: (seq - 1) * 3 + strip, part, susp: (strip - 1) * 20 + part, defect, t });
+const row = (carrier, strip_no, part, defect = 0) => ({ seq: 1, carrier, strip: 1, strip_no, part, susp: part, defect, t: strip_no * 100 + part });
 
-test('visitsOf groups by visit and counts defects per type', () => {
-  const rows = [row(1, 7, 1, 1, 0b00011, 10), row(1, 7, 2, 3, 0, 20), row(2, 8, 1, 1, 0b10000, 30), row(41, 1, 1, 1, 1, 40)];
-  const c = visitsOf(rows);
-  assert.strictEqual(c.length, 3);
-  assert.deepStrictEqual(c[0].strips, [1, 2]);
-  assert.deepStrictEqual(c[0].cnt, [1, 1, 0, 0, 0, 0]);
-  assert.strictEqual(c[0].defective, 1);
-  assert.strictEqual(c[0].pieces, 2);
-  assert.strictEqual(c[1].cnt[4], 1);
-  assert.strictEqual(c[0].start, 10);
-  assert.strictEqual(c[0].end, 20);
-});
-
-test('points without a carrier are ignored', () => {
-  assert.deepStrictEqual(carriersOf([{ seq: 1, carrier: null, strip_no: 1, defect: 0, t: 1 }, { seq: 2, strip_no: 4, defect: 0, t: 2 }]), []);
-});
-
-test('a reused carrier number stays a separate visit', () => {
-  const c = visitsOf([row(1, 3, 1, 1, 0, 1), row(44, 3, 1, 1, 0, 2)]);
-  assert.deepStrictEqual(c.map((x) => [x.seq, x.carrier]), [[1, 3], [44, 3]]);
-});
-
-test('carriersOf lists each carrier of the run card with the strip numbers of each of its sets', () => {
-  const c = carriersOf([row(26, 1, 1, 1, 0, 3), row(26, 1, 2, 1, 0, 4), row(1, 1, 1, 1, 0, 1), row(2, 7, 1, 1, 0, 2)]);
-  assert.deepStrictEqual(c, [
-    { carrier: 1, sets: [{ seq: 1, strips: ['Strip-1'] }, { seq: 26, strips: ['Strip-76', 'Strip-77'] }] },
-    { carrier: 7, sets: [{ seq: 2, strips: ['Strip-4'] }] },
+test('carriersOf lists each carrier with the strip numbers of all its uses, in order', () => {
+  const rows = [row(1, 76, 1), row(1, 76, 2), row(1, 1, 1), row(7, 4, 1), row(1, 121, 1), { carrier: null, strip_no: 9 }];
+  assert.deepStrictEqual(carriersOf(rows), [
+    { carrier: 1, strips: ['Strip-1', 'Strip-76', 'Strip-121'] },
+    { carrier: 7, strips: ['Strip-4'] },
   ]);
+  assert.deepStrictEqual(carriersOf([]), []);
 });
 
-test('partsOf returns one visit ordered by suspension', () => {
-  const p = partsOf([row(2, 1, 2, 1, 0, 1), row(2, 1, 1, 5, 0, 2), row(3, 1, 1, 1, 0, 3)], 2);
-  assert.deepStrictEqual(p.map((r) => r.susp), [5, 21]);
-  assert.strictEqual(p[0].strip_no, 'Strip-4'); // strip numbers are answered as "Strip-<no>"
+test('partsOf returns the pieces of the asked strips, ordered, with the strip answered as Strip-<no>', () => {
+  const p = partsOf([row(1, 77, 2), row(1, 76, 5), row(1, 76, 1), row(1, 9, 1)], ['Strip-76', 'Strip-77']);
+  assert.deepStrictEqual(p.map((r) => [r.strip_no, r.part]), [['Strip-76', 1], ['Strip-76', 5], ['Strip-77', 2]]);
+  assert.ok(!('seq' in p[0]) && !('susp' in p[0]) && !('strip' in p[0]));
 });
 
 test('rangeOf: dates are whole days in the given time zone, ms still accepted, bad input is rejected', () => {

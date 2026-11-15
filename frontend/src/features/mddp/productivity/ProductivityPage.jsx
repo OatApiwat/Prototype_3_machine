@@ -269,25 +269,34 @@ export default function ProductivityPage() {
   );
   const rc = cards.some((c) => c.rc === pickRc) ? pickRc : (cards[cards.length - 1]?.rc ?? null);
   const step2 = useLoaded(carriersUrl(rc), nonce);
-  // the API lists carriers with their sets; the page works with one entry per set (visit), in run card order
+  // the API lists carriers with their Strip numbers; a set (one column) is one use of the carrier = a run of up to 3 consecutive strips
   const carriers = useMemo(
     () =>
-      (step2.url ? step2.data : [])
-        .flatMap((g) => g.sets.map((s) => ({ carrier: g.carrier, seq: s.seq, strips: s.strips })))
-        .sort((a, b) => a.seq - b.seq),
+      (step2.url ? step2.data : []).flatMap((g) => {
+        const sets = [];
+        for (const st of g.strips) {
+          const n = +st.replace(/\D/g, ''),
+            last = sets[sets.length - 1];
+          if (last && last.strips.length < STRIPS_PER_CARRIER && n === last.end + 1) {
+            last.strips.push(st);
+            last.end = n;
+          } else sets.push({ carrier: g.carrier, key: st, strips: [st], end: n });
+        }
+        return sets;
+      }),
     [step2]
   );
   const carrierNos = useMemo(() => [...new Set(carriers.map((c) => c.carrier))], [carriers]);
-  const defaultVisit = carriers[carriers.length - 1];
+  const defaultVisit = carriers.reduce((a, c) => (!a || c.end > a.end ? c : a), null); // the set with the newest strips
   const carrierNo = carrierNos.includes(pickCarrier) ? pickCarrier : defaultVisit?.carrier;
   // the sets of the selected carrier: every visit of that carrier number in the run card (carrier numbers are reused)
   const sets = carriers.filter((c) => c.carrier === carrierNo);
-  const chosen = pickSets ? sets.filter((c) => pickSets.includes(c.seq)) : sets;
+  const chosen = pickSets ? sets.filter((c) => pickSets.includes(c.key)) : sets;
   const shown = chosen.length ? chosen : sets;
   const allSets = shown.length === sets.length;
-  const toggleSet = (seq) => {
-    const cur = shown.map((c) => c.seq);
-    const next = cur.includes(seq) ? cur.filter((x) => x !== seq) : [...cur, seq];
+  const toggleSet = (key) => {
+    const cur = shown.map((c) => c.key);
+    const next = cur.includes(key) ? cur.filter((x) => x !== key) : [...cur, key];
     setPickSets(next.length === 0 || next.length === sets.length ? null : next);
   };
   // zoom window over the 60 suspensions, shared by every chart; anything invalid falls back to the full range
@@ -358,10 +367,21 @@ export default function ProductivityPage() {
 
   // pieces of the shown sets (loaded once per selection) -> per strip statistics for the carrier chart
   const many = useLoadedMany(
-    shown.map((c) => partsUrl(rc, c.seq)),
+    shown.map((c) => partsUrl(rc, c.strips)),
     nonce
   );
-  const rowsOf = shown.map((_, i) => carrierRows(many.data[i] || []));
+  // suspension 1..60 of a set = position of the strip in the set x 20 + part
+  const rowsOf = shown.map((c, i) =>
+    carrierRows(
+      (many.data[i] || [])
+        .map((r) => ({
+          ...r,
+          strip: c.strips.indexOf(r.strip_no) + 1,
+          susp: c.strips.indexOf(r.strip_no) * PARTS_PER_STRIP + r.part,
+        }))
+        .filter((r) => r.strip > 0)
+    )
+  );
   // one defect axis (0..N, N a multiple of 4) shared by the carrier chart and every piece chart
   const maxPiece = Math.max(
     0,
@@ -480,11 +500,11 @@ export default function ProductivityPage() {
                   All
                 </label>
                 {sets.map((c, k) => (
-                  <label key={c.seq}>
+                  <label key={c.key}>
                     <input
                       type="checkbox"
-                      checked={shown.some((x) => x.seq === c.seq)}
-                      onChange={() => toggleSet(c.seq)}
+                      checked={shown.some((x) => x.key === c.key)}
+                      onChange={() => toggleSet(c.key)}
                     />{' '}
                     Set {k + 1} · {c.strips.join(', ')}
                   </label>
@@ -524,7 +544,7 @@ export default function ProductivityPage() {
           >
             {shown.map((c, i) => (
               <SetColumn
-                key={rc + '/' + c.seq}
+                key={rc + '/' + c.key}
                 visit={c}
                 index={sets.indexOf(c)}
                 rows={rowsOf[i]}

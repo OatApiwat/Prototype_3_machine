@@ -43,5 +43,8 @@ export function useLoadedMany(urls, nonce) {
 export const cardsUrl = (dateStart, dateEnd) =>
   dateStart <= dateEnd ? `/api/mddp/runcards?dateStart=${dateStart}&dateEnd=${dateEnd}` : null;
 export const carriersUrl = (rc) => (rc ? `/api/mddp/carriers?rc=${encodeURIComponent(rc)}` : null);
-export const partsUrl = (rc, seq) =>
-  rc && seq ? `/api/mddp/parts?rc=${encodeURIComponent(rc)}&seq=${seq}` : null;
+/** pieces of some strips ("Strip-76", ...) of a run card */
+export const partsUrl = (rc, strips) =>
+  rc && strips?.length
+    ? `/api/mddp/parts?rc=${encodeURIComponent(rc)}&strip=${strips.map(encodeURIComponent).join(',')}`
+    : null;

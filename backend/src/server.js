@@ -96,8 +96,8 @@ const cached = (key, ttl, fn) => {
 };
 // GET /api/mddp/runcards?dateStart=YYYY-MM-DD&dateEnd=YYYY-MM-DD   run cards with pieces from 00:00 of dateStart to the end of dateEnd (TZ_OFFSET_MIN, default Asia/Bangkok);
 //     no dateEnd = dateStart; legacy from/to (epoch ms) still accepted; no parameters = last 24 h
-// GET /api/mddp/carriers?rc=<run card>          carrier visits of a run card: carrier number, strip numbers, pieces, defects per code
-// GET /api/mddp/parts?rc=<run card>&seq=<visit> the 60 pieces (suspensions) of one carrier visit
+// GET /api/mddp/carriers?rc=<run card>          carriers of a run card with their Strip numbers
+// GET /api/mddp/parts?rc=<run card>&strip=Strip-76,Strip-77   the pieces (20 per strip) of the strips
 const rcOf = (q) => String(q.rc || '').replace(/[^A-Za-z0-9_-]/g, '');
 const fail = (res, e) => res.status(502).json({ error: String(e.message || e) });
 app.get('/api/mddp/runcards', async (req, res) => {
@@ -115,9 +115,9 @@ app.get('/api/mddp/carriers', async (req, res) => {
   try { res.json(carriersOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)))); } catch (e) { fail(res, e); }
 });
 app.get('/api/mddp/parts', async (req, res) => {
-  const rc = rcOf(req.query), seq = +req.query.seq;
-  if (!rc || !seq) return res.status(400).json({ error: 'rc and seq required' });
-  try { res.json(partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), seq)); } catch (e) { fail(res, e); }
+  const rc = rcOf(req.query), strips = String(req.query.strip || '').split(',').filter((x) => /^Strip-\d+$/.test(x));
+  if (!rc || !strips.length) return res.status(400).json({ error: 'rc and strip required' });
+  try { res.json(partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), strips)); } catch (e) { fail(res, e); }
 });
 
 const server = http.createServer(app);

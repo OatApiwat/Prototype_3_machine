@@ -298,7 +298,7 @@ export default function ProductivityPage() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', flexWrap: 'wrap' }}>
-          <b style={{ fontSize: 16 }}>Process parameter &amp; defect monitoring</b>
+          <b style={{ fontSize: 16 }}>Defect monitoring</b>
           <span style={{ flex: 1 }} />
           <Legend />
         </div>

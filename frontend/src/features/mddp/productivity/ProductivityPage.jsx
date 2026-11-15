@@ -31,7 +31,6 @@ const AXES = [
   ['Y', '#d62728'],
   ['Z', '#1a9e6e'],
 ];
-const DEFECT_AXIS_MAX = 4;
 const RIGHT = { rightMax: 6, rightTicks: [0, 2, 4, 6], rightLabel: 'Defects of the piece (count)' };
 const X_LABEL = `Suspension No. (1 - ${SUSPENSIONS}) · 1 carrier = ${STRIPS_PER_CARRIER} strips × ${PARTS_PER_STRIP}`;
 
@@ -66,7 +65,7 @@ function Legend() {
 }
 
 /** One "set" = one visit of a carrier = 3 strips x 20 pieces; shown as one column of charts */
-function SetColumn({ rc, visit, index, nonce }) {
+function SetColumn({ rc, visit, index, nonce, defectMax }) {
   const res = useLoaded(partsUrl(rc, visit.seq), nonce);
   const rows = useMemo(() => carrierRows(res.url ? res.data : []), [res]);
   const sm = summarize(rows);
@@ -86,9 +85,9 @@ function SetColumn({ rc, visit, index, nonce }) {
         ]
       : [`Suspension ${i + 1}`, 'not made yet'];
   };
-  // defect bars: the same right axis (0-4 defects of the piece) in every chart; only a piece with more defects widens it
+  // defect bars: one defect axis (same 0..N as the overview chart) in every chart, so the same defects look the same everywhere
   const stackMax = Math.max(
-    DEFECT_AXIS_MAX,
+    defectMax,
     ...rows.map((r) => (r ? DEFECTS.reduce((n, _, d) => n + hasDefect(r.defect, d), 0) : 0))
   );
   const common = {
@@ -98,7 +97,10 @@ function SetColumn({ rc, visit, index, nonce }) {
     xlabel: X_LABEL,
     ...RIGHT,
     rightMax: stackMax,
-    rightTicks: Array.from({ length: stackMax + 1 }, (_, k) => k),
+    rightTicks:
+      stackMax % 4
+        ? Array.from({ length: stackMax + 1 }, (_, k) => k)
+        : [0, 1, 2, 3, 4].map((k) => (k * stackMax) / 4),
   };
   const lineChart = (p) => ({
     ...common,
@@ -405,7 +407,14 @@ export default function ProductivityPage() {
             }}
           >
             {shown.map((c) => (
-              <SetColumn key={rc + '/' + c.seq} rc={rc} visit={c} index={sets.indexOf(c)} nonce={nonce} />
+              <SetColumn
+                key={rc + '/' + c.seq}
+                rc={rc}
+                visit={c}
+                index={sets.indexOf(c)}
+                nonce={nonce}
+                defectMax={ovTop}
+              />
             ))}
           </div>
           <div className="card" style={{ marginTop: 8, padding: '6px 10px', color: 'var(--muted)' }}>

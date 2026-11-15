@@ -1,0 +1,22 @@
+:root { --bg:#f1f5f9; --panel:#fff; --text:#0f172a; --muted:#475569; --line:#cbd5e1; --grid:#e2e8f0; --blue:#1d4ed8; --cyan:#0e7490; --green:#16a34a; --red:#dc2626; --amber:#d97706; --carrier:#e2e8f0; --cellL:#bfdbfe; --cellR:#cffafe; --done:#86efac; }
+:root[data-theme=dark] { --bg:#0f141b; --panel:#1a2233; --text:#e5e7eb; --muted:#94a3b8; --line:#334155; --grid:#263247; --blue:#60a5fa; --cyan:#22d3ee; --green:#4ade80; --red:#f87171; --amber:#fbbf24; --carrier:#273449; --cellL:#1e3a5f; --cellR:#164e63; --done:#166534; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font-family:"Segoe UI",Arial,sans-serif; }
+.app { max-width:1600px; margin:0 auto; padding:10px 16px 24px; }
+.tabbar { display:flex; gap:6px; border-bottom:2px solid var(--line); align-items:flex-end; }
+.tab { border:1px solid var(--line); border-bottom:0; border-radius:10px 10px 0 0; background:var(--grid); color:var(--muted); padding:6px 22px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:-2px; }
+.tab.active { background:var(--panel); color:var(--text); border-bottom:2px solid var(--panel); }
+.spacer { flex:1; }
+.pill { border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:14px; padding:3px 12px; font-size:13px; font-weight:700; cursor:pointer; margin-bottom:4px; }
+.status { font-size:12px; color:var(--muted); margin:0 10px 6px; }
+.dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; background:var(--red); } .dot.on { background:var(--green); }
+h1 { font-size:24px; margin:12px 0 8px; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px; margin-bottom:8px; }
+.toolbar { display:flex; gap:10px; align-items:center; margin:6px 0; font-size:14px; }
+canvas { display:block; width:100%; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.nodata { color:var(--muted); font-size:14px; padding:20px; text-align:center; }
+.portal { display:flex; gap:6px; flex-wrap:wrap; padding:12px; }
+.mach { border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-width:96px; text-align:center; font-weight:700; font-size:13px; background:var(--grid); color:var(--muted); }
+.mach.live { background:var(--cellL); color:var(--text); border-color:var(--blue); cursor:pointer; }
+.mach small { display:block; font-weight:400; margin-top:4px; }

@@ -100,15 +100,15 @@ export default function CalulTab() {
       <div className="kframe"><span className="kh">KUKA</span>
         <div className="toolbar" style={{ marginTop: -6 }}><b>By point</b> {PN.map((n, i) => <button key={i} className={'pill' + (pt === i ? ' on' : '')} style={pt === i ? { background: 'var(--blue)', color: '#fff' } : undefined} title={n} onClick={() => setPt(i)}>P{i + 1}</button>)}<SpcBox style={{ marginLeft: 12 }} /></div>
         <div className="g3">
-          {G('Position XYZ', [['x', '--red', 'X'], ['y', '--green', 'Y'], ['z', '--blue', 'Z']], -400, 900, [-300, 0, 300, 600, 900], ' mm', 2, KEY, { toggle: true, spcOk: false }, 'span3')}
+          {G('Position XYZ', [['x', '--red', 'X'], ['y', '--green', 'Y'], ['z', '--blue', 'Z']], -400, 900, [-300, 0, 300, 600, 900], ' mm', 2, KEY, { toggle: true, spcOk: false, joined: { dec: 0, unit: 'mm' } }, 'span3')}
           {bp('ex', '--red', 'X', 'X (mm)')}
           {bp('ey', '--green', 'Y', 'Y (mm)')}
           {bp('ez', '--blue', 'Z', 'Z (mm)')}
-          {G('Orientation ABC', [['a', '--red', 'A'], ['b', '--green', 'B'], ['c', '--blue', 'C']], -10, 370, [0, 90, 180, 270, 360], '°', 1, KEY, { toggle: true, spcOk: false }, 'span3')}
+          {G('Orientation ABC', [['a', '--red', 'A'], ['b', '--green', 'B'], ['c', '--blue', 'C']], -10, 370, [0, 90, 180, 270, 360], '°', 1, KEY, { toggle: true, spcOk: false, joined: { dec: 0, unit: '°' } }, 'span3')}
           {bp('ea', '--red', 'A', 'A (°)')}
           {bp('eb', '--green', 'B', 'B (°)')}
           {bp('ec', '--blue', 'C', 'C (°)')}
-          {G('Joint temperature', [1, 2, 3, 4, 5, 6].map((i) => ['t' + i, ['--red', '--amber', '--green', '--cyan', '--blue', '--muted'][i - 1], 'J' + i]), 30, 60, [30, 40, 50, 60], '', 1, KEY, { toggle: true, ownSpc: true })}
+          {G('Joint temperature', [1, 2, 3, 4, 5, 6].map((i) => ['t' + i, ['--red', '--amber', '--green', '--cyan', '--blue', '--muted'][i - 1], 'J' + i]), 30, 60, [30, 40, 50, 60], '', 1, KEY, { toggle: true, ownSpc: true, joined: { mode: 'hottest', unit: '°C' } })}
           {G('Vacuum Front', [['front', '--blue', 'Front']], -120, 10, [-100, -50, 0], '', 1, 'calul_vac|', { refs: [{ v: -80, label: 'alarm −80', color: '--red' }], ownSpc: true })}
           {G('Vacuum Back', [['back', '--cyan', 'Back']], -120, 10, [-100, -50, 0], '', 1, 'calul_vac|', { refs: [{ v: -80, label: 'alarm −80', color: '--red' }], ownSpc: true })}
         </div>

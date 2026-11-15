@@ -20,16 +20,16 @@ function Line2D() {
       const { g, w } = fit(cv); const s = w / 1560; g.setTransform(s * (window.devicePixelRatio || 1), 0, 0, s * (window.devicePixelRatio || 1), 0, 0);
       g.clearRect(0, 0, 1560, 290);
       const tr = nowRender();
-      [[0, 'L', '--blue', 'LEFT'], [790, 'R', '--cyan', 'RIGHT']].forEach(([x0, , col, lab]) => {
+      [[0, 'L', '--blue', 'LEFT ARM'], [790, 'R', '--cyan', 'RIGHT ARM']].forEach(([x0, sd, col, lab]) => {
         g.strokeStyle = css(col); g.setLineDash([6, 4]); g.lineWidth = 2; g.strokeRect(x0 + 1, 40, 768, 232); g.setLineDash([]);
-        g.fillStyle = css(col); g.fillRect(x0, 6, 770, 28); g.font = 'bold 15px "Segoe UI"'; g.textAlign = 'center'; g.fillText(lab, x0 + 385, 262);
+        g.fillStyle = css(col); g.fillRect(x0, 6, 770, 28); g.fillStyle = '#fff'; g.font = 'bold 15px "Segoe UI"'; g.textAlign = 'center'; g.fillText(sd, x0 + 385, 26); g.fillStyle = css(col); g.font = 'bold 15px "Segoe UI"'; g.textAlign = 'center'; g.fillText(lab, x0 + 385, 262);
       });
       let anyData = false;
       for (const key of keysWith('mddp_carrier|')) {
         const x = sample(key, 'x', tr); if (x === null) continue; anyData = true;
         const nL = sample(key, 'nL', tr, true) ?? 0, nR = sample(key, 'nR', tr, true) ?? 0, k = key.split('|')[1];
         g.fillStyle = css('--carrier'); g.strokeStyle = css('--line'); g.lineWidth = 2; g.fillRect(x, CAR_TOP, 750, 188); g.strokeRect(x, CAR_TOP, 750, 188);
-        g.font = 'bold 12px "Segoe UI"'; g.textAlign = 'center'; g.fillStyle = css('--muted'); g.fillText('CARRIER #' + (((k - 1) % 40) + 1), x + 375, CAR_TOP + 178);
+        g.font = 'bold 11px "Segoe UI"'; g.textAlign = 'left'; g.fillStyle = css('--muted'); for (let r = 1; r <= 3; r++) g.fillText('Strip ' + r, x + 6, CAR_TOP + ROW_Y0 + (r - 1) * PITCH_Y + 24); g.font = 'bold 12px "Segoe UI"'; g.textAlign = 'center'; g.fillText('CARRIER #' + (((k - 1) % 40) + 1), x + 375, CAR_TOP + 178);
         ['L', 'R'].forEach((side) => ORD[side].forEach(([r, c], j) => {
           const n = Math.max(0, Math.min(2, (side === 'L' ? nL : nR) - 2 * j));
           const cx = x + COL_X0 + (c - 1) * PITCH_X, cy = CAR_TOP + ROW_Y0 + (r - 1) * PITCH_Y;

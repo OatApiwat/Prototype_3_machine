@@ -3,7 +3,7 @@ import { nowRender, range, ui } from './store.js';
 import { css, fit, clock } from './canvasUtil.js';
 
 // Scrolling line graph. series: [{ key, field, color, label }], x axis = real (server) clock, drawn at render time.
-export default function Graph({ title, series, ymin, ymax, ticks, unit = '', win, height = 150, dec = 2, refs = [], spcOk = true, dots = false, noTime = false, toggle = false, ownSpc = false, tickFmt = null, valFmt = null, ylabel = null }) {
+export default function Graph({ title, series, ymin, ymax, ticks, unit = '', win, height = 150, dec = 2, refs = [], spcOk = true, dots = false, noTime = false, toggle = false, ownSpc = false, tickFmt = null, valFmt = null, ylabel = null, joined = null }) {
   const ref = useRef(null), hid = useRef({}), own = useRef(false), [, bump] = useState(0);
   useEffect(() => {
     let raf;
@@ -13,7 +13,7 @@ export default function Graph({ title, series, ymin, ymax, ticks, unit = '', win
       const { g, w, h } = fit(cv); const L = 52, T = 22, R = 8, B = noTime ? 4 : 16, pw = w - L - R, ph = h - T - B;
       const tr = nowRender(), W = win() * 1000, t0 = tr - W;
       g.clearRect(0, 0, w, h); g.font = '12px "Segoe UI",Arial'; g.textBaseline = 'middle';
-      g.fillStyle = series.length === 1 || toggle ? series[0].color : css('--text'); g.textAlign = 'left'; g.font = 'bold 13px "Segoe UI",Arial'; g.fillText(title, L, 10); g.font = '12px "Segoe UI",Arial';
+      g.fillStyle = series.length === 1 && !toggle ? series[0].color : css('--text'); g.textAlign = 'left'; g.font = 'bold 13px "Segoe UI",Arial'; g.fillText(title, L, 10); g.font = '12px "Segoe UI",Arial';
       const yl = ylabel ?? unit.trim(); if (yl) { g.save(); g.fillStyle = css('--muted'); g.translate(11, T + ph / 2); g.rotate(-Math.PI / 2); g.textAlign = 'center'; g.fillText(yl, 0, 0); g.restore(); }
       const y = (v) => T + ph - ((Math.max(ymin, Math.min(ymax, v)) - ymin) / (ymax - ymin)) * ph;
       g.strokeStyle = css('--grid'); g.fillStyle = css('--muted'); g.textAlign = 'right';
@@ -34,8 +34,9 @@ export default function Graph({ title, series, ymin, ymax, ticks, unit = '', win
         g.stroke();
         if (dots) { g.fillStyle = s.color; for (const r of rows) { const v = r[s.field]; if (typeof v === 'number') { g.beginPath(); g.arc(L + ((r.t - t0) / W) * pw, y(v), 2.5, 0, 6.3); g.fill(); } } }
         const last = rows[rows.length - 1][s.field];
-        if (tx - (series.length === 1 ? 170 : 70) > minX) { g.fillStyle = s.color; g.textAlign = 'right'; g.fillText(`${series.length === 1 ? clock(ui.hoverT != null ? ui.hoverT : tr) + '  ' : ''}${s.label} ${typeof last === 'number' ? (valFmt ? valFmt(last) : last.toFixed(dec)) : '--'}${unit}`, tx, 10); tx -= series.length > 3 ? 75 : 110; }
+        if (!joined && tx - (series.length === 1 ? 170 : 70) > minX) { g.fillStyle = s.color; g.textAlign = 'right'; g.fillText(`${series.length === 1 ? clock(ui.hoverT != null ? ui.hoverT : tr) + '  ' : ''}${s.label} ${typeof last === 'number' ? (valFmt ? valFmt(last) : last.toFixed(dec)) : '--'}${unit}`, tx, 10); tx -= series.length > 3 ? 75 : 110; }
       });
+      if (joined) { const vs = series.filter((s) => !hid.current[s.label]).map((s) => { const a = range(s.key, tr - 3000, tr); const r = a[a.length - 1]; return r && typeof r[s.field] === 'number' ? r[s.field] : null; }); if (vs.some((v) => v !== null)) { const txt = joined.mode === 'hottest' ? (() => { let bi = -1; vs.forEach((v, i) => { if (v !== null && (bi < 0 || v > vs[bi])) bi = i; }); return `hottest ${series[bi].label}  ${vs[bi].toFixed(1)} ${joined.unit}`; })() : vs.map((v) => (v === null ? '--' : (+v.toFixed(joined.dec)).toString())).join(' / ') + ' ' + joined.unit; g.fillStyle = css('--text'); g.textAlign = 'right'; g.fillText(txt, L + pw, 10); } }
       if ((ownSpc ? own.current : ui.spc && spcOk) && series.length) {
         const rows = range(series[0].key, tr - 60000, tr).map((r) => r[series[0].field]).filter((v) => typeof v === 'number');
         if (rows.length > 20) {

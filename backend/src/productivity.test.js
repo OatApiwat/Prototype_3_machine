@@ -16,9 +16,9 @@ test('carriersOf lists each carrier with the strip numbers of all its uses, in o
 
 test('partsOf returns the pieces of the asked strips, ordered, with the strip answered as Strip-<no>', () => {
   const p = partsOf([row(1, 77, 2), row(1, 76, 5), row(1, 76, 1), row(1, 9, 1)], ['Strip-76', 'Strip-77']);
-  assert.deepStrictEqual(p.map((r) => [r.strip_no, r.part]), [['Strip-76', 1], ['Strip-76', 5], ['Strip-77', 2]]);
+  assert.deepStrictEqual(p.map((r) => [r.strip_no, r.suspension_no]), [['Strip-76', 1], ['Strip-76', 5], ['Strip-77', 2]]);
   assert.strictEqual(p[0].carrier, 'CR-0001');
-  assert.ok(!('seq' in p[0]) && !('susp' in p[0]) && !('strip' in p[0]));
+  assert.ok(!('seq' in p[0]) && !('susp' in p[0]) && !('part' in p[0]) && !('strip' in p[0]));
 });
 
 test('rangeOf: dates are whole days in the given time zone, ms still accepted, bad input is rejected', () => {

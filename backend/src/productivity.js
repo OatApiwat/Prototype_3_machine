@@ -49,7 +49,7 @@ const partsOf = (rows, strips) => {
   return rows
     .filter((r) => want.has(stripName(r.strip_no)))
     .sort((a, b) => a.strip_no - b.strip_no || a.part - b.part)
-    .map(({ seq, strip, susp, ...r }) => ({ ...r, carrier: carrierName(r.carrier), strip_no: stripName(r.strip_no) })); // eslint-disable-line no-unused-vars
+    .map(({ seq, strip, susp, part, ...r }) => ({ ...r, carrier: carrierName(r.carrier), strip_no: stripName(r.strip_no), suspension_no: part }));   // part = suspension no. 1..20 in the strip // eslint-disable-line no-unused-vars
 };
 
 module.exports = { stripName, carrierName, carriersOf, partsOf, rangeOf };

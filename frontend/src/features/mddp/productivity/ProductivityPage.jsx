@@ -72,7 +72,7 @@ const peerTip = (peers, i, linesOf) =>
     const r = p.rows[i];
     return r
       ? [
-          `${p.label} · Suspension ${i + 1} (strip ${r.strip}, part ${r.part}) · ${stamp(r.t)}`,
+          `${p.label} · Suspension ${i + 1} (${stripLabel(r.strip_no)}, no. ${r.suspension_no}) · ${stamp(r.t)}`,
           ...linesOf(r, p.rows).filter(Boolean),
         ]
       : [`${p.label} · Suspension ${i + 1}`];
@@ -377,7 +377,7 @@ export default function ProductivityPage() {
         .map((r) => ({
           ...r,
           strip: c.strips.indexOf(r.strip_no) + 1,
-          susp: c.strips.indexOf(r.strip_no) * PARTS_PER_STRIP + r.part,
+          susp: c.strips.indexOf(r.strip_no) * PARTS_PER_STRIP + r.suspension_no,
         }))
         .filter((r) => r.strip > 0)
     )

@@ -17,7 +17,7 @@ const row = (susp, defect) => ({
   carrier: 'CR-0007',
   strip: Math.ceil(susp / 20),
   strip_no: 'Strip-' + Math.ceil(susp / 20),
-  part: ((susp - 1) % 20) + 1,
+  suspension_no: ((susp - 1) % 20) + 1,
   susp,
   temp: 109,
   peak: 90,

@@ -30,9 +30,9 @@ export async function exportExcel({ rc, carrier, sets }) {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[`Run Card ${rc}`], [], ...summary]), 'Summary');
   for (const s of sets) {
     const head = [
-      'Suspension',
+      'Suspension No.',
       'Strip',
-      'Part',
+      'Suspension No. (in Strip)',
       'Time',
       'Epoxy head temperature (°C)',
       'Dispense pressure (kPa)',
@@ -53,7 +53,7 @@ export async function exportExcel({ rc, carrier, sets }) {
           ? [
               i + 1,
               stripLabel(r.strip_no ?? 0),
-              r.part,
+              r.suspension_no,
               stamp(r.t),
               r.temp,
               r.peak,

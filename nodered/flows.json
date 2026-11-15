@@ -32,7 +32,7 @@
   "type": "comment",
   "z": "tab_MDDP_184",
   "name": "MDDP_184 · Glue dispensing (Left + Right arm)",
-  "info": "Measurements written by this tab: mddp_fast, mddp_arm, mddp_carrier, mddp_dispense",
+  "info": "Measurements written by this tab: mddp_fast, mddp_arm, mddp_carrier, mddp_dispense, mddp_part",
   "x": 220,
   "y": 40,
   "wires": []
@@ -387,6 +387,94 @@
   ],
   "x": 760,
   "y": 540,
+  "wires": []
+ },
+ {
+  "id": "tab_MDDP_184_part_g",
+  "type": "group",
+  "z": "tab_MDDP_184",
+  "name": "mddp_part  ·  event  ·  event",
+  "style": {
+   "label": true,
+   "fill": "#fde68a",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_MDDP_184_part_c",
+   "tab_MDDP_184_part_i",
+   "tab_MDDP_184_part_f",
+   "tab_MDDP_184_part_o"
+  ],
+  "x": 14,
+  "y": 600,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_MDDP_184_part_c",
+  "type": "comment",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_part_g",
+  "name": "One row per finished piece: strip, part, process parameters (temp, peak pressure, dispense time, vibration velocity/acceleration X/Y/Z) and defect bit mask (6 types), tags side, rc (run card)",
+  "info": "measurement mddp_part\nrate event\nOne row per finished piece: strip, part, process parameters (temp, peak pressure, dispense time, vibration velocity/acceleration X/Y/Z) and defect bit mask (6 types), tags side, rc (run card)",
+  "x": 360,
+  "y": 630,
+  "wires": []
+ },
+ {
+  "id": "tab_MDDP_184_part_i",
+  "type": "inject",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_part_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 670,
+  "wires": [
+   [
+    "tab_MDDP_184_part_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_MDDP_184_part_f",
+  "type": "function",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_part_g",
+  "name": "MDDP_184 · mddp_part",
+  "func": "// mddp_part: One row per finished piece: strip, part, process parameters (temp, peak pressure, dispense time, vibration velocity/acceleration X/Y/Z) and defect bit mask (6 types), tags side, rc (run card)\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('MDDP_184', 'part', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 670,
+  "wires": [
+   [
+    "tab_MDDP_184_part_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_MDDP_184_part_o",
+  "type": "link out",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_part_g",
+  "name": "mddp_part → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 670,
   "wires": []
  },
  {
@@ -1309,6 +1397,7 @@
    "tab_MDDP_184_arm_o",
    "tab_MDDP_184_carrier_o",
    "tab_MDDP_184_dispense_o",
+   "tab_MDDP_184_part_o",
    "tab_CALUL_037_vac_o",
    "tab_CALUL_037_robot_o",
    "tab_CALUL_037_flow_o",

@@ -8,3 +8,8 @@ Object.defineProperty(HTMLElement.prototype, 'clientWidth', { get: () => 800 });
 Object.defineProperty(HTMLElement.prototype, 'clientHeight', { get: () => 300 });
 globalThis.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
 globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
+globalThis.ResizeObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};

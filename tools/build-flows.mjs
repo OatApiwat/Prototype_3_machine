@@ -18,6 +18,7 @@ const INFO = {
     fast: ['mddp_fast', 'Arm pressure p (kPa) and robot vibration vx/vy/vz (g), tag side=L|R', '1 kHz', 'stream'],
     arm: ['mddp_arm', 'Arm position x/y, dispense flag, active cell, head epoxy temperature temp (°C), tag side=L|R', '20 Hz', 'state'],
     carrier: ['mddp_carrier', 'Carrier position x and pieces dispensed per arm nL/nR, tag k=carrier number', '20 Hz', 'state'],
+    part: ['mddp_part', 'One row per finished piece: strip, part, process parameters (temp, peak pressure, dispense time, vibration velocity/acceleration X/Y/Z) and defect bit mask (6 types), tags side, rc (run card)', 'event', 'event'],
     dispense: ['mddp_dispense', 'Dispense time dur (ms) and peak pressure (kPa) of each finished dispense, tag side=L|R', 'event', 'event'],
   },
   CALUL_037: {

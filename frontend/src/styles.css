@@ -811,3 +811,44 @@ select.pill {
     padding: 6px 8px;
   }
 }
+
+/* productivity dashboard */
+.plegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  font-size: 12px;
+}
+.plegend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.plegend i {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.pfield {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.ptip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25);
+  padding: 6px 9px;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: nowrap;
+}

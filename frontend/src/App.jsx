@@ -7,6 +7,7 @@ import PortalPage from './pages/portal/PortalPage.jsx';
 import MddpSensorPage from './features/mddp/MddpSensorPage.jsx';
 import CalulSensorPage from './features/calul/CalulSensorPage.jsx';
 import HallSensorPage from './features/hall/HallSensorPage.jsx';
+import ProductivityPage from './features/mddp/productivity/ProductivityPage.jsx';
 
 const SENSOR_PAGES = { mddp: MddpSensorPage, calul: CalulSensorPage, hall: HallSensorPage };
 let ver = 0;
@@ -55,7 +56,12 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('ui.theme', theme);
   }, [theme]);
-  const Page = loc.m && loc.d === 'sensor' ? SENSOR_PAGES[loc.m] : null;
+  const Page =
+    loc.m && loc.d === 'sensor'
+      ? SENSOR_PAGES[loc.m]
+      : loc.m === 'mddp' && loc.d === 'productivity'
+        ? ProductivityPage
+        : null;
   return (
     <div className="app">
       <NavBar

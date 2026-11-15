@@ -81,6 +81,26 @@ app.get('/api/history', async (req, res) => {
   try { res.json({ source: 'influx', rows: await h.promise }); } catch (e) { res.status(502).json({ error: String(e.message || e) }); }
 });
 
+// ---- productivity dashboard: per run card, per piece (small TTL cache + request coalescing; data older than the live cache) ----
+const prod = new Map();
+const cached = (key, ttl, fn) => {
+  let h = prod.get(key);
+  if (!h || Date.now() - h.at > ttl) {
+    for (const [k, v] of prod) if (Date.now() - v.at > 60000) prod.delete(k);
+    h = { at: Date.now(), promise: fn() }; prod.set(key, h);
+    h.promise.catch(() => prod.delete(key));
+  }
+  return h.promise;
+};
+app.get('/api/mddp/runcards', async (_q, res) => {
+  try { res.json(await cached('rcs', cfg.pollMs, () => influx.runCards())); } catch (e) { res.status(502).json({ error: String(e.message || e) }); }
+});
+app.get('/api/mddp/parts', async (req, res) => {
+  const rc = String(req.query.rc || '').replace(/[^A-Za-z0-9_-]/g, '');
+  if (!rc) return res.status(400).json({ error: 'rc required' });
+  try { res.json(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc))); } catch (e) { res.status(502).json({ error: String(e.message || e) }); }
+});
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws', perMessageDeflate: { threshold: 1024 } });
 wss.on('connection', (ws) => {

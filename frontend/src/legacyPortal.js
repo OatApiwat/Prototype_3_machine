@@ -387,19 +387,54 @@ export function initPortal(env) {
     var fl = new THREE.Mesh(new THREE.PlaneGeometry(30000, 20000), lm(0xe5e9ef)); fl.rotation.x = -Math.PI / 2; fl.receiveShadow = true; sc.add(fl);
     var laneM = new THREE.MeshBasicMaterial({ color: 0x3b82f6 });
     LANES.forEach(function (L) { for (var i = 1; i < L.length; i++) { var x0 = wx(L[i - 1][0]), z0 = wz(L[i - 1][1]), x1 = wx(L[i][0]), z1 = wz(L[i][1]), len = Math.hypot(x1 - x0, z1 - z0); var m = new THREE.Mesh(new THREE.BoxGeometry(len, 12, 90), laneM); m.position.set((x0 + x1) / 2, 6, (z0 + z1) / 2); m.rotation.y = -Math.atan2(z1 - z0, x1 - x0); sc.add(m); } });
+    var OPT = { '1': { inner: 0x64748b, mon: 1, extra: 1 }, '2': { inner: 0x374151, cap: 140 }, '3': { inner: 0xef4444, extra: 1 }, '4': { inner: 0x475569, cap: 140, mon: 1 }, '5': { inner: 0x64748b, cap: 100, extra: 1 }, '6': { inner: 0x334155, cap: 120, mon: 1, extra: 1 }, '6.1': { inner: 0x0f766e, glass: 0xd97706 }, '6.3': { inner: 0x1f2937, glass: 0x92400e }, '7': { inner: 0xef4444 }, '7.1': { inner: 0x475569 }, '8': { inner: 0x334155, cap: 140 }, '9': { inner: 0x334155, cap: 100, mon: 1 }, '9.1': { inner: 0x475569, mon: 1, extra: 1 }, '10': { inner: 0x334155, mon: 1, pad: 1 }, '10.1': { inner: 0x334155, cap: 120, mon: 1, extra: 1, pad: 1 }, '11': { inner: 0x64748b, cap: 80 } };
+    var DARK3 = lm(0x1f2937), STEEL3 = lm(0xdfe5ee);
+    // one detailed machine module: kick plate + feet, lower cabinet with door panels and handles, upper enclosure with front/side glass,
+    // process head on a rail behind the glass, optional top housing, vent slots, stack light and monitor arm
+    function mach3(g, mats, X, Z, W, D, H, rot, o, live) {
+      var u = new THREE.Group(); u.position.set(X, 0, Z); u.rotation.y = rot; g.add(u);
+      var mat = mats[0], top = mats[1], FY = 70, lowH = H * 0.42, upH = H * 0.58, capH = o.cap || 0;
+      var glass = new THREE.MeshStandardMaterial({ color: o.glass || 0x7dd3fc, transparent: true, opacity: 0.55, roughness: 0.08, metalness: 0.1, depthWrite: false });
+      bx(u, W * 0.94, FY, D * 0.94, DARK3, 0, FY / 2, 0);
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (p) { var f = new THREE.Mesh(new THREE.CylinderGeometry(34, 46, 30, 12), DARK3); f.position.set(p[0] * (W / 2 - 60), 15, p[1] * (D / 2 - 60)); u.add(f); });
+      bx(u, W, lowH, D, mat, 0, FY + lowH / 2, 0);
+      var nd = o.doors || (W > 600 ? 2 : 1), ew = W / nd;
+      for (var q = 0; q < nd; q++) { var dx = -W / 2 + ew * (q + 0.5); bx(u, ew - 36, lowH - 70, 12, STEEL3, dx, FY + lowH / 2, D / 2 + 6); bx(u, 12, Math.min(220, lowH * 0.45), 22, DARK3, dx + (q % 2 ? -ew / 2 + 50 : ew / 2 - 50), FY + lowH * 0.62, D / 2 + 16); }
+      bx(u, W, upH, D, mat, 0, FY + lowH + upH / 2, 0);
+      bx(u, W + 10, 24, D + 10, top, 0, FY + lowH + 12, 0);                                   // belt line between cabinet and enclosure
+      bx(u, W * 0.8, upH * 0.6, 10, glass, 0, FY + lowH + upH * 0.52, D / 2 + 6);             // front window
+      bx(u, W * 0.84, 14, 14, DARK3, 0, FY + lowH + upH * 0.84, D / 2 + 10); bx(u, W * 0.84, 14, 14, DARK3, 0, FY + lowH + upH * 0.2, D / 2 + 10);
+      [-1, 1].forEach(function (sx) { bx(u, 14, upH * 0.6, 14, DARK3, sx * W * 0.4, FY + lowH + upH * 0.52, D / 2 + 10); });
+      bx(u, 10, upH * 0.6, D * 0.7, glass, W / 2 + 6, FY + lowH + upH * 0.52, 0);              // side window
+      bx(u, W * 0.7, 22, 26, DARK3, 0, FY + lowH + upH * 0.74, D * 0.08);                      // gantry rail behind the glass
+      bx(u, W * 0.28, upH * 0.22, D * 0.34, lm(o.inner || 0x64748b), -W * 0.05, FY + lowH + upH * 0.5, 0);   // process head / tool
+      bx(u, W * 0.1, upH * 0.14, D * 0.2, DARK3, W * 0.22, FY + lowH + upH * 0.42, D * 0.05);
+      var hc = new THREE.Mesh(new THREE.CylinderGeometry(34, 34, upH * 0.2, 12), lm(0xcbd5e1)); hc.position.set(-W * 0.22, FY + lowH + upH * 0.4, 0); u.add(hc);
+      for (var v = 0; v < 4; v++) bx(u, W * 0.5, 6, 46, DARK3, 0, FY + H + 3 + capH, -D * 0.3 + v * 70);   // vent slots on the roof
+      bx(u, 10, upH * 0.14, D * 0.34, lm(live ? 0x16a34a : 0x2563eb), -W / 2 - 6, FY + lowH * 0.7, 0);       // name plate on the side
+      if (capH) bx(u, W * 0.55, capH, D * 0.5, top, W * 0.05, FY + H + capH / 2, -D * 0.1);
+      var tx = W / 2 - 60, tz = D / 2 - 70, ty = FY + H + capH;
+      bx(u, 24, 300, 24, DARK3, tx, ty + 150, tz);
+      [[0x7f1d1d, 0xef4444], [0x78350f, 0xf59e0b], [0x14532d, 0x22c55e]].forEach(function (c, qq) { var lit = qq === 2 && live, cm = new THREE.MeshStandardMaterial({ color: lit ? c[1] : c[0], emissive: lit ? c[1] : 0x000000, emissiveIntensity: lit ? 0.7 : 0 }), cy = new THREE.Mesh(new THREE.CylinderGeometry(42, 42, 62, 14), cm); cy.position.set(tx, ty + 330 + qq * 66, tz); u.add(cy); });
+      if (o.mon) { var mx = -W / 2 + 110, mz = D / 2 + 120; bx(u, 20, 380, 20, DARK3, mx, FY + lowH + 120, mz - 60); bx(u, 300, 190, 26, DARK3, mx, FY + lowH + 400, mz); bx(u, 270, 160, 6, new THREE.MeshStandardMaterial({ color: live ? 0x38bdf8 : 0x334155, emissive: live ? 0x0ea5e9 : 0x000000, emissiveIntensity: live ? 0.5 : 0 }), mx, FY + lowH + 400, mz + 16); }
+      mats.push(glass.clone && null); mats.pop();
+    }
     ST.forEach(function (s, i) {
       var g = new THREE.Group(); sc.add(g); var mat = lm(s.line ? 0x86efac : 0xcbd5e1), top = lm(s.line ? 0xbbf7d0 : 0xe5e7eb); var mats = [mat, top];
+      var op = OPT[s.n] || {}, live3 = !!s.line;
       if (s.a) {
         var x0 = wx(s.a[0]), z0 = wz(s.a[1]), x1 = wx(s.b[0]), z1 = wz(s.b[1]), ang = -Math.atan2(z1 - z0, x1 - x0), len = Math.hypot(x1 - x0, z1 - z0) / s.seg;
-        for (var j = 0; j < s.seg; j++) { var u = (j + 0.5) / s.seg, b = bx(g, len * 0.92, 900, 700, mat, x0 + (x1 - x0) * u, 450, z0 + (z1 - z0) * u); b.rotation.y = ang; var tp = bx(g, len * 0.6, 120, 500, top, x0 + (x1 - x0) * u, 960, z0 + (z1 - z0) * u); tp.rotation.y = ang; }
+        for (var j = 0; j < s.seg; j++) { var u = (j + 0.5) / s.seg; mach3(g, mats, x0 + (x1 - x0) * u, z0 + (z1 - z0) * u, len * 0.94, 760, 1000, ang, op, live3); }
         if (s.line) { var fr = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(x1 - x0, z1 - z0) + 500, 30, 1200), new THREE.MeshBasicMaterial({ color: 0x22c55e })); fr.position.set((x0 + x1) / 2, 15, (z0 + z1) / 2); fr.rotation.y = ang; g.add(fr); }
       } else if (s.dot) { var c = new THREE.Mesh(new THREE.CylinderGeometry(260, 260, 60, 32), lm(0x86efac)); c.position.set(wx(s.x), 30, wz(s.y)); g.add(c); mats = [c.material]; }
-      else { var W = s.w * 14, H = s.flat ? 350 : 900, X3 = wx(s.x), Z3 = wz(s.y), DD = W * 0.8; bx(g, W, H, DD, mat, X3, H / 2, Z3); bx(g, W * 0.6, 20, W * 0.5, top, X3, H + 10, Z3);
-        if (!s.flat) { var gm = new THREE.MeshStandardMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.6, roughness: 0.1 }); bx(g, W * 0.55, H * 0.32, 10, gm, X3 - W * 0.12, H * 0.68, Z3 + DD / 2 + 6); bx(g, W * 0.2, H * 0.2, 10, lm(0x334155), X3 + W * 0.3, H * 0.7, Z3 + DD / 2 + 6); bx(g, 18, H * 0.35, 20, lm(0xe5e7eb), X3, H * 0.28, Z3 + DD / 2 + 12);
-          bx(g, 24, 260, 24, lm(0x475569), X3 + W / 2 - 40, H + 130, Z3 + DD / 2 - 40); [0x7f1d1d, 0x78350f, 0x22c55e].forEach(function (c, q) { var o = new THREE.Mesh(new THREE.CylinderGeometry(40, 40, 60, 12), lm(c)); o.position.set(X3 + W / 2 - 40, H + 290 + q * 64, Z3 + DD / 2 - 40); g.add(o); }); } }
+      else if (s.n === '10.3') { var TX = wx(s.x), TZ = wz(s.y), tm = lm(0xcbd5e1); mats = [tm]; [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (q) { bx(g, 40, 700, 40, lm(0x475569), TX + q[0] * 430, 350, TZ + q[1] * 230); }); bx(g, 1000, 50, 560, tm, TX, 725, TZ); bx(g, 700, 30, 300, lm(0xe5e7eb), TX, 765, TZ); }
+      else if (s.flat) { var pm = new THREE.MeshStandardMaterial({ color: 0xbfd7f2, roughness: 0.5 }); mats = [pm]; var pn = bx(g, s.w * 16, 40, s.w * 8, pm, wx(s.x), 25, wz(s.y)); pn.rotation.y = -0.52; bx(g, s.w * 15, 6, s.w * 7, lm(0x5b7fb3), wx(s.x), 48, wz(s.y)).rotation.y = -0.52; }
+      else { var W = s.w * 14, X3 = wx(s.x), Z3 = wz(s.y); mach3(g, mats, X3, Z3, W, W * 0.8, 1000, 0, op, live3);
+        if (op.extra) mach3(g, mats, X3 + W * 0.95, Z3 - W * 0.3, W * 0.8, W * 0.7, 800, 0, { inner: op.inner }, live3);
+        if (op.pad) { var pd = new THREE.Mesh(new THREE.CylinderGeometry(250, 250, 60, 32), lm(0xf43f5e)); pd.position.set(X3 + W * 0.9, 30, Z3 + W * 0.7); g.add(pd); } }
       g.traverse(function (o) { if (o.isMesh) o.userData.oi = i; }); oMeshes.push({ mats: mats });
       var d = document.createElement('div'); d.className = 'olb' + (s.line ? ' live' : ''); d.textContent = s.line ? '8 · Milli PZT – Line A2202' : s.n; olab.appendChild(d);
-      oLabs.push({ el: d, p: new THREE.Vector3(s.a ? wx(s.a[0]) : wx(s.x), s.a ? 1400 : (s.flat || s.dot ? 700 : 1300), s.a ? wz(s.a[1]) : wz(s.y)) });
+      oLabs.push({ el: d, p: new THREE.Vector3(s.a ? wx(s.a[0]) : wx(s.x), s.a ? 1900 : (s.flat || s.dot || s.n === '10.3' ? 900 : 1950), s.a ? wz(s.a[1]) : wz(s.y)) });
     });
     oRay = new THREE.Raycaster(); oMouse = new THREE.Vector2();
   }

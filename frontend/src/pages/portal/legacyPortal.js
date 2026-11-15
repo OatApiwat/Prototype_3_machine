@@ -398,7 +398,8 @@ export function initPortal(env) {
     showTip(-1);
     draw2();
   });
-  c2.addEventListener('click', function () {
+  c2.addEventListener('click', function (e) {
+    c2.dispatchEvent(new MouseEvent('mousemove', { clientX: e.clientX, clientY: e.clientY }));
     if (hover >= 0) open(LINE[hover]);
   });
 
@@ -1460,7 +1461,8 @@ export function initPortal(env) {
     oTip(-1);
     oDraw2();
   });
-  oc2.addEventListener('click', function () {
+  oc2.addEventListener('click', function (e) {
+    oc2.dispatchEvent(new MouseEvent('mousemove', { clientX: e.clientX, clientY: e.clientY }));
     if (oHover >= 0 && ST[oHover].line) goLine();
   });
 

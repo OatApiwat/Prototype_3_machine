@@ -39,6 +39,12 @@ const runcards = (...s) => ({
 const set1 = ['Strip-1', 'Strip-2', 'Strip-3'];
 const set2 = ['Strip-4', 'Strip-5', 'Strip-6'];
 
+const search = async () => {
+  const b = await screen.findByRole('button', { name: /Search/ });
+  await waitFor(() => expect(b.disabled).toBe(false));
+  fireEvent.click(b);
+};
+
 describe('Productivity dashboard', () => {
   it('walks date -> run card -> carrier and summarises the carrier', async () => {
     const calls = [];
@@ -60,6 +66,7 @@ describe('Productivity dashboard', () => {
       })
     );
     const { container } = render(<ProductivityPage />);
+    await search();
     await waitFor(() => expect(container.textContent).toContain('60 parts inspected'));
     expect(container.textContent).toContain('CR-0007');
     expect(container.textContent).toContain('2 defects found');
@@ -91,10 +98,14 @@ describe('Productivity dashboard', () => {
       })
     );
     const { container } = render(<ProductivityPage />);
+    expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(0); // nothing before Search
+    await search();
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(2));
     fireEvent.click(screen.getByLabelText(/Set 2/)); // untick set 2
+    await search();
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(1));
     fireEvent.click(screen.getByLabelText('All'));
+    await search();
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(2));
   });
   it('remembers the selection in localStorage', async () => {
@@ -110,9 +121,11 @@ describe('Productivity dashboard', () => {
     );
     localStorage.setItem('prod.sets', JSON.stringify(['Strip-4']));
     const { container, unmount } = render(<ProductivityPage />);
+    await search();
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(1));
     expect(container.textContent).toContain('Set 2 · CR-0007');
     fireEvent.click(screen.getByLabelText('All'));
+    await search();
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(2));
     expect(JSON.parse(localStorage.getItem('prod.sets'))).toBeNull();
     unmount();

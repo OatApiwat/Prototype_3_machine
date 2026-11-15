@@ -287,6 +287,12 @@ export default function ProductivityPage() {
   const chosen = pickSets ? sets.filter((c) => pickSets.includes(c.key)) : sets;
   const shown = chosen.length ? chosen : sets;
   const allSets = shown.length === sets.length;
+  // the pieces are only requested after the Search button: the strips chosen then are the ones shown
+  const [searched, setSearched] = useState(null);
+  const active =
+    searched && searched.rc === rc && searched.carrier === carrierNo
+      ? sets.filter((c) => searched.keys.includes(c.key))
+      : [];
   const toggleSet = (key) => {
     const cur = shown.map((c) => c.key);
     const next = cur.includes(key) ? cur.filter((x) => x !== key) : [...cur, key];
@@ -310,7 +316,7 @@ export default function ProductivityPage() {
     setZoom(span >= SUSPENSIONS ? null : { from: f, to: f + span });
   };
   const [busy, setBusy] = useState(false);
-  // the charts of every shown set as light-background images (canvases are transparent)
+  // the charts of every active set as light-background images (canvases are transparent)
   const chartImages = () =>
     [...document.querySelectorAll('[data-testid="set-column"]')].map((col) =>
       [...col.querySelectorAll('canvas')].map((cv) => {
@@ -331,7 +337,7 @@ export default function ProductivityPage() {
       await fn({
         rc,
         carrier: carrierNo,
-        sets: shown.map((c, i) => ({
+        sets: active.map((c, i) => ({
           no: sets.indexOf(c) + 1,
           visit: c,
           rows: rowsOf[i],
@@ -358,13 +364,13 @@ export default function ProductivityPage() {
   }, []);
   const err = step1.error;
 
-  // pieces of the shown sets (loaded once per selection) -> per strip statistics for the carrier chart
+  // pieces of the active sets (loaded once per selection) -> per strip statistics for the carrier chart
   const many = useLoadedMany(
-    shown.map((c) => partsUrl(rc, c.strips)),
+    active.map((c) => partsUrl(rc, c.strips)),
     nonce
   );
   // suspension 1..60 of a set = position of the strip in the set x 20 + part
-  const rowsOf = shown.map((c, i) =>
+  const rowsOf = active.map((c, i) =>
     carrierRows(
       (many.data[i]?.pieces || [])
         .map((r) => ({
@@ -397,13 +403,13 @@ export default function ProductivityPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', flexWrap: 'wrap' }}>
           <b style={{ fontSize: 16 }}>Defect monitoring</b>
           <span style={{ flex: 1 }} />
-          <button className="pill" onClick={() => runExport(exportExcel)} disabled={!shown.length || busy}>
+          <button className="pill" onClick={() => runExport(exportExcel)} disabled={!active.length || busy}>
             Export Excel
           </button>
           <button
             className="pill"
             onClick={() => runExport(exportPowerPoint, true)}
-            disabled={!shown.length || busy}
+            disabled={!active.length || busy}
           >
             Export PowerPoint
           </button>
@@ -502,6 +508,14 @@ export default function ProductivityPage() {
               </div>
             </details>
           </span>
+          <button
+            className="pill"
+            onClick={() => setSearched({ rc, carrier: carrierNo, keys: shown.map((c) => c.key) })}
+            disabled={!shown.length}
+            title="Load the data of the selected strips"
+          >
+            🔍 Search
+          </button>
           <button className="pill" onClick={reload} title="Load the latest data from InfluxDB">
             ↻ Refresh
           </button>
@@ -510,6 +524,12 @@ export default function ProductivityPage() {
       {badRange && (
         <div className="card" style={{ marginTop: 8, color: 'var(--red)' }}>
           Date Start must not be after Date End.
+        </div>
+      )}
+      {!err && (step1.loading || many.loading) && (
+        <div className="card" role="status" style={{ marginTop: 8, color: 'var(--muted)' }}>
+          ⏳ Loading…{' '}
+          {step1.loading ? 'looking up run cards, carriers and strips' : 'loading the selected strips'}
         </div>
       )}
       {err && (
@@ -522,17 +542,17 @@ export default function ProductivityPage() {
           No run cards in this period (InfluxDB keeps the last 7 days).
         </div>
       )}
-      {shown.length > 0 && (
+      {active.length > 0 && (
         <>
           <div
             style={{
               display: 'grid',
               gap: 8,
               marginTop: 8,
-              gridTemplateColumns: `repeat(${shown.length}, minmax(0, 1fr))`,
+              gridTemplateColumns: `repeat(${active.length}, minmax(0, 1fr))`,
             }}
           >
-            {shown.map((c, i) => (
+            {active.map((c, i) => (
               <SetColumn
                 key={rc + '/' + c.key}
                 visit={c}

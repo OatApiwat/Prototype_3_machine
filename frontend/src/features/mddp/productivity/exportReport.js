@@ -1,6 +1,10 @@
 // Export of the Defect monitoring page: Excel (data) and PowerPoint (summary + chart images). Libraries load on first use.
 import { DEFECTS, hasDefect, summarize, stripLabel, carrierLabel, stamp } from './defects.js';
 
+const startOf = (rows) => {
+  const r = rows.find(Boolean);
+  return r ? stamp(r.t) : '';
+};
 const names = (m) => DEFECTS.filter((_, i) => hasDefect(m, i)).join(', ');
 const fileBase = (rc, carrier) => `defect-monitoring_${rc}_${carrierLabel(carrier).replace(' ', '')}`;
 
@@ -26,7 +30,7 @@ export async function exportExcel({ rc, carrier, sets }) {
       s.no,
       carrierLabel(s.visit.carrier),
       s.visit.seq,
-      stamp(s.visit.start),
+      startOf(s.rows),
       sm.n,
       sm.total,
       sm.defective,
@@ -99,17 +103,14 @@ export async function exportPowerPoint({ rc, carrier, sets }) {
   for (const s of sets) {
     const sm = summarize(s.rows);
     const sl = pp.addSlide();
-    sl.addText(
-      `Set ${s.no} · ${carrierLabel(s.visit.carrier)} (visit ${s.visit.seq}) · ${stamp(s.visit.start)}`,
-      {
-        x: 0.4,
-        y: 0.2,
-        w: 12.5,
-        h: 0.5,
-        fontSize: 20,
-        bold: true,
-      }
-    );
+    sl.addText(`Set ${s.no} · ${carrierLabel(s.visit.carrier)} (visit ${s.visit.seq}) · ${startOf(s.rows)}`, {
+      x: 0.4,
+      y: 0.2,
+      w: 12.5,
+      h: 0.5,
+      fontSize: 20,
+      bold: true,
+    });
     sl.addText(
       `${sm.n} parts inspected | ${sm.total} defects found | ${sm.defective} defective parts | Top defect code: ${sm.top}`,
       { x: 0.4, y: 0.7, w: 12.5, h: 0.4, fontSize: 14 }

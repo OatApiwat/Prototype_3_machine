@@ -9,6 +9,7 @@ import Hall3D from './Hall3D.jsx';
 import TopView from './TopView.jsx';
 import SideView from './SideView.jsx';
 import { XOV } from './hallScene.js';
+import { storeGet, storeSet } from '../../lib/safeStorage.js';
 
 const SETPT = 160;
 const mmss = (s) =>
@@ -16,9 +17,9 @@ const mmss = (s) =>
 
 export default function HallSensorPage() {
   const { win, setWin, getWin } = useGraphWindow('hall.win', 120);
-  const [mode, setMode] = useState(() => localStorage.getItem('hall.mode') || '2d');
+  const [mode, setMode] = useState(() => storeGet('hall.mode') || '2d');
   useEffect(() => {
-    localStorage.setItem('hall.mode', mode);
+    storeSet('hall.mode', mode);
   }, [mode]);
   useTick(1000);
   const c = (n) => theme(n),

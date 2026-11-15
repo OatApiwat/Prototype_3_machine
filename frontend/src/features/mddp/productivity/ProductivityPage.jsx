@@ -151,13 +151,15 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
   return (
     <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }} data-testid="set-column">
       <div className="card" style={{ padding: '6px 10px' }}>
-        <b>
-          Set {index + 1} · {carrierLabel(visit.carrier)} (visit {visit.seq})
-        </b>{' '}
-        <span style={{ color: 'var(--muted)' }}>
-          {clock(visit.start)} · Strips {visit.strips.join(', ')}
-          {visit.pieces >= SUSPENSIONS ? '' : ' · in progress'}
-        </span>
+        <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <b>
+            Set {index + 1} · {carrierLabel(visit.carrier)} (visit {visit.seq})
+          </b>{' '}
+          <span style={{ color: 'var(--muted)' }}>
+            {clock(visit.start)} · Strips {visit.strips.join(', ')}
+            {visit.pieces >= SUSPENSIONS ? '' : ' · in progress'}
+          </span>
+        </div>
       </div>
       {error && (
         <div className="card" style={{ color: 'var(--red)' }}>

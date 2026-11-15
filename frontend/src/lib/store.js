@@ -1,3 +1,4 @@
+import { storeGet, storeSet } from './safeStorage.js';
 // Live data store. Everything comes from the backend (which reads InfluxDB); nothing is generated here.
 const KEEP_MS = 125000;
 const series = new Map(); // key -> rows sorted by t
@@ -72,7 +73,7 @@ export const setPaused = (p) => {
 export const setSpc = (v) => {
   spcTab[ui.tab] = v;
   try {
-    localStorage.setItem('ui.spc.' + ui.tab, v ? '1' : '0');
+    storeSet('ui.spc.' + ui.tab, v ? '1' : '0');
   } catch (e) {
     /* ignore */
   }
@@ -80,7 +81,7 @@ export const setSpc = (v) => {
 };
 for (const t of ['mddp', 'calul', 'hall']) {
   try {
-    spcTab[t] = localStorage.getItem('ui.spc.' + t) === '1';
+    spcTab[t] = storeGet('ui.spc.' + t) === '1';
   } catch (e) {
     /* ignore */
   }

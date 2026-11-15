@@ -9,15 +9,16 @@ import FaultLog from '../../components/FaultLog.jsx';
 import Robot2D from './Robot2D.jsx';
 import MeasuredTable from './MeasuredTable.jsx';
 import { PN } from './pointNames.js';
+import { storeGet, storeSet } from '../../lib/safeStorage.js';
 
 const KEY = 'calul_robot|';
 const serviceSince = (life) => new Date(Date.now() - life * 1000).toLocaleDateString('en-CA');
 
 export default function CalulSensorPage() {
   const { win, setWin, getWin } = useGraphWindow('calul.win', 20);
-  const [mode, setMode] = useState(() => localStorage.getItem('calul.mode') || '3d');
+  const [mode, setMode] = useState(() => storeGet('calul.mode') || '3d');
   useEffect(() => {
-    localStorage.setItem('calul.mode', mode);
+    storeSet('calul.mode', mode);
   }, [mode]);
   useTick(500);
   const c = (n) => theme(n);
@@ -58,9 +59,9 @@ export default function CalulSensorPage() {
       />
     </div>
   );
-  const [pt, setPt] = useState(() => +(localStorage.getItem('calul.pt') || 0));
+  const [pt, setPt] = useState(() => +(storeGet('calul.pt') || 0));
   useEffect(() => {
-    localStorage.setItem('calul.pt', pt);
+    storeSet('calul.pt', pt);
   }, [pt]);
   const AK = 'calul_arrival|P' + (pt + 1),
     bp = (f, col, lab, ttl) =>

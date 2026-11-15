@@ -8,6 +8,7 @@ import MddpSensorPage from './features/mddp/MddpSensorPage.jsx';
 import CalulSensorPage from './features/calul/CalulSensorPage.jsx';
 import HallSensorPage from './features/hall/HallSensorPage.jsx';
 import ProductivityPage from './features/mddp/productivity/ProductivityPage.jsx';
+import { storeGet, storeSet } from './lib/safeStorage.js';
 
 const SENSOR_PAGES = { mddp: MddpSensorPage, calul: CalulSensorPage, hall: HallSensorPage };
 let ver = 0;
@@ -33,7 +34,7 @@ export default function App() {
   useSyncExternalStore(sub, snap);
   const [menu, setMenu] = useState(null); // { m, x, y }: dropdown opened by clicking a machine in the Portal
   const [loc, setLocState] = useState(() => parseRoute(location.hash));
-  const [theme, setTheme] = useState(() => localStorage.getItem('ui.theme') || 'light');
+  const [theme, setTheme] = useState(() => storeGet('ui.theme') || 'light');
   // hash routing: back button, refresh and direct links work
   const setLoc = (l) => {
     const h = routeHash(l);
@@ -50,20 +51,12 @@ export default function App() {
   }, []);
   // reopening the app without a link goes back to the page that was open last
   useEffect(() => {
-    try {
-      const last = localStorage.getItem('ui.route');
-      if (!location.hash && last && last !== routeHash(loc)) location.hash = last;
-    } catch {
-      /* no storage */
-    }
+    const last = storeGet('ui.route');
+    if (!location.hash && last && last !== routeHash(loc)) location.hash = last;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    try {
-      localStorage.setItem('ui.route', routeHash(loc));
-    } catch {
-      /* no storage */
-    }
+    storeSet('ui.route', routeHash(loc));
   }, [loc]);
   useEffect(() => {
     setStoreTab(loc.m || 'portal');
@@ -71,7 +64,7 @@ export default function App() {
   }, [loc]);
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('ui.theme', theme);
+    storeSet('ui.theme', theme);
   }, [theme]);
   const Page =
     loc.m && loc.d === 'sensor'

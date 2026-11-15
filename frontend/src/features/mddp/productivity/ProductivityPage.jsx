@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { cardsUrl, carriersUrl, partsUrl, useLoaded } from './useProductivityData.js';
 import PartChart from './PartChart.jsx';
 import {
@@ -82,7 +82,21 @@ function SetColumn({ rc, visit, index, nonce }) {
         ]
       : [`Suspension ${i + 1}`, 'not made yet'];
   };
-  const common = { n: SUSPENSIONS, groups, bars: bars(rows), xlabel: X_LABEL, ...RIGHT };
+  // defect bars: same stacked look as the overview chart; the count axis fits the data (min 2) so the bars stay tall
+  const stackMax = Math.max(
+    2,
+    ...rows.map((r) => (r ? DEFECTS.reduce((n, _, d) => n + hasDefect(r.defect, d), 0) : 0))
+  );
+  const rightTicks = Array.from({ length: stackMax + 1 }, (_, k) => k);
+  const common = {
+    n: SUSPENSIONS,
+    groups,
+    bars: bars(rows),
+    xlabel: X_LABEL,
+    ...RIGHT,
+    rightMax: stackMax,
+    rightTicks: stackMax > 6 ? [0, stackMax] : rightTicks,
+  };
   const lineChart = (p) => ({
     ...common,
     lines: [{ label: p.title, color: 'text', values: rows.map((r) => (r ? r[p.f] : null)) }],
@@ -196,6 +210,19 @@ export default function ProductivityPage() {
     setPickSets(next.length === 0 || next.length === sets.length ? null : next);
   };
   const reload = () => setNonce((n) => n + 1);
+  // close the set dropdown when clicking anywhere else or pressing Esc
+  useEffect(() => {
+    const close = (e) =>
+      document.querySelectorAll('details.multi[open]').forEach((d) => {
+        if (e.type === 'keydown' ? e.key === 'Escape' : !d.contains(e.target)) d.removeAttribute('open');
+      });
+    document.addEventListener('click', close);
+    document.addEventListener('keydown', close);
+    return () => {
+      document.removeEventListener('click', close);
+      document.removeEventListener('keydown', close);
+    };
+  }, []);
   const card = cards.find((c) => c.rc === rc);
   const err = step1.error || step2.error;
 
@@ -290,7 +317,7 @@ export default function ProductivityPage() {
             </select>
           </label>
           <span className="pfield">
-            Strip (3 strips per set) :
+            Strip :
             <details className="multi" role="group" aria-label="Sets of 3 strips">
               <summary className="pill">
                 {allSets

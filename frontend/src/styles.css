@@ -878,9 +878,9 @@ select.pill {
   flex-direction: column;
   gap: 6px;
   padding: 8px 10px;
-  background: var(--card, #fff);
-  color: var(--text, inherit);
-  border: 1px solid var(--border, #ccc);
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
   border-radius: 6px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
   white-space: nowrap;
@@ -890,7 +890,7 @@ select.pill {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 @media (max-width: 1100px) {
@@ -904,5 +904,5 @@ select.pill {
   flex: none;
 }
 .pselect-row select.pill {
-  max-width: 260px;
+  max-width: 190px;
 }

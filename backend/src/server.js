@@ -5,7 +5,7 @@ const cors = require('cors');
 const { WebSocketServer } = require('ws');
 const { Cache } = require('./cache');
 const { makeInflux } = require('./influx');
-const { groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
+const { headOf, groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
 
 const cfg = {
   url: process.env.INFLUX_URL || 'http://localhost:8086',
@@ -130,7 +130,10 @@ app.get('/api/mddp/strips', async (req, res) => {
 app.get('/api/mddp/parts', async (req, res) => {
   const rc = rcOf(req.query), strips = String(req.query.strip || '').split(',').filter((x) => /^Strip-\d+$/.test(x));
   if (!rc || !strips.length) return res.status(400).json({ error: 'rc and strip required' });
-  try { res.json({ rc, strips, pieces: partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), strips) }); } catch (e) { fail(res, e); }
+  try {
+    const pieces = partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), strips);
+    res.json({ rc, strips, ...headOf(pieces, cfg.tzOffsetMin), pieces });
+  } catch (e) { fail(res, e); }
 });
 
 const server = http.createServer(app);

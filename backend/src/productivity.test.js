@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
+const { headOf, groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
 
 const row = (carrier, strip_no, part, defect = 0) => ({ seq: 1, carrier, strip: 1, strip_no, part, susp: part, defect, t: strip_no * 100 + part });
 
@@ -44,4 +44,9 @@ test('groupStrips splits strips into groups of up to 3 consecutive numbers', () 
     groupStrips(['Strip-1', 'Strip-2', 'Strip-3', 'Strip-4', 'Strip-76', 'Strip-77']),
     [['Strip-1', 'Strip-2', 'Strip-3'], ['Strip-4'], ['Strip-76', 'Strip-77']]
   );
+});
+
+test('headOf gives the carrier and the local date of the pieces', () => {
+  assert.deepStrictEqual(headOf([{ carrier: 'CR-0001', t: Date.UTC(2026, 10, 15, 18, 0) }], 420), { carrier: 'CR-0001', date: '2026-11-16' });
+  assert.deepStrictEqual(headOf([], 420), { carrier: null, date: null });
 });

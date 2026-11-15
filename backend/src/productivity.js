@@ -72,4 +72,10 @@ function groupStrips(names, size = 3) {
   }
   return out.map((x) => x.g);
 }
-module.exports = { groupStrips, stripName, carrierName, carriersOf, stripsOf, partsOf, rangeOf };
+/** the carrier(s) and the date (YYYY-MM-DD in the time zone `tzMin` minutes east of UTC) of API pieces: carrier is one code, or a list when the strips belong to several carriers */
+function headOf(pieces, tzMin) {
+  const cs = [...new Set(pieces.map((p) => p.carrier))].sort();
+  const t = pieces.length ? Math.min(...pieces.map((p) => p.t)) : null;
+  return { carrier: cs.length > 1 ? cs : (cs[0] ?? null), date: t == null ? null : new Date(t + tzMin * 60000).toISOString().slice(0, 10) };
+}
+module.exports = { headOf, groupStrips, stripName, carrierName, carriersOf, stripsOf, partsOf, rangeOf };

@@ -189,7 +189,7 @@ export function drawGraph(g, w, h, p, st) {
         g.moveTo(L, y(v));
         g.lineTo(L + pw, y(v));
         g.stroke();
-        if (y(v) - 6 >= T && labelYs.every((ly) => Math.abs(ly - y(v)) > 12)) {
+        if (!(lab === 'CL' && ph < 70) && y(v) - 6 >= T && labelYs.every((ly) => Math.abs(ly - y(v)) > 12)) {
           labelYs.push(y(v));
           g.textAlign = 'right';
           g.fillText(`${lab} ${v.toFixed(dec)}`, L + pw - 2, y(v) - 6);

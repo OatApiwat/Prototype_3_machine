@@ -32,7 +32,7 @@ const AXES = [
   ['Z', '#1a9e6e'],
 ];
 const RIGHT = { rightMax: 6, rightTicks: [0, 2, 4, 6], rightLabel: 'Defects found (count, by code)' };
-const X_LABEL = `Suspension No. (1 - ${SUSPENSIONS}) · 1 carrier = ${STRIPS_PER_CARRIER} strips × ${PARTS_PER_STRIP}`;
+const X_LABEL = 'Suspension No.';
 
 const pad = (n) => String(n).padStart(2, '0');
 const dayStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -41,7 +41,7 @@ const dayEnd = (s) => new Date(s + 'T23:59:59.999').getTime();
 const fmtT = (t) => new Date(t).toLocaleString('sv-SE');
 const defectNames = (m) => {
   const names = DEFECTS.filter((_, i) => hasDefect(m, i));
-  return names.length ? `${names.length} defect(s): ${names.join(', ')}` : 'No defect';
+  return names.length ? `${names.length} defect(s): ${names.join(', ')}` : '';
 };
 const bars = (rows) => DEFECTS.map((_, d) => rows.map((r) => (r ? hasDefect(r.defect, d) : 0)));
 const lastOf = (rows) => [...rows].reverse().find(Boolean);
@@ -72,9 +72,9 @@ const peerTip = (peers, i, linesOf) =>
     return r
       ? [
           `${p.label} · Suspension ${i + 1} (strip ${r.strip}, part ${r.part}) · ${fmtT(r.t)}`,
-          ...linesOf(r, p.rows),
+          ...linesOf(r, p.rows).filter(Boolean),
         ]
-      : [`${p.label} · Suspension ${i + 1}`, 'not made yet'];
+      : [`${p.label} · Suspension ${i + 1}`];
   });
 
 function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error, defectMax }) {
@@ -94,11 +94,7 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
       ...AXES.map(([a], k) => `${a}: ${r[v.f[k]].toFixed(2)} ${v.unit}`),
       defectNames(r.defect),
     ]);
-  const defectTip = (i) =>
-    peerTip(peers, i, (r, all) => [
-      defectNames(r.defect),
-      `Defective parts so far: ${all.slice(0, i + 1).filter((x) => x && x.defect > 0).length} of ${all.slice(0, i + 1).filter(Boolean).length}`,
-    ]);
+  const defectTip = (i) => peerTip(peers, i, (r) => [defectNames(r.defect)]);
   // defect bars: one defect axis (same 0..N as the overview chart) in every chart, so the same defects look the same everywhere
   const stackMax = Math.max(
     defectMax,
@@ -258,7 +254,6 @@ export default function ProductivityPage() {
       document.removeEventListener('keydown', close);
     };
   }, []);
-  const card = cards.find((c) => c.rc === rc);
   const err = step1.error || step2.error;
 
   // pieces of the shown sets (loaded once per selection) -> per strip statistics for the carrier chart
@@ -423,14 +418,6 @@ export default function ProductivityPage() {
                 defectMax={defectMax}
               />
             ))}
-          </div>
-          <div className="card" style={{ marginTop: 8, padding: '6px 10px', color: 'var(--muted)' }}>
-            Run Card {rc} / {carrierLabel(carrierNo)} · {shown.length} of {sets.length} set(s) shown · Data
-            from InfluxDB (mddp_part)
-            {card
-              ? ` · run card ${card.pieces.toLocaleString()} / ${PIECES_PER_RUN_CARD.toLocaleString()} pcs`
-              : ''}{' '}
-            · press Refresh to load newer pieces
           </div>
         </>
       )}

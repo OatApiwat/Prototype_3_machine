@@ -8,8 +8,8 @@ const row = (carrier, strip_no, part, defect = 0) => ({ seq: 1, carrier, strip: 
 test('carriersOf lists each carrier with the strip numbers of all its uses, in order', () => {
   const rows = [row(1, 76, 1), row(1, 76, 2), row(1, 1, 1), row(7, 4, 1), row(1, 121, 1), { carrier: null, strip_no: 9 }];
   assert.deepStrictEqual(carriersOf(rows), [
-    { carrier: 1, strips: ['Strip-1', 'Strip-76', 'Strip-121'] },
-    { carrier: 7, strips: ['Strip-4'] },
+    { carrier: 'CR-0001', strips: ['Strip-1', 'Strip-76', 'Strip-121'] },
+    { carrier: 'CR-0007', strips: ['Strip-4'] },
   ]);
   assert.deepStrictEqual(carriersOf([]), []);
 });
@@ -17,6 +17,7 @@ test('carriersOf lists each carrier with the strip numbers of all its uses, in o
 test('partsOf returns the pieces of the asked strips, ordered, with the strip answered as Strip-<no>', () => {
   const p = partsOf([row(1, 77, 2), row(1, 76, 5), row(1, 76, 1), row(1, 9, 1)], ['Strip-76', 'Strip-77']);
   assert.deepStrictEqual(p.map((r) => [r.strip_no, r.part]), [['Strip-76', 1], ['Strip-76', 5], ['Strip-77', 2]]);
+  assert.strictEqual(p[0].carrier, 'CR-0001');
   assert.ok(!('seq' in p[0]) && !('susp' in p[0]) && !('strip' in p[0]));
 });
 

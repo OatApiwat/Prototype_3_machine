@@ -6,7 +6,7 @@ const startOf = (rows) => {
   return r ? stamp(r.t) : '';
 };
 const names = (m) => DEFECTS.filter((_, i) => hasDefect(m, i)).join(', ');
-const fileBase = (rc, carrier) => `defect-monitoring_${rc}_${carrierLabel(carrier).replace(' ', '')}`;
+const fileBase = (rc, carrier) => `defect-monitoring_${rc}_${carrierLabel(carrier)}`;
 
 /** sets: [{ no, visit, rows }] (rows = 60 entries, null where not made yet) */
 export async function exportExcel({ rc, carrier, sets }) {

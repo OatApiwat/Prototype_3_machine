@@ -4,6 +4,8 @@ const DEFECTS = 6;   // bit 0..5 = ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5, MI
 
 /** Strip no as the API shows it: "Strip-76" (stored as a number) */
 const stripName = (n) => 'Strip-' + n;
+/** Carrier no as the API shows it: a code such as "CR-0005" (stored as a number) */
+const carrierName = (n) => 'CR-' + String(n).padStart(4, '0');
 
 /**
  * Query range of /api/mddp/runcards: calendar dates ("YYYY-MM-DD", from = start of that day, to = end of that day, in the time zone
@@ -38,7 +40,7 @@ function carriersOf(rows) {
   }
   return [...by.entries()]
     .sort((a, b) => a[0] - b[0])
-    .map(([carrier, set]) => ({ carrier, strips: [...set].sort((a, b) => a - b).map(stripName) }));
+    .map(([carrier, set]) => ({ carrier: carrierName(carrier), strips: [...set].sort((a, b) => a - b).map(stripName) }));
 }
 
 /** pieces of the given strips ("Strip-76", ...), one row per piece in strip then part order */
@@ -47,7 +49,7 @@ const partsOf = (rows, strips) => {
   return rows
     .filter((r) => want.has(stripName(r.strip_no)))
     .sort((a, b) => a.strip_no - b.strip_no || a.part - b.part)
-    .map(({ seq, strip, susp, ...r }) => ({ ...r, strip_no: stripName(r.strip_no) })); // eslint-disable-line no-unused-vars
+    .map(({ seq, strip, susp, ...r }) => ({ ...r, carrier: carrierName(r.carrier), strip_no: stripName(r.strip_no) })); // eslint-disable-line no-unused-vars
 };
 
-module.exports = { stripName, carriersOf, partsOf, rangeOf };
+module.exports = { stripName, carrierName, carriersOf, partsOf, rangeOf };

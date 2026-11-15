@@ -14,7 +14,7 @@ const row = (susp, defect) => ({
   t: now + susp * 1000,
   side: 'L',
   seq: 1,
-  carrier: 7,
+  carrier: 'CR-0007',
   strip: Math.ceil(susp / 20),
   strip_no: 'Strip-' + Math.ceil(susp / 20),
   part: ((susp - 1) % 20) + 1,
@@ -31,7 +31,7 @@ const row = (susp, defect) => ({
   defect,
 });
 // API 2 answer: carriers of the run card with their strip numbers (3 consecutive strips = one set)
-const carriers = (...strips) => [{ carrier: 7, strips }];
+const carriers = (...strips) => [{ carrier: 'CR-0007', strips }];
 const set1 = ['Strip-1', 'Strip-2', 'Strip-3'];
 const set2 = ['Strip-4', 'Strip-5', 'Strip-6'];
 
@@ -53,7 +53,7 @@ describe('Productivity dashboard', () => {
     );
     const { container } = render(<ProductivityPage />);
     await waitFor(() => expect(container.textContent).toContain('60 parts inspected'));
-    expect(container.textContent).toContain('Carrier 07');
+    expect(container.textContent).toContain('CR-0007');
     expect(container.textContent).toContain('2 defects found');
     expect(container.textContent).toContain('2 defective parts');
     expect(container.textContent).toContain('Date Start');
@@ -103,7 +103,7 @@ describe('Productivity dashboard', () => {
     localStorage.setItem('prod.sets', JSON.stringify(['Strip-4']));
     const { container, unmount } = render(<ProductivityPage />);
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(1));
-    expect(container.textContent).toContain('Set 2 · Carrier 07');
+    expect(container.textContent).toContain('Set 2 · CR-0007');
     fireEvent.click(screen.getByLabelText('All'));
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(2));
     expect(JSON.parse(localStorage.getItem('prod.sets'))).toBeNull();

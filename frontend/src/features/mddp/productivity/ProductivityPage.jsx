@@ -468,7 +468,7 @@ export default function ProductivityPage() {
             <select
               className="pill"
               value={carrierNo ?? ''}
-              onChange={(e) => (setPickCarrier(+e.target.value), setPickSets(null))}
+              onChange={(e) => (setPickCarrier(e.target.value), setPickSets(null))}
               disabled={!carrierNos.length}
             >
               {carrierNos.map((n) => (

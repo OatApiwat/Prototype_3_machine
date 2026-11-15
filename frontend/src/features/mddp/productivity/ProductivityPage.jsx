@@ -32,6 +32,7 @@ const AXES = [
   ['Y', '#d62728'],
   ['Z', '#1a9e6e'],
 ];
+const PCT_AXIS = { lo: 0, hi: 100, ticks: [0, 25, 50, 75, 100] };
 const RIGHT = { rightMax: 6, rightTicks: [0, 2, 4, 6], rightLabel: 'Defects found (count, by code)' };
 const X_LABEL = 'Suspension No.';
 
@@ -95,7 +96,16 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
       ...AXES.map(([a], k) => `${a}: ${r[v.f[k]].toFixed(2)} ${v.unit}`),
       defectNames(r.defect),
     ]);
-  const defectTip = (i) => peerTip(peers, i, (r) => [defectNames(r.defect)]);
+  const defectTip = (i) =>
+    peerTip(peers, i, (r, all) => {
+      const k = Math.floor(i / PARTS_PER_STRIP),
+        made = all.slice(k * PARTS_PER_STRIP, (k + 1) * PARTS_PER_STRIP).filter(Boolean),
+        bad = made.filter((x) => x.defect > 0).length;
+      return [
+        defectNames(r.defect),
+        `${stripLabel(r.strip_no ?? 0)}: ${bad} of ${made.length} pcs defective (${((100 * bad) / made.length).toFixed(1)}%)`,
+      ];
+    });
   // defect bars: one defect axis (same 0..N as the overview chart) in every chart, so the same defects look the same everywhere
   const stackMax = Math.max(
     defectMax,
@@ -128,6 +138,12 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
       ylabel: v.unit,
     };
   };
+  // red line: % of defective pieces of each strip, as a step over its 20 suspensions
+  const stripPct = rows.map((_, i) => {
+    const k = Math.floor(i / PARTS_PER_STRIP),
+      made = rows.slice(k * PARTS_PER_STRIP, (k + 1) * PARTS_PER_STRIP).filter(Boolean);
+    return made.length ? (100 * made.filter((r) => r.defect > 0).length) / made.length : null;
+  });
   const cur = (f, dec) => {
     const r = lastOf(rows);
     return r ? r[f].toFixed(dec) : '--';
@@ -159,9 +175,10 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
         height={200}
         draw={{
           ...common,
-          lines: [],
-          axis: { lo: 0, hi: stackMax, ticks: common.rightTicks },
-          leftHidden: true,
+          lines: [{ color: '#c0392b', values: stripPct }],
+          axis: PCT_AXIS,
+          leftFmt: (v) => v + '%',
+          ylabel: 'Defective parts (%)',
         }}
         tip={defectTip}
         hoverIndex={hoverI}

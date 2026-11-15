@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useSyncExternalStore } from 'react';
-import { start, subscribe, state, ui, setPaused } from './store.js';
+import { start, subscribe, state, ui, setPaused, setTab } from './store.js';
 import Portal from './Portal.jsx';
 import MddpTab from './MddpTab.jsx';
 import CalulTab from './CalulTab.jsx';
@@ -12,7 +12,7 @@ export default function App() {
   const [tab, setTab] = useState(() => localStorage.getItem('ui.tab') || 'portal');
   const [theme, setTheme] = useState(() => localStorage.getItem('ui.theme') || 'light');
   useEffect(() => { start(); }, []);
-  useEffect(() => { localStorage.setItem('ui.tab', tab); }, [tab]);
+  useEffect(() => { localStorage.setItem('ui.tab', tab); setTab(tab); }, [tab]);
   useEffect(() => { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('ui.theme', theme); }, [theme]);
   return (
     <div className="app">

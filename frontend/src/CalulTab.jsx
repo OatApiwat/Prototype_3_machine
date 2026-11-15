@@ -68,11 +68,11 @@ export default function CalulTab() {
   useEffect(() => { localStorage.setItem('calul.win', win); localStorage.setItem('calul.mode', mode); }, [win, mode]);
   useTick(500);
   const c = (n) => theme(n);
-  const wpv = val(KEY, 'wp', true), atv = val(KEY, 'at', true), cyc = val(KEY, 'cycle', true), vfv = val('calul_vac|', 'front'), vbv = val('calul_vac|', 'back');
-  const status = wpv === null ? 'No data' : `${atv >= 0 ? 'At P' + (atv + 1) + '  ' + PN[atv] : 'Moving to P' + (wpv + 1) + '  ' + PN[wpv]}   |   Front vacuum ${vfv < -50 ? 'ON' : 'off'}   Back vacuum ${vbv < -50 ? 'ON' : 'off'}   |   Cycle ${cyc}`;
+  const wpv = val(KEY, 'wp', true), atv = val(KEY, 'at', true), cyc = val(KEY, 'cycle', true), hr = val(KEY, 'hr', true), vfv = val('calul_vac|', 'front'), vbv = val('calul_vac|', 'back');
+  const status = wpv === null ? 'No data' : `${atv >= 0 ? 'At P' + (atv + 1) + '  ' + PN[atv] : 'Moving to P' + (wpv + 1) + '  ' + PN[wpv]}   |   Front vacuum ${vfv < -50 ? 'ON' : 'off'}   Back vacuum ${vbv < -50 ? 'ON' : 'off'}   |   HAll rows ${hr}-${hr + 1} / 12   |   Cycle ${cyc}`;
   const life = val(KEY, 'life'), d = life ? Math.floor(life / 86400) : null, rem = life ? life - d * 86400 : 0;
   const since = life ? new Date(Date.now() - life * 1000).toLocaleDateString('en-CA') : '--';
-  const G = (title, series, ymin, ymax, ticks, unit, dec = 2, key = KEY, extra = {}, cls = '') => <div className={'card ' + cls}><Graph {...extra} title={title} series={series.map(([f, col, lab]) => ({ key, field: f, color: c(col), label: lab }))} ymin={ymin} ymax={ymax} ticks={ticks} unit={unit} dec={dec} win={getWin} height={190} /></div>;
+  const G = (title, series, ymin, ymax, ticks, unit, dec = 2, key = KEY, extra = {}, cls = '') => <div className={'card ' + cls}><Graph {...extra} title={title} series={series.map(([f, col, lab, of]) => ({ key, field: f, color: c(col), label: lab, of, dash: !!of }))} ymin={ymin} ymax={ymax} ticks={ticks} unit={unit} dec={dec} win={getWin} height={190} /></div>;
   const [pt, setPt] = useState(() => +(localStorage.getItem('calul.pt') || 0));
   useEffect(() => { localStorage.setItem('calul.pt', pt); }, [pt]);
   const AK = 'calul_arrival|P' + (pt + 1), bp = (f, col, lab, ttl) => G(`${ttl.split(' ')[0]} by point`, [[f, col, lab]], -0.12, 0.12, tol, '', 3, AK, { refs: tolRefs, dots: true });
@@ -100,11 +100,11 @@ export default function CalulTab() {
       <div className="kframe"><span className="kh">KUKA</span>
         <div className="toolbar" style={{ marginTop: -6 }}><b>By point</b> {PN.map((n, i) => <button key={i} className={'pill' + (pt === i ? ' on' : '')} style={pt === i ? { background: 'var(--blue)', color: '#fff' } : undefined} title={n} onClick={() => setPt(i)}>P{i + 1}</button>)}<SpcBox style={{ marginLeft: 12 }} /></div>
         <div className="g3">
-          {G('Position XYZ', [['x', '--red', 'X'], ['y', '--green', 'Y'], ['z', '--blue', 'Z']], -400, 900, [-300, 0, 300, 600, 900], ' mm', 2, KEY, { toggle: true, spcOk: false, joined: { dec: 0, unit: 'mm' } }, 'span3')}
+          {G('Position XYZ', [['x', '--red', 'X'], ['y', '--green', 'Y'], ['z', '--blue', 'Z'], ['tx', '--red', 'X target', 'X'], ['ty', '--green', 'Y target', 'Y'], ['tz', '--blue', 'Z target', 'Z']], -400, 900, [-300, 0, 300, 600, 900], ' mm', 2, KEY, { toggle: true, spcOk: false, joined: { dec: 0, unit: 'mm' } }, 'span3')}
           {bp('ex', '--red', 'X', 'X (mm)')}
           {bp('ey', '--green', 'Y', 'Y (mm)')}
           {bp('ez', '--blue', 'Z', 'Z (mm)')}
-          {G('Orientation ABC', [['a', '--red', 'A'], ['b', '--green', 'B'], ['c', '--blue', 'C']], -10, 370, [0, 90, 180, 270, 360], '°', 1, KEY, { toggle: true, spcOk: false, joined: { dec: 0, unit: '°' } }, 'span3')}
+          {G('Orientation ABC', [['a', '--red', 'A'], ['b', '--green', 'B'], ['c', '--blue', 'C'], ['ta', '--red', 'A target', 'A'], ['tb', '--green', 'B target', 'B'], ['tg', '--blue', 'C target', 'C']], -10, 370, [0, 90, 180, 270, 360], '°', 1, KEY, { toggle: true, spcOk: false, joined: { dec: 0, unit: '°' } }, 'span3')}
           {bp('ea', '--red', 'A', 'A (°)')}
           {bp('eb', '--green', 'B', 'B (°)')}
           {bp('ec', '--blue', 'C', 'C (°)')}

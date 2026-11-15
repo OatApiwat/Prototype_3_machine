@@ -144,7 +144,7 @@ export default function HallTab() {
       </div>
       <div className="kframe halll"><span className="kh">HAll</span><SpcBox className="kspc" />
         <div className="g3">
-          {G('Oven temperature actual / setting', [['temp', '--red', '']], 154, 164, [154, 156, 158, 160, 162, 164], ' °C', 2, { refs: [{ v: SETPT, label: 'setting 160', color: '--muted' }] })}
+          {G([{ t: 'Oven temperature  ', c: '--text' }, { t: 'actual', c: '--red' }, { t: '  /  setting', c: '--muted' }], [['temp', '--red', '']], 154, 164, [154, 156, 158, 160, 162, 164], ' °C', 2, { refs: [{ v: SETPT, label: 'setting 160', color: '--muted' }] })}
           {G('Blower speed', [['rpm', '--blue', '']], 1445, 1455, [1445, 1447, 1449, 1451, 1453, 1455], ' rpm', 0)}
           {G('Conveyor speed', [['conv', '--green', '']], 22.7, 23.1, [22.7, 22.8, 22.9, 23.0, 23.1], ' mm/s', 2)}
           <div className="card" style={{ padding: 2 }}>{[['vx', 'X', '--red', 0.8, 1.6, [0.8, 1.2, 1.6]], ['vy', 'Y', '--green', 0.6, 1.2, [0.6, 0.9, 1.2]], ['vz', 'Z', '--blue', 0.4, 0.9, [0.4, 0.65, 0.9]]].map(([f, a, col, lo, hi, tk]) => <Graph key={f} title={a === 'X' ? 'Blower vibration X axis' : a + ' axis'} series={[{ key: K, field: f, color: c(col), label: a }]} ymin={lo} ymax={hi} ticks={tk} unit=" mm/s" dec={3} win={getWin} height={82} noTime={f !== 'vz'} />)}</div>

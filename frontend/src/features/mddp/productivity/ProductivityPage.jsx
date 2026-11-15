@@ -169,7 +169,7 @@ function SetColumn({
       <div className="card set-head">
         <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           <b>
-            Set {index + 1} · {carrierLabel(visit.carrier)} (visit {visit.seq})
+            Set {index + 1} · {carrierLabel(visit.carrier)}
           </b>{' '}
           <span style={{ opacity: 0.9 }}>
             {sm.n ? clock(firstOf(rows).t) + ' · ' : ''}
@@ -480,7 +480,7 @@ export default function ProductivityPage() {
                   All
                 </label>
                 {sets.map((c, k) => (
-                  <label key={c.seq} title={`visit ${c.seq}`}>
+                  <label key={c.seq}>
                     <input
                       type="checkbox"
                       checked={shown.some((x) => x.seq === c.seq)}

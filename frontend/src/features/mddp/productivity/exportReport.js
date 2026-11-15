@@ -13,23 +13,13 @@ export async function exportExcel({ rc, carrier, sets }) {
   const XLSX = await import('xlsx');
   const wb = XLSX.utils.book_new();
   const summary = [
-    [
-      'Set',
-      'Carrier',
-      'Visit',
-      'Start',
-      'Parts inspected',
-      'Defects found',
-      'Defective parts',
-      'Top defect code',
-    ],
+    ['Set', 'Carrier', 'Start', 'Parts inspected', 'Defects found', 'Defective parts', 'Top defect code'],
   ];
   for (const s of sets) {
     const sm = summarize(s.rows);
     summary.push([
       s.no,
       carrierLabel(s.visit.carrier),
-      s.visit.seq,
       startOf(s.rows),
       sm.n,
       sm.total,
@@ -103,7 +93,7 @@ export async function exportPowerPoint({ rc, carrier, sets }) {
   for (const s of sets) {
     const sm = summarize(s.rows);
     const sl = pp.addSlide();
-    sl.addText(`Set ${s.no} · ${carrierLabel(s.visit.carrier)} (visit ${s.visit.seq}) · ${startOf(s.rows)}`, {
+    sl.addText(`Set ${s.no} · ${carrierLabel(s.visit.carrier)} · ${startOf(s.rows)}`, {
       x: 0.4,
       y: 0.2,
       w: 12.5,

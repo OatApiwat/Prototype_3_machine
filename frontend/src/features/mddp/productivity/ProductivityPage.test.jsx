@@ -102,7 +102,7 @@ describe('Productivity dashboard', () => {
     localStorage.setItem('prod.sets', JSON.stringify([2]));
     const { container, unmount } = render(<ProductivityPage />);
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(1));
-    expect(container.textContent).toContain('visit 2');
+    expect(container.textContent).toContain('Set 2 · Carrier 07');
     fireEvent.click(screen.getByLabelText('All'));
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(2));
     expect(JSON.parse(localStorage.getItem('prod.sets'))).toBeNull();

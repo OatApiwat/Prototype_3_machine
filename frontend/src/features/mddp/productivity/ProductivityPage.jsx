@@ -66,24 +66,45 @@ function Legend() {
 }
 
 /** One "set" = one visit of a carrier = 3 strips x 20 pieces; shown as one column of charts */
-function SetColumn({ visit, index, rows, loading, error, defectMax }) {
+const stripPctAt = (rows, i) => {
+  const k = Math.floor(i / PARTS_PER_STRIP),
+    made = rows.slice(k * PARTS_PER_STRIP, (k + 1) * PARTS_PER_STRIP).filter(Boolean);
+  return made.length ? (100 * made.filter((r) => r.defect > 0).length) / made.length : null;
+};
+/** tooltip lines of suspension i for every shown set at once (`linesOf(piece)` = the lines of that chart) */
+const peerTip = (peers, i, linesOf) =>
+  peers.flatMap((p) => {
+    const r = p.rows[i];
+    return r
+      ? [
+          `${p.label} · Suspension ${i + 1} (strip ${r.strip}, part ${r.part}) · ${fmtT(r.t)}`,
+          ...linesOf(r, p.rows),
+        ]
+      : [`${p.label} · Suspension ${i + 1}`, 'not made yet'];
+  });
+
+function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error, defectMax }) {
   const sm = summarize(rows);
   const groups = Array.from({ length: STRIPS_PER_CARRIER }, (_, k) => ({
     from: k * PARTS_PER_STRIP,
     to: (k + 1) * PARTS_PER_STRIP,
     label: visit.strips[k] ? stripLabel(visit.strips[k]) : `Strip ${k + 1}`,
   }));
-  const tipHead = (i, r) => `Suspension ${i + 1} (strip ${r.strip}, part ${r.part}) · ${fmtT(r.t)}`;
-  const partTip = (i) => {
-    const r = rows[i];
-    return r
-      ? [
-          tipHead(i, r),
-          ...PARAMS.map((p) => `${p.title}: ${r[p.f].toFixed(p.dec)} ${p.unit}`),
-          defectNames(r.defect),
-        ]
-      : [`Suspension ${i + 1}`, 'not made yet'];
-  };
+  const partTip = (i) =>
+    peerTip(peers, i, (r) => [
+      ...PARAMS.map((p) => `${p.title}: ${r[p.f].toFixed(p.dec)} ${p.unit}`),
+      defectNames(r.defect),
+    ]);
+  const vibTip = (v) => (i) =>
+    peerTip(peers, i, (r) => [
+      ...AXES.map(([a], k) => `${a}: ${r[v.f[k]].toFixed(2)} ${v.unit}`),
+      defectNames(r.defect),
+    ]);
+  const defectTip = (i) =>
+    peerTip(peers, i, (r, all) => [
+      defectNames(r.defect),
+      `Strip: ${stripPctAt(all, i).toFixed(1)}% of its pieces defective`,
+    ]);
   // defect bars: one defect axis (same 0..N as the overview chart) in every chart, so the same defects look the same everywhere
   const stackMax = Math.max(
     defectMax,
@@ -117,21 +138,7 @@ function SetColumn({ visit, index, rows, loading, error, defectMax }) {
     };
   };
   // red line: % of defective pieces of each strip, as a step over its 20 suspensions
-  const stripPct = rows.map((_, i) => {
-    const made = rows
-      .slice(
-        Math.floor(i / PARTS_PER_STRIP) * PARTS_PER_STRIP,
-        (Math.floor(i / PARTS_PER_STRIP) + 1) * PARTS_PER_STRIP
-      )
-      .filter(Boolean);
-    return made.length ? (100 * made.filter((r) => r.defect > 0).length) / made.length : null;
-  });
-  const defectTip = (i) => {
-    const r = rows[i];
-    return r
-      ? [tipHead(i, r), defectNames(r.defect), `Strip: ${stripPct[i].toFixed(1)}% of its pieces defective`]
-      : [`Suspension ${i + 1}`, 'not made yet'];
-  };
+  const stripPct = rows.map((_, i) => stripPctAt(rows, i));
   const cur = (f, dec) => {
     const r = lastOf(rows);
     return r ? r[f].toFixed(dec) : '--';
@@ -169,6 +176,8 @@ function SetColumn({ visit, index, rows, loading, error, defectMax }) {
           ylabel: 'Defective parts of the strip (%)',
         }}
         tip={defectTip}
+        hoverIndex={hoverI}
+        onHover={onHover}
       />
       {PARAMS.map((p) => (
         <PartChart
@@ -178,6 +187,8 @@ function SetColumn({ visit, index, rows, loading, error, defectMax }) {
           height={200}
           draw={lineChart(p)}
           tip={partTip}
+          hoverIndex={hoverI}
+          onHover={onHover}
         />
       ))}
       {VIBS.map((v) => (
@@ -187,16 +198,9 @@ function SetColumn({ visit, index, rows, loading, error, defectMax }) {
           right={AXES.map(([a], k) => `${a} ${cur(v.f[k], 2)}`).join('  ')}
           height={200}
           draw={vibChart(v)}
-          tip={(i) => {
-            const r = rows[i];
-            return r
-              ? [
-                  tipHead(i, r),
-                  ...AXES.map(([a], k) => `${a}: ${r[v.f[k]].toFixed(2)} ${v.unit}`),
-                  defectNames(r.defect),
-                ]
-              : [`Suspension ${i + 1}`, 'not made yet'];
-          }}
+          tip={vibTip(v)}
+          hoverIndex={hoverI}
+          onHover={onHover}
         />
       ))}
       <div className="card" style={{ padding: '6px 10px', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
@@ -217,6 +221,7 @@ export default function ProductivityPage() {
     [dateEnd, setDateEnd] = useState(today),
     [pickRc, setPickRc] = useState(null),
     [pickCarrier, setPickCarrier] = useState(null),
+    [hoverI, setHoverI] = useState(-1),
     [pickSets, setPickSets] = useState(null); // null = all sets of the carrier, else a list of visit numbers
   const from = dayStart(dateStart),
     to = dayEnd(dateEnd),
@@ -265,6 +270,7 @@ export default function ProductivityPage() {
     nonce
   );
   const rowsOf = shown.map((_, i) => carrierRows(many.data[i] || []));
+  const peers = shown.map((c, i) => ({ label: `Set ${sets.indexOf(c) + 1}`, rows: rowsOf[i] }));
   // one defect axis (0..N, N a multiple of 4) shared by the carrier chart and every piece chart
   const maxPiece = Math.max(
     0,
@@ -412,6 +418,9 @@ export default function ProductivityPage() {
                 visit={c}
                 index={sets.indexOf(c)}
                 rows={rowsOf[i]}
+                peers={peers}
+                hoverI={hoverI}
+                onHover={setHoverI}
                 loading={many.loading}
                 error={many.error}
                 defectMax={defectMax}

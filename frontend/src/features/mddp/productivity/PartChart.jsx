@@ -3,7 +3,7 @@ import { fit } from '../../../lib/canvasUtil.js';
 import { drawPartChart, slotAt } from './drawPartChart.js';
 
 /** Canvas chart + hover tooltip. `tip(i)` returns the tooltip lines of category i (or null). */
-export default function PartChart({ title, right, height = 200, draw, tip, onPick }) {
+export default function PartChart({ title, right, height = 200, draw, tip, onPick, hoverIndex, onHover }) {
   const ref = useRef(null),
     [hover, setHover] = useState(-1),
     [box, setBox] = useState(null),
@@ -15,7 +15,7 @@ export default function PartChart({ title, right, height = 200, draw, tip, onPic
     drawPartChart(g, w, h, { ...latest.current.draw, hover: latest.current.hover });
   };
   useEffect(() => {
-    latest.current = { draw, hover };
+    latest.current = { draw, hover: hoverIndex != null && hoverIndex >= 0 ? hoverIndex : hover };
     paint();
   });
   useEffect(() => {
@@ -33,6 +33,7 @@ export default function PartChart({ title, right, height = 200, draw, tip, onPic
     const r = ref.current.getBoundingClientRect(),
       i = slotAt(e.clientX - r.left, r.width, draw.n);
     setHover(i);
+    onHover?.(i);
     setBox(i >= 0 ? { x: e.clientX - r.left, y: e.clientY - r.top, w: r.width } : null);
   };
   const lines = hover >= 0 && tip ? tip(hover) : null;
@@ -65,6 +66,7 @@ export default function PartChart({ title, right, height = 200, draw, tip, onPic
         onMouseLeave={() => {
           setHover(-1);
           setBox(null);
+          onHover?.(-1);
         }}
       />
       {lines && box && (

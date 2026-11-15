@@ -12,6 +12,7 @@ V = Math.round(10 * 480 / PER) / 10; DWELL = 2 * XOV / V;
 // the oven is already running when the animation starts: trays that left CALUL before t = 0 keep the same rhythm, so the belt is full from the first second
 var NPRE = Math.ceil((2 * XS + 2 * TRAY_L) / (V * PER)) + 1, PRE = [];
 for (var pj = NPRE; pj >= 1; pj--) PRE.push(READY[0] - pj * PER);
+for (var ex = READY.length; READY[READY.length - 1] < 3 * 86400; ex++) READY.push(READY[READY.length - 1] + PER);   // the line keeps running: trays go on for 3 days of sim time (was ~2 h, then the belt looked empty)
 READY = PRE.concat(READY); TRAYS = READY.length;   // belt speed so that trays keep ~480 mm spacing
 function xOf(k, t) { return XS - V * (t - READY[k]); }                       // tray centre
 function tIn(k) { return READY[k] + (XS - XOV) / V; }                         // time the tray centre enters the oven

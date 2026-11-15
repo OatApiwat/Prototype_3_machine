@@ -284,28 +284,37 @@ export default function ProductivityPage() {
             ))}
           </select>
         </label>
-        <span className="pfield" role="group" aria-label="Sets of 3 strips">
-          Set (3 strips) :
-          <label>
-            <input
-              type="checkbox"
-              checked={allSets}
-              disabled={!sets.length}
-              onChange={() => setPickSets(null)}
-            />{' '}
-            All
-          </label>
-          {sets.map((c, k) => (
-            <label key={c.seq} title={`visit ${c.seq} · Strips ${c.strips.join(', ')}`}>
-              <input
-                type="checkbox"
-                checked={shown.some((x) => x.seq === c.seq)}
-                onChange={() => toggleSet(c.seq)}
-              />{' '}
-              Set {k + 1} · {clock(c.start)}
-              {complete(c) ? '' : ' (in progress)'}
-            </label>
-          ))}
+        <span className="pfield">
+          Strip (3 strips per set) :
+          <details className="multi" role="group" aria-label="Sets of 3 strips">
+            <summary className="pill">
+              {allSets
+                ? `All ${sets.length} set(s)`
+                : shown.map((c) => `Set ${sets.indexOf(c) + 1}`).join(', ')}
+            </summary>
+            <div className="multi-list">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={allSets}
+                  disabled={!sets.length}
+                  onChange={() => setPickSets(null)}
+                />{' '}
+                All
+              </label>
+              {sets.map((c, k) => (
+                <label key={c.seq} title={`visit ${c.seq}`}>
+                  <input
+                    type="checkbox"
+                    checked={shown.some((x) => x.seq === c.seq)}
+                    onChange={() => toggleSet(c.seq)}
+                  />{' '}
+                  Set {k + 1} · Strips {c.strips.join(', ')} · {clock(c.start)}
+                  {complete(c) ? '' : ' (in progress)'}
+                </label>
+              ))}
+            </div>
+          </details>
         </span>
         <button className="pill" onClick={reload} title="Load the latest data from InfluxDB">
           ↻ Refresh

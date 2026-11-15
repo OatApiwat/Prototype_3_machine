@@ -852,3 +852,36 @@ select.pill {
   line-height: 1.45;
   white-space: nowrap;
 }
+
+.multi {
+  position: relative;
+}
+.multi summary {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.multi summary::-webkit-details-marker {
+  display: none;
+}
+.multi summary::after {
+  content: ' ▾';
+}
+.multi-list {
+  position: absolute;
+  z-index: 20;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--card, #fff);
+  color: var(--text, inherit);
+  border: 1px solid var(--border, #ccc);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  white-space: nowrap;
+}

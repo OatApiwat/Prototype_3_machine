@@ -54,7 +54,13 @@ export default function PartChart({ title, right, height = 200, draw, tip, onPic
         ref={ref}
         style={{ height, width: '100%', display: 'block' }}
         onMouseMove={onMove}
-        onClick={() => onPick && hover >= 0 && onPick(hover)}
+        onClick={(e) => {
+          if (!onPick) return;
+          onMove(e); // a cold click (no mouse move before it) must still hit the bar under the pointer
+          const r = ref.current.getBoundingClientRect(),
+            i = slotAt(e.clientX - r.left, r.width, draw.n);
+          if (i >= 0) onPick(i);
+        }}
         data-clickable={onPick ? '1' : undefined}
         onMouseLeave={() => {
           setHover(-1);

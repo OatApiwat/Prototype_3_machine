@@ -27,20 +27,18 @@ function rangeOf(from, to, tzMin, now = Date.now()) {
   return { from: f ?? hi - 24 * 3600 * 1000, to: hi };
 }
 
-/**
- * Carriers of a run card with their Strip numbers: [{ carrier, strips: ["Strip-1", ...] }]
- * (carriers and strips in ascending order; a carrier used several times lists the strips of every use)
- */
+/** carriers of a run card: [{ carrier: "CR-0005" }] in ascending order */
 function carriersOf(rows) {
-  const by = new Map();
-  for (const r of rows) {
-    if (r.carrier == null || r.strip_no == null) continue; // incomplete point: cannot be placed on a carrier
-    if (!by.has(r.carrier)) by.set(r.carrier, new Set());
-    by.get(r.carrier).add(r.strip_no);
-  }
-  return [...by.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .map(([carrier, set]) => ({ carrier: carrierName(carrier), strips: [...set].sort((a, b) => a - b).map(stripName) }));
+  const set = new Set();
+  for (const r of rows) if (r.carrier != null && r.strip_no != null) set.add(r.carrier);   // incomplete points cannot be placed on a carrier
+  return [...set].sort((a, b) => a - b).map((c) => ({ carrier: carrierName(c) }));
+}
+
+/** Strip numbers of one carrier ("CR-0005") in a run card, in ascending order: ["Strip-1", "Strip-2", ...] (all uses of the carrier) */
+function stripsOf(rows, carrier) {
+  const set = new Set();
+  for (const r of rows) if (r.carrier != null && r.strip_no != null && carrierName(r.carrier) === carrier) set.add(r.strip_no);
+  return [...set].sort((a, b) => a - b).map(stripName);
 }
 
 /** pieces of the given strips ("Strip-76", ...), one row per piece in strip then part order */
@@ -52,4 +50,4 @@ const partsOf = (rows, strips) => {
     .map(({ seq, strip, susp, part, ...r }) => ({ ...r, carrier: carrierName(r.carrier), strip_no: stripName(r.strip_no), suspension_no: part }));   // part = suspension no. 1..20 in the strip // eslint-disable-line no-unused-vars
 };
 
-module.exports = { stripName, carrierName, carriersOf, partsOf, rangeOf };
+module.exports = { stripName, carrierName, carriersOf, stripsOf, partsOf, rangeOf };

@@ -5,7 +5,7 @@ const cors = require('cors');
 const { WebSocketServer } = require('ws');
 const { Cache } = require('./cache');
 const { makeInflux } = require('./influx');
-const { carriersOf, partsOf, rangeOf } = require('./productivity');
+const { carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
 
 const cfg = {
   url: process.env.INFLUX_URL || 'http://localhost:8086',
@@ -96,7 +96,8 @@ const cached = (key, ttl, fn) => {
 };
 // GET /api/mddp/runcards?dateStart=YYYY-MM-DD&dateEnd=YYYY-MM-DD   run cards with pieces from 00:00 of dateStart to the end of dateEnd (TZ_OFFSET_MIN, default Asia/Bangkok);
 //     no dateEnd = dateStart; legacy from/to (epoch ms) still accepted; no parameters = last 24 h
-// GET /api/mddp/carriers?rc=<run card>          carriers of a run card with their Strip numbers
+// GET /api/mddp/carriers?rc=<run card>          carriers of a run card
+// GET /api/mddp/strips?rc=<run card>&carrier=CR-0005   Strip numbers of that carrier
 // GET /api/mddp/parts?rc=<run card>&strip=Strip-76,Strip-77   the pieces (20 per strip) of the strips
 const rcOf = (q) => String(q.rc || '').replace(/[^A-Za-z0-9_-]/g, '');
 const fail = (res, e) => res.status(502).json({ error: String(e.message || e) });
@@ -117,6 +118,11 @@ app.get('/api/mddp/carriers', async (req, res) => {
   const rc = rcOf(req.query);
   if (!rc) return res.status(400).json({ error: 'rc required' });
   try { res.json({ rc, carriers: carriersOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc))) }); } catch (e) { fail(res, e); }
+});
+app.get('/api/mddp/strips', async (req, res) => {
+  const rc = rcOf(req.query), carrier = /^CR-\d+$/.test(req.query.carrier || '') ? req.query.carrier : '';
+  if (!rc || !carrier) return res.status(400).json({ error: 'rc and carrier required' });
+  try { res.json({ rc, carrier, strips: stripsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), carrier) }); } catch (e) { fail(res, e); }
 });
 app.get('/api/mddp/parts', async (req, res) => {
   const rc = rcOf(req.query), strips = String(req.query.strip || '').split(',').filter((x) => /^Strip-\d+$/.test(x));

@@ -42,6 +42,10 @@ export function useLoadedMany(urls, nonce) {
 /** run cards of the dates (YYYY-MM-DD, whole days, end date included); null when the range is empty */
 export const cardsUrl = (dateStart, dateEnd) =>
   dateStart <= dateEnd ? `/api/mddp/runcards?dateStart=${dateStart}&dateEnd=${dateEnd}` : null;
+export const stripsUrl = (rc, carrier) =>
+  rc && carrier
+    ? `/api/mddp/strips?rc=${encodeURIComponent(rc)}&carrier=${encodeURIComponent(carrier)}`
+    : null;
 export const carriersUrl = (rc) => (rc ? `/api/mddp/carriers?rc=${encodeURIComponent(rc)}` : null);
 /** pieces of some strips ("Strip-76", ...) of a run card */
 export const partsUrl = (rc, strips) =>

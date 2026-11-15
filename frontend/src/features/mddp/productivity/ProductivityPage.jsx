@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { usePersistentState } from '../../../hooks/usePersistentState.js';
-import { cardsUrl, carriersUrl, partsUrl, useLoaded, useLoadedMany } from './useProductivityData.js';
+import {
+  cardsUrl,
+  carriersUrl,
+  stripsUrl,
+  partsUrl,
+  useLoaded,
+  useLoadedMany,
+} from './useProductivityData.js';
 import { exportExcel, exportPowerPoint } from './exportReport.js';
 import PartChart from './PartChart.jsx';
 import {
@@ -269,28 +276,25 @@ export default function ProductivityPage() {
   );
   const rc = cards.some((c) => c.rc === pickRc) ? pickRc : (cards[cards.length - 1]?.rc ?? null);
   const step2 = useLoaded(carriersUrl(rc), nonce);
-  // the API lists carriers with their Strip numbers; a set (one column) is one use of the carrier = a run of up to 3 consecutive strips
-  const carriers = useMemo(
-    () =>
-      (step2.url ? (step2.data.carriers ?? []) : []).flatMap((g) => {
-        const sets = [];
-        for (const st of g.strips) {
-          const n = +st.replace(/\D/g, ''),
-            last = sets[sets.length - 1];
-          if (last && last.strips.length < STRIPS_PER_CARRIER && n === last.end + 1) {
-            last.strips.push(st);
-            last.end = n;
-          } else sets.push({ carrier: g.carrier, key: st, strips: [st], end: n });
-        }
-        return sets;
-      }),
+  const carrierNos = useMemo(
+    () => (step2.url ? (step2.data.carriers ?? []) : []).map((c) => c.carrier),
     [step2]
   );
-  const carrierNos = useMemo(() => [...new Set(carriers.map((c) => c.carrier))], [carriers]);
-  const defaultVisit = carriers.reduce((a, c) => (!a || c.end > a.end ? c : a), null); // the set with the newest strips
-  const carrierNo = carrierNos.includes(pickCarrier) ? pickCarrier : defaultVisit?.carrier;
-  // the sets of the selected carrier: every visit of that carrier number in the run card (carrier numbers are reused)
-  const sets = carriers.filter((c) => c.carrier === carrierNo);
+  const carrierNo = carrierNos.includes(pickCarrier) ? pickCarrier : carrierNos[carrierNos.length - 1];
+  const step3 = useLoaded(stripsUrl(rc, carrierNo), nonce);
+  // the strips of the carrier; a set (one column) is one use of the carrier = a run of up to 3 consecutive strips
+  const sets = useMemo(() => {
+    const out = [];
+    for (const st of step3.url ? (step3.data.strips ?? []) : []) {
+      const n = +st.replace(/\D/g, ''),
+        last = out[out.length - 1];
+      if (last && last.strips.length < STRIPS_PER_CARRIER && n === last.end + 1) {
+        last.strips.push(st);
+        last.end = n;
+      } else out.push({ carrier: carrierNo, key: st, strips: [st], end: n });
+    }
+    return out;
+  }, [step3, carrierNo]);
   const chosen = pickSets ? sets.filter((c) => pickSets.includes(c.key)) : sets;
   const shown = chosen.length ? chosen : sets;
   const allSets = shown.length === sets.length;

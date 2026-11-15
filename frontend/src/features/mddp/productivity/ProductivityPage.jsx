@@ -195,7 +195,7 @@ function SetColumn({
         height={200}
         draw={{
           ...common,
-          lines: [{ color: '#c0392b', values: stripPct, marker: 6, connect: true }],
+          lines: [{ color: '#c0392b', values: stripPct, marker: 3, connect: true }],
           axis: PCT_AXIS,
           leftFmt: (v) => v + '%',
           ylabel: 'Defective parts (%)',

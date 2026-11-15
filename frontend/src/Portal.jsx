@@ -17,7 +17,8 @@ export default function Portal({ go }) {
     const subs = [], core = { scale: () => 1, getT: () => Date.now() / 1000, onRender: null };
     const W = { addEventListener: (t, f, o) => { window.addEventListener(t, f, o); subs.push([t, f, o]); } };
     const dispose = () => subs.forEach(([t, f, o]) => window.removeEventListener(t, f, o));
-    const stop = initPortal({ core, THREE, W, go, live: (k) => (LIVE[k] ? LIVE[k]() : ['Status: running']), dispose });
+    const ptr = { x: 200, y: 200 }; W.addEventListener('pointerup', (e) => { ptr.x = e.clientX; ptr.y = e.clientY; }, true);
+    const stop = initPortal({ core, THREE, W, go: (m) => go(m, ptr.x, ptr.y), live: (k) => (LIVE[k] ? LIVE[k]() : ['Status: running']), dispose });
     const iv = setInterval(() => core.onRender && core.onRender(core.getT()), 250);
     return () => { clearInterval(iv); stop(); };
   }, []);

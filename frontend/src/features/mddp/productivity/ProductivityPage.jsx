@@ -34,6 +34,8 @@ const AXES = [
 const RIGHT = { rightMax: 6, rightTicks: [0, 2, 4, 6], rightLabel: 'Defect count' };
 const X_LABEL = `Suspension No. (1 - ${SUSPENSIONS}) · 1 carrier = ${STRIPS_PER_CARRIER} strips × ${PARTS_PER_STRIP}`;
 
+const X_LABEL_STRIP = `Suspension No. within the strip (1 strip = ${PARTS_PER_STRIP} pieces)`;
+
 const pad = (n) => String(n).padStart(2, '0');
 const dayStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const dayStart = (s) => new Date(s + 'T00:00:00').getTime();
@@ -66,7 +68,8 @@ export default function ProductivityPage() {
   const [dateStart, setDateStart] = useState(today),
     [dateEnd, setDateEnd] = useState(today),
     [pickRc, setPickRc] = useState(null),
-    [pickSeq, setPickSeq] = useState(null);
+    [pickSeq, setPickSeq] = useState(null),
+    [pickStrip, setPickStrip] = useState(null);
   const from = dayStart(dateStart),
     to = dayEnd(dateEnd),
     badRange = !(from < to);
@@ -87,12 +90,17 @@ export default function ProductivityPage() {
   const loading = !!(step1.loading || step2.loading || step3.loading);
   const reload = () => setNonce((n) => n + 1);
   const carrier = carriers.find((c) => c.seq === seq);
-  const rows = useMemo(() => carrierRows(parts), [parts]);
-  const sm = summarize(rows);
+  const allRows = useMemo(() => carrierRows(parts), [parts]);
   const stripNos = carrier ? carrier.strips : [];
-  const groups = Array.from({ length: STRIPS_PER_CARRIER }, (_, k) => ({
-    from: k * PARTS_PER_STRIP,
-    to: (k + 1) * PARTS_PER_STRIP,
+  // Strip No. selector: all 3 strips of the carrier, or one strip (20 pieces = 1 row of the machine)
+  const sk = pickStrip >= 1 && pickStrip <= stripNos.length ? pickStrip - 1 : -1; // position 1-3 inside the carrier, kept when the carrier changes
+  const off = sk >= 0 ? sk * PARTS_PER_STRIP : 0;
+  const nView = sk >= 0 ? PARTS_PER_STRIP : SUSPENSIONS;
+  const rows = sk >= 0 ? allRows.slice(off, off + PARTS_PER_STRIP) : allRows;
+  const sm = summarize(rows);
+  const groups = (sk >= 0 ? [sk] : Array.from({ length: STRIPS_PER_CARRIER }, (_, k) => k)).map((k, j) => ({
+    from: j * PARTS_PER_STRIP,
+    to: (j + 1) * PARTS_PER_STRIP,
     label: stripNos[k] ? stripLabel(stripNos[k]) : `Strip ${k + 1}`,
   }));
   const card = cards.find((c) => c.rc === rc);
@@ -102,13 +110,13 @@ export default function ProductivityPage() {
     const r = rows[i];
     return r
       ? [
-          `Suspension ${i + 1} (strip ${r.strip}, part ${r.part}) · ${fmtT(r.t)}`,
+          `Suspension ${off + i + 1} (strip ${r.strip}, part ${r.part}) · ${fmtT(r.t)}`,
           ...PARAMS.map((p) => `${p.title}: ${r[p.f].toFixed(p.dec)} ${p.unit}`),
           defectNames(r.defect),
         ]
-      : [`Suspension ${i + 1}`, 'not made yet'];
+      : [`Suspension ${off + i + 1}`, 'not made yet'];
   };
-  const common = { n: SUSPENSIONS, groups, bars: bars(rows), xlabel: X_LABEL, ...RIGHT };
+  const common = { n: nView, groups, bars: bars(rows), xlabel: sk >= 0 ? X_LABEL_STRIP : X_LABEL, ...RIGHT };
   const lineChart = (p) => ({
     ...common,
     lines: [{ label: p.title, color: 'text', values: rows.map((r) => (r ? r[p.f] : null)) }],
@@ -201,13 +209,29 @@ export default function ProductivityPage() {
           <select
             className="pill"
             value={seq || ''}
-            onChange={(e) => setPickSeq(+e.target.value)}
+            onChange={(e) => (setPickSeq(+e.target.value))}
             disabled={!carriers.length}
           >
             {carriers.map((c) => (
               <option key={c.seq} value={c.seq}>
                 {carrierLabel(c.carrier)} · {clock(c.start)}
                 {complete(c) ? '' : ' (in progress)'}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="pfield">
+          Strip No :
+          <select
+            className="pill"
+            value={sk >= 0 ? sk + 1 : ''}
+            onChange={(e) => setPickStrip(e.target.value ? +e.target.value : null)}
+            disabled={!carrier}
+          >
+            <option value="">All {STRIPS_PER_CARRIER} strips</option>
+            {stripNos.map((n, k) => (
+              <option key={n} value={k + 1}>
+                Strip {k + 1} · No. {n}
               </option>
             ))}
           </select>
@@ -239,7 +263,7 @@ export default function ProductivityPage() {
             title={`Defective parts per carrier — Run Card ${rc}`}
             right={`${ov.length} carriers · ${totalN.toLocaleString()} pcs · ${totalN ? ((100 * totalD) / totalN).toFixed(1) : 0}% defective · click a bar to open a carrier`}
             height={200}
-            onPick={(i) => setPickSeq(ov[i].seq)}
+            onPick={(i) => (setPickSeq(ov[i].seq))}
             draw={{
               n: Math.max(ov.length, 45),
               lines: [{ color: '#c0392b', values: ov.map((c) => (100 * c.defective) / c.pieces) }],
@@ -260,6 +284,11 @@ export default function ProductivityPage() {
       )}
       {carrier && (
         <>
+          {sm.n === 0 && (
+            <div className="card" style={{ marginTop: 8, color: 'var(--muted)' }}>
+              No parts yet for this {sk >= 0 ? 'strip' : 'carrier'}.
+            </div>
+          )}
           <div
             style={{
               display: 'grid',
@@ -298,11 +327,11 @@ export default function ProductivityPage() {
                   const r = rows[i];
                   return r
                     ? [
-                        `Suspension ${i + 1} (strip ${r.strip}, part ${r.part}) · ${fmtT(r.t)}`,
+                        `Suspension ${off + i + 1} (strip ${r.strip}, part ${r.part}) · ${fmtT(r.t)}`,
                         ...AXES.map(([a], k) => `${a}: ${r[v.f[k]].toFixed(2)} ${v.unit}`),
                         defectNames(r.defect),
                       ]
-                    : [`Suspension ${i + 1}`, 'not made yet'];
+                    : [`Suspension ${off + i + 1}`, 'not made yet'];
                 }}
               />
             ))}

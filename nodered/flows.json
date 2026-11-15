@@ -1,14 +1,80 @@
 [
  {
-  "id": "tab1",
+  "id": "tab_MDDP_184",
   "type": "tab",
-  "label": "Machine simulators",
-  "disabled": false
+  "label": "MDDP_184",
+  "disabled": false,
+  "info": "MDDP_184 · Glue dispensing (Left + Right arm)\n\nOne group per measurement. Each group: inject every 250 ms → function (sim.signal) → link out to \"Influx writer\".\nAll groups of this tab share one sim clock (flow context \"clock\"), so the measurements stay aligned."
  },
  {
-  "id": "inj",
+  "id": "tab_CALUL_037",
+  "type": "tab",
+  "label": "CALUL_037",
+  "disabled": false,
+  "info": "CALUL_037 · KUKA KR 6 R900-2 HO pick and place + FESTO + IAI\n\nOne group per measurement. Each group: inject every 250 ms → function (sim.signal) → link out to \"Influx writer\".\nAll groups of this tab share one sim clock (flow context \"clock\"), so the measurements stay aligned."
+ },
+ {
+  "id": "tab_HAll_013",
+  "type": "tab",
+  "label": "HAll_013",
+  "disabled": false,
+  "info": "HAll_013 · Convection oven\n\nOne group per measurement. Each group: inject every 250 ms → function (sim.signal) → link out to \"Influx writer\".\nAll groups of this tab share one sim clock (flow context \"clock\"), so the measurements stay aligned."
+ },
+ {
+  "id": "tab_writer",
+  "type": "tab",
+  "label": "Influx writer",
+  "disabled": false,
+  "info": "Receives the line protocol of every signal flow, batches it for 250 ms into one string and writes it to InfluxDB v2 (precision ms). Any HTTP status other than 204 is logged."
+ },
+ {
+  "id": "tab_MDDP_184_head",
+  "type": "comment",
+  "z": "tab_MDDP_184",
+  "name": "MDDP_184 · Glue dispensing (Left + Right arm)",
+  "info": "Measurements written by this tab: mddp_fast, mddp_arm, mddp_carrier, mddp_dispense",
+  "x": 220,
+  "y": 40,
+  "wires": []
+ },
+ {
+  "id": "tab_MDDP_184_fast_g",
+  "type": "group",
+  "z": "tab_MDDP_184",
+  "name": "mddp_fast  ·  1 kHz  ·  sensor stream",
+  "style": {
+   "label": true,
+   "fill": "#bfdbfe",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_MDDP_184_fast_c",
+   "tab_MDDP_184_fast_i",
+   "tab_MDDP_184_fast_f",
+   "tab_MDDP_184_fast_o"
+  ],
+  "x": 14,
+  "y": 80,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_MDDP_184_fast_c",
+  "type": "comment",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_fast_g",
+  "name": "Arm pressure p (kPa) and robot vibration vx/vy/vz (g), tag side=L|R",
+  "info": "measurement mddp_fast\nrate 1 kHz\nArm pressure p (kPa) and robot vibration vx/vy/vz (g), tag side=L|R",
+  "x": 360,
+  "y": 110,
+  "wires": []
+ },
+ {
+  "id": "tab_MDDP_184_fast_i",
   "type": "inject",
-  "z": "tab1",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_fast_g",
   "name": "every 250 ms",
   "props": [],
   "repeat": "0.25",
@@ -16,38 +82,1305 @@
   "once": true,
   "onceDelay": "3",
   "topic": "",
-  "x": 140,
-  "y": 80,
+  "x": 130,
+  "y": 150,
   "wires": [
    [
-    "fn"
+    "tab_MDDP_184_fast_f"
    ]
   ]
  },
  {
-  "id": "fn",
+  "id": "tab_MDDP_184_fast_f",
   "type": "function",
-  "z": "tab1",
-  "name": "sim tick -> line protocol (MDDP_184, CALUL_037, HAll_013)",
-  "func": "// Emits every sim sample since the previous tick with its own ms timestamp.\nlet st = context.get('state'); if (!st) { st = {}; context.set('state', st); }\nconst lines = global.get('sim').tick(st, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nmsg.url = env.get('INFLUX_URL') + '/api/v2/write?org=' + encodeURIComponent(env.get('INFLUX_ORG')) +\n          '&bucket=' + encodeURIComponent(env.get('INFLUX_BUCKET')) + '&precision=ms';\nmsg.headers = { 'Authorization': 'Token ' + env.get('INFLUX_TOKEN'), 'Content-Type': 'text/plain; charset=utf-8' };\nmsg.method = 'POST';\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_fast_g",
+  "name": "MDDP_184 · mddp_fast",
+  "func": "// mddp_fast: Arm pressure p (kPa) and robot vibration vx/vy/vz (g), tag side=L|R\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('MDDP_184', 'fast', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
   "outputs": 1,
   "timeout": 0,
   "noerr": 0,
   "initialize": "",
   "finalize": "",
   "libs": [],
-  "x": 390,
-  "y": 80,
+  "x": 440,
+  "y": 150,
   "wires": [
    [
-    "http"
+    "tab_MDDP_184_fast_o"
    ]
   ]
  },
  {
-  "id": "http",
+  "id": "tab_MDDP_184_fast_o",
+  "type": "link out",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_fast_g",
+  "name": "mddp_fast → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 150,
+  "wires": []
+ },
+ {
+  "id": "tab_MDDP_184_arm_g",
+  "type": "group",
+  "z": "tab_MDDP_184",
+  "name": "mddp_arm  ·  20 Hz  ·  machine state",
+  "style": {
+   "label": true,
+   "fill": "#bbf7d0",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_MDDP_184_arm_c",
+   "tab_MDDP_184_arm_i",
+   "tab_MDDP_184_arm_f",
+   "tab_MDDP_184_arm_o"
+  ],
+  "x": 14,
+  "y": 210,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_MDDP_184_arm_c",
+  "type": "comment",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_arm_g",
+  "name": "Arm position x/y, dispense flag, active cell, head epoxy temperature temp (°C), tag side=L|R",
+  "info": "measurement mddp_arm\nrate 20 Hz\nArm position x/y, dispense flag, active cell, head epoxy temperature temp (°C), tag side=L|R",
+  "x": 360,
+  "y": 240,
+  "wires": []
+ },
+ {
+  "id": "tab_MDDP_184_arm_i",
+  "type": "inject",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_arm_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 280,
+  "wires": [
+   [
+    "tab_MDDP_184_arm_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_MDDP_184_arm_f",
+  "type": "function",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_arm_g",
+  "name": "MDDP_184 · mddp_arm",
+  "func": "// mddp_arm: Arm position x/y, dispense flag, active cell, head epoxy temperature temp (°C), tag side=L|R\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('MDDP_184', 'arm', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 280,
+  "wires": [
+   [
+    "tab_MDDP_184_arm_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_MDDP_184_arm_o",
+  "type": "link out",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_arm_g",
+  "name": "mddp_arm → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 280,
+  "wires": []
+ },
+ {
+  "id": "tab_MDDP_184_carrier_g",
+  "type": "group",
+  "z": "tab_MDDP_184",
+  "name": "mddp_carrier  ·  20 Hz  ·  machine state",
+  "style": {
+   "label": true,
+   "fill": "#bbf7d0",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_MDDP_184_carrier_c",
+   "tab_MDDP_184_carrier_i",
+   "tab_MDDP_184_carrier_f",
+   "tab_MDDP_184_carrier_o"
+  ],
+  "x": 14,
+  "y": 340,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_MDDP_184_carrier_c",
+  "type": "comment",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_carrier_g",
+  "name": "Carrier position x and pieces dispensed per arm nL/nR, tag k=carrier number",
+  "info": "measurement mddp_carrier\nrate 20 Hz\nCarrier position x and pieces dispensed per arm nL/nR, tag k=carrier number",
+  "x": 360,
+  "y": 370,
+  "wires": []
+ },
+ {
+  "id": "tab_MDDP_184_carrier_i",
+  "type": "inject",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_carrier_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 410,
+  "wires": [
+   [
+    "tab_MDDP_184_carrier_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_MDDP_184_carrier_f",
+  "type": "function",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_carrier_g",
+  "name": "MDDP_184 · mddp_carrier",
+  "func": "// mddp_carrier: Carrier position x and pieces dispensed per arm nL/nR, tag k=carrier number\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('MDDP_184', 'carrier', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 410,
+  "wires": [
+   [
+    "tab_MDDP_184_carrier_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_MDDP_184_carrier_o",
+  "type": "link out",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_carrier_g",
+  "name": "mddp_carrier → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 410,
+  "wires": []
+ },
+ {
+  "id": "tab_MDDP_184_dispense_g",
+  "type": "group",
+  "z": "tab_MDDP_184",
+  "name": "mddp_dispense  ·  event  ·  event",
+  "style": {
+   "label": true,
+   "fill": "#fde68a",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_MDDP_184_dispense_c",
+   "tab_MDDP_184_dispense_i",
+   "tab_MDDP_184_dispense_f",
+   "tab_MDDP_184_dispense_o"
+  ],
+  "x": 14,
+  "y": 470,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_MDDP_184_dispense_c",
+  "type": "comment",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_dispense_g",
+  "name": "Dispense time dur (ms) and peak pressure (kPa) of each finished dispense, tag side=L|R",
+  "info": "measurement mddp_dispense\nrate event\nDispense time dur (ms) and peak pressure (kPa) of each finished dispense, tag side=L|R",
+  "x": 360,
+  "y": 500,
+  "wires": []
+ },
+ {
+  "id": "tab_MDDP_184_dispense_i",
+  "type": "inject",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_dispense_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 540,
+  "wires": [
+   [
+    "tab_MDDP_184_dispense_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_MDDP_184_dispense_f",
+  "type": "function",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_dispense_g",
+  "name": "MDDP_184 · mddp_dispense",
+  "func": "// mddp_dispense: Dispense time dur (ms) and peak pressure (kPa) of each finished dispense, tag side=L|R\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('MDDP_184', 'dispense', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 540,
+  "wires": [
+   [
+    "tab_MDDP_184_dispense_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_MDDP_184_dispense_o",
+  "type": "link out",
+  "z": "tab_MDDP_184",
+  "g": "tab_MDDP_184_dispense_g",
+  "name": "mddp_dispense → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 540,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_head",
+  "type": "comment",
+  "z": "tab_CALUL_037",
+  "name": "CALUL_037 · KUKA KR 6 R900-2 HO pick and place + FESTO + IAI",
+  "info": "Measurements written by this tab: calul_vac, calul_robot, calul_flow, calul_tray, calul_festo, calul_arrival, calul_fault",
+  "x": 220,
+  "y": 40,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_vac_g",
+  "type": "group",
+  "z": "tab_CALUL_037",
+  "name": "calul_vac  ·  100 Hz  ·  sensor stream",
+  "style": {
+   "label": true,
+   "fill": "#bfdbfe",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_CALUL_037_vac_c",
+   "tab_CALUL_037_vac_i",
+   "tab_CALUL_037_vac_f",
+   "tab_CALUL_037_vac_o"
+  ],
+  "x": 14,
+  "y": 80,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_CALUL_037_vac_c",
+  "type": "comment",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_vac_g",
+  "name": "Vacuum front / back (kPa)",
+  "info": "measurement calul_vac\nrate 100 Hz\nVacuum front / back (kPa)",
+  "x": 360,
+  "y": 110,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_vac_i",
+  "type": "inject",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_vac_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 150,
+  "wires": [
+   [
+    "tab_CALUL_037_vac_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_vac_f",
+  "type": "function",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_vac_g",
+  "name": "CALUL_037 · calul_vac",
+  "func": "// calul_vac: Vacuum front / back (kPa)\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('CALUL_037', 'vac', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 150,
+  "wires": [
+   [
+    "tab_CALUL_037_vac_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_vac_o",
+  "type": "link out",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_vac_g",
+  "name": "calul_vac → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 150,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_robot_g",
+  "type": "group",
+  "z": "tab_CALUL_037",
+  "name": "calul_robot  ·  20 Hz  ·  sensor stream",
+  "style": {
+   "label": true,
+   "fill": "#bfdbfe",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_CALUL_037_robot_c",
+   "tab_CALUL_037_robot_i",
+   "tab_CALUL_037_robot_f",
+   "tab_CALUL_037_robot_o"
+  ],
+  "x": 14,
+  "y": 210,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_CALUL_037_robot_c",
+  "type": "comment",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_robot_g",
+  "name": "Pose x y z a b c, joints q1-q6, joint temperatures t1-t6, tracking error, target, cycle counters, life time",
+  "info": "measurement calul_robot\nrate 20 Hz\nPose x y z a b c, joints q1-q6, joint temperatures t1-t6, tracking error, target, cycle counters, life time",
+  "x": 360,
+  "y": 240,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_robot_i",
+  "type": "inject",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_robot_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 280,
+  "wires": [
+   [
+    "tab_CALUL_037_robot_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_robot_f",
+  "type": "function",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_robot_g",
+  "name": "CALUL_037 · calul_robot",
+  "func": "// calul_robot: Pose x y z a b c, joints q1-q6, joint temperatures t1-t6, tracking error, target, cycle counters, life time\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('CALUL_037', 'robot', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 280,
+  "wires": [
+   [
+    "tab_CALUL_037_robot_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_robot_o",
+  "type": "link out",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_robot_g",
+  "name": "calul_robot → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 280,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_flow_g",
+  "type": "group",
+  "z": "tab_CALUL_037",
+  "name": "calul_flow  ·  20 Hz  ·  machine state",
+  "style": {
+   "label": true,
+   "fill": "#bbf7d0",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_CALUL_037_flow_c",
+   "tab_CALUL_037_flow_i",
+   "tab_CALUL_037_flow_f",
+   "tab_CALUL_037_flow_o"
+  ],
+  "x": 14,
+  "y": 340,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_CALUL_037_flow_c",
+  "type": "comment",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_flow_g",
+  "name": "Carrier queue: ready / picked / sent to HAll",
+  "info": "measurement calul_flow\nrate 20 Hz\nCarrier queue: ready / picked / sent to HAll",
+  "x": 360,
+  "y": 370,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_flow_i",
+  "type": "inject",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_flow_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 410,
+  "wires": [
+   [
+    "tab_CALUL_037_flow_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_flow_f",
+  "type": "function",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_flow_g",
+  "name": "CALUL_037 · calul_flow",
+  "func": "// calul_flow: Carrier queue: ready / picked / sent to HAll\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('CALUL_037', 'flow', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 410,
+  "wires": [
+   [
+    "tab_CALUL_037_flow_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_flow_o",
+  "type": "link out",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_flow_g",
+  "name": "calul_flow → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 410,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_tray_g",
+  "type": "group",
+  "z": "tab_CALUL_037",
+  "name": "calul_tray  ·  20 Hz  ·  machine state",
+  "style": {
+   "label": true,
+   "fill": "#bbf7d0",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_CALUL_037_tray_c",
+   "tab_CALUL_037_tray_i",
+   "tab_CALUL_037_tray_f",
+   "tab_CALUL_037_tray_o"
+  ],
+  "x": 14,
+  "y": 470,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_CALUL_037_tray_c",
+  "type": "comment",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_tray_g",
+  "name": "HA tray state (placed plates, sideways shift) and buffer fill",
+  "info": "measurement calul_tray\nrate 20 Hz\nHA tray state (placed plates, sideways shift) and buffer fill",
+  "x": 360,
+  "y": 500,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_tray_i",
+  "type": "inject",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_tray_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 540,
+  "wires": [
+   [
+    "tab_CALUL_037_tray_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_tray_f",
+  "type": "function",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_tray_g",
+  "name": "CALUL_037 · calul_tray",
+  "func": "// calul_tray: HA tray state (placed plates, sideways shift) and buffer fill\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('CALUL_037', 'tray', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 540,
+  "wires": [
+   [
+    "tab_CALUL_037_tray_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_tray_o",
+  "type": "link out",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_tray_g",
+  "name": "calul_tray → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 540,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_festo_g",
+  "type": "group",
+  "z": "tab_CALUL_037",
+  "name": "calul_festo  ·  20 Hz  ·  sensor stream",
+  "style": {
+   "label": true,
+   "fill": "#bfdbfe",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_CALUL_037_festo_c",
+   "tab_CALUL_037_festo_i",
+   "tab_CALUL_037_festo_f",
+   "tab_CALUL_037_festo_o"
+  ],
+  "x": 14,
+  "y": 600,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_CALUL_037_festo_c",
+  "type": "comment",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_festo_g",
+  "name": "FESTO axis temperature (°C), tag axis=X|Y|Z",
+  "info": "measurement calul_festo\nrate 20 Hz\nFESTO axis temperature (°C), tag axis=X|Y|Z",
+  "x": 360,
+  "y": 630,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_festo_i",
+  "type": "inject",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_festo_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 670,
+  "wires": [
+   [
+    "tab_CALUL_037_festo_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_festo_f",
+  "type": "function",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_festo_g",
+  "name": "CALUL_037 · calul_festo",
+  "func": "// calul_festo: FESTO axis temperature (°C), tag axis=X|Y|Z\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('CALUL_037', 'festo', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 670,
+  "wires": [
+   [
+    "tab_CALUL_037_festo_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_festo_o",
+  "type": "link out",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_festo_g",
+  "name": "calul_festo → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 670,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_arrival_g",
+  "type": "group",
+  "z": "tab_CALUL_037",
+  "name": "calul_arrival  ·  event  ·  event",
+  "style": {
+   "label": true,
+   "fill": "#fde68a",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_CALUL_037_arrival_c",
+   "tab_CALUL_037_arrival_i",
+   "tab_CALUL_037_arrival_f",
+   "tab_CALUL_037_arrival_o"
+  ],
+  "x": 14,
+  "y": 730,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_CALUL_037_arrival_c",
+  "type": "comment",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_arrival_g",
+  "name": "Measured arrival at each waypoint P1-P10: x y z a b c and error ex..ec, tag point",
+  "info": "measurement calul_arrival\nrate event\nMeasured arrival at each waypoint P1-P10: x y z a b c and error ex..ec, tag point",
+  "x": 360,
+  "y": 760,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_arrival_i",
+  "type": "inject",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_arrival_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 800,
+  "wires": [
+   [
+    "tab_CALUL_037_arrival_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_arrival_f",
+  "type": "function",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_arrival_g",
+  "name": "CALUL_037 · calul_arrival",
+  "func": "// calul_arrival: Measured arrival at each waypoint P1-P10: x y z a b c and error ex..ec, tag point\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('CALUL_037', 'arrival', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 800,
+  "wires": [
+   [
+    "tab_CALUL_037_arrival_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_arrival_o",
+  "type": "link out",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_arrival_g",
+  "name": "calul_arrival → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 800,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_fault_g",
+  "type": "group",
+  "z": "tab_CALUL_037",
+  "name": "calul_fault  ·  event  ·  event",
+  "style": {
+   "label": true,
+   "fill": "#fde68a",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_CALUL_037_fault_c",
+   "tab_CALUL_037_fault_i",
+   "tab_CALUL_037_fault_f",
+   "tab_CALUL_037_fault_o"
+  ],
+  "x": 14,
+  "y": 860,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_CALUL_037_fault_c",
+  "type": "comment",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_fault_g",
+  "name": "Festo / IAI error codes: item, code, description, duration, value, tag src=festo|iai",
+  "info": "measurement calul_fault\nrate event\nFesto / IAI error codes: item, code, description, duration, value, tag src=festo|iai",
+  "x": 360,
+  "y": 890,
+  "wires": []
+ },
+ {
+  "id": "tab_CALUL_037_fault_i",
+  "type": "inject",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_fault_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 930,
+  "wires": [
+   [
+    "tab_CALUL_037_fault_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_fault_f",
+  "type": "function",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_fault_g",
+  "name": "CALUL_037 · calul_fault",
+  "func": "// calul_fault: Festo / IAI error codes: item, code, description, duration, value, tag src=festo|iai\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('CALUL_037', 'fault', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 930,
+  "wires": [
+   [
+    "tab_CALUL_037_fault_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_CALUL_037_fault_o",
+  "type": "link out",
+  "z": "tab_CALUL_037",
+  "g": "tab_CALUL_037_fault_g",
+  "name": "calul_fault → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 930,
+  "wires": []
+ },
+ {
+  "id": "tab_HAll_013_head",
+  "type": "comment",
+  "z": "tab_HAll_013",
+  "name": "HAll_013 · Convection oven",
+  "info": "Measurements written by this tab: hall_oven, hall_tray, hall_cure",
+  "x": 220,
+  "y": 40,
+  "wires": []
+ },
+ {
+  "id": "tab_HAll_013_oven_g",
+  "type": "group",
+  "z": "tab_HAll_013",
+  "name": "hall_oven  ·  10 Hz  ·  sensor stream",
+  "style": {
+   "label": true,
+   "fill": "#bfdbfe",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_HAll_013_oven_c",
+   "tab_HAll_013_oven_i",
+   "tab_HAll_013_oven_f",
+   "tab_HAll_013_oven_o"
+  ],
+  "x": 14,
+  "y": 80,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_HAll_013_oven_c",
+  "type": "comment",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_oven_g",
+  "name": "Oven temperature, heater duty, blower rpm, blower vibration vx/vy/vz, blower temperature, conveyor speed",
+  "info": "measurement hall_oven\nrate 10 Hz\nOven temperature, heater duty, blower rpm, blower vibration vx/vy/vz, blower temperature, conveyor speed",
+  "x": 360,
+  "y": 110,
+  "wires": []
+ },
+ {
+  "id": "tab_HAll_013_oven_i",
+  "type": "inject",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_oven_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 150,
+  "wires": [
+   [
+    "tab_HAll_013_oven_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_HAll_013_oven_f",
+  "type": "function",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_oven_g",
+  "name": "HAll_013 · hall_oven",
+  "func": "// hall_oven: Oven temperature, heater duty, blower rpm, blower vibration vx/vy/vz, blower temperature, conveyor speed\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('HAll_013', 'oven', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 150,
+  "wires": [
+   [
+    "tab_HAll_013_oven_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_HAll_013_oven_o",
+  "type": "link out",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_oven_g",
+  "name": "hall_oven → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 150,
+  "wires": []
+ },
+ {
+  "id": "tab_HAll_013_tray_g",
+  "type": "group",
+  "z": "tab_HAll_013",
+  "name": "hall_tray  ·  10 Hz  ·  machine state",
+  "style": {
+   "label": true,
+   "fill": "#bbf7d0",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_HAll_013_tray_c",
+   "tab_HAll_013_tray_i",
+   "tab_HAll_013_tray_f",
+   "tab_HAll_013_tray_o"
+  ],
+  "x": 14,
+  "y": 210,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_HAll_013_tray_c",
+  "type": "comment",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_tray_g",
+  "name": "Tray position x and in-oven flag, tag k=tray number",
+  "info": "measurement hall_tray\nrate 10 Hz\nTray position x and in-oven flag, tag k=tray number",
+  "x": 360,
+  "y": 240,
+  "wires": []
+ },
+ {
+  "id": "tab_HAll_013_tray_i",
+  "type": "inject",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_tray_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 280,
+  "wires": [
+   [
+    "tab_HAll_013_tray_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_HAll_013_tray_f",
+  "type": "function",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_tray_g",
+  "name": "HAll_013 · hall_tray",
+  "func": "// hall_tray: Tray position x and in-oven flag, tag k=tray number\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('HAll_013', 'tray', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 280,
+  "wires": [
+   [
+    "tab_HAll_013_tray_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_HAll_013_tray_o",
+  "type": "link out",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_tray_g",
+  "name": "hall_tray → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 280,
+  "wires": []
+ },
+ {
+  "id": "tab_HAll_013_cure_g",
+  "type": "group",
+  "z": "tab_HAll_013",
+  "name": "hall_cure  ·  event  ·  event",
+  "style": {
+   "label": true,
+   "fill": "#fde68a",
+   "fill-opacity": "0.35",
+   "stroke": "#64748b"
+  },
+  "nodes": [
+   "tab_HAll_013_cure_c",
+   "tab_HAll_013_cure_i",
+   "tab_HAll_013_cure_f",
+   "tab_HAll_013_cure_o"
+  ],
+  "x": 14,
+  "y": 340,
+  "w": 1052,
+  "h": 112
+ },
+ {
+  "id": "tab_HAll_013_cure_c",
+  "type": "comment",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_cure_g",
+  "name": "Curing time of each tray, written when the tray leaves the oven",
+  "info": "measurement hall_cure\nrate event\nCuring time of each tray, written when the tray leaves the oven",
+  "x": 360,
+  "y": 370,
+  "wires": []
+ },
+ {
+  "id": "tab_HAll_013_cure_i",
+  "type": "inject",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_cure_g",
+  "name": "every 250 ms",
+  "props": [],
+  "repeat": "0.25",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "3",
+  "topic": "",
+  "x": 130,
+  "y": 410,
+  "wires": [
+   [
+    "tab_HAll_013_cure_f"
+   ]
+  ]
+ },
+ {
+  "id": "tab_HAll_013_cure_f",
+  "type": "function",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_cure_g",
+  "name": "HAll_013 · hall_cure",
+  "func": "// hall_cure: Curing time of each tray, written when the tray leaves the oven\n// Returns the line protocol of every sample since this node's previous tick (own ms timestamps).\nconst lines = global.get('sim').signal('HAll_013', 'cure', context, flow, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 440,
+  "y": 410,
+  "wires": [
+   [
+    "tab_HAll_013_cure_o"
+   ]
+  ]
+ },
+ {
+  "id": "tab_HAll_013_cure_o",
+  "type": "link out",
+  "z": "tab_HAll_013",
+  "g": "tab_HAll_013_cure_g",
+  "name": "hall_cure → writer",
+  "mode": "link",
+  "links": [
+   "writer_in"
+  ],
+  "x": 760,
+  "y": 410,
+  "wires": []
+ },
+ {
+  "id": "tab_writer_head",
+  "type": "comment",
+  "z": "tab_writer",
+  "name": "All signal flows → one InfluxDB write per 250 ms",
+  "info": "Writing each signal directly would multiply the HTTP requests (mddp_fast alone is about 2000 rows/s).",
+  "x": 300,
+  "y": 40,
+  "wires": []
+ },
+ {
+  "id": "writer_in",
+  "type": "link in",
+  "z": "tab_writer",
+  "name": "lines from all machines",
+  "links": [
+   "tab_MDDP_184_fast_o",
+   "tab_MDDP_184_arm_o",
+   "tab_MDDP_184_carrier_o",
+   "tab_MDDP_184_dispense_o",
+   "tab_CALUL_037_vac_o",
+   "tab_CALUL_037_robot_o",
+   "tab_CALUL_037_flow_o",
+   "tab_CALUL_037_tray_o",
+   "tab_CALUL_037_festo_o",
+   "tab_CALUL_037_arrival_o",
+   "tab_CALUL_037_fault_o",
+   "tab_HAll_013_oven_o",
+   "tab_HAll_013_tray_o",
+   "tab_HAll_013_cure_o"
+  ],
+  "x": 120,
+  "y": 100,
+  "wires": [
+   [
+    "tab_writer_join"
+   ]
+  ]
+ },
+ {
+  "id": "tab_writer_join",
+  "type": "join",
+  "z": "tab_writer",
+  "name": "batch 250 ms",
+  "mode": "custom",
+  "build": "string",
+  "property": "payload",
+  "propertyType": "msg",
+  "key": "topic",
+  "joiner": "\\n",
+  "joinerType": "str",
+  "useparts": false,
+  "accumulate": false,
+  "timeout": "0.25",
+  "count": "",
+  "reduceRight": false,
+  "reduceExp": "",
+  "reduceInit": "",
+  "reduceInitType": "",
+  "reduceFixup": "",
+  "x": 330,
+  "y": 100,
+  "wires": [
+   [
+    "tab_writer_req"
+   ]
+  ]
+ },
+ {
+  "id": "tab_writer_req",
+  "type": "function",
+  "z": "tab_writer",
+  "name": "build InfluxDB write request",
+  "func": "msg.url = env.get('INFLUX_URL') + '/api/v2/write?org=' + encodeURIComponent(env.get('INFLUX_ORG')) +\n          '&bucket=' + encodeURIComponent(env.get('INFLUX_BUCKET')) + '&precision=ms';\nmsg.headers = { 'Authorization': 'Token ' + env.get('INFLUX_TOKEN'), 'Content-Type': 'text/plain; charset=utf-8' };\nmsg.method = 'POST';\nnode.status({ fill: 'green', shape: 'dot', text: msg.payload.split('\\n').length + ' points' });\nreturn msg;\n",
+  "outputs": 1,
+  "timeout": 0,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": [],
+  "x": 590,
+  "y": 100,
+  "wires": [
+   [
+    "tab_writer_http"
+   ]
+  ]
+ },
+ {
+  "id": "tab_writer_http",
   "type": "http request",
-  "z": "tab1",
+  "z": "tab_writer",
   "name": "InfluxDB write",
   "method": "use",
   "ret": "txt",
@@ -60,18 +1393,18 @@
   "authType": "",
   "senderr": false,
   "headers": [],
-  "x": 640,
-  "y": 80,
+  "x": 830,
+  "y": 100,
   "wires": [
    [
-    "chk"
+    "tab_writer_chk"
    ]
   ]
  },
  {
-  "id": "chk",
+  "id": "tab_writer_chk",
   "type": "switch",
-  "z": "tab1",
+  "z": "tab_writer",
   "name": "HTTP status != 204",
   "property": "statusCode",
   "propertyType": "msg",
@@ -85,18 +1418,18 @@
   "checkall": "true",
   "repair": false,
   "outputs": 1,
-  "x": 870,
-  "y": 80,
+  "x": 1050,
+  "y": 100,
   "wires": [
    [
-    "dbg"
+    "tab_writer_dbg"
    ]
   ]
  },
  {
-  "id": "dbg",
+  "id": "tab_writer_dbg",
   "type": "debug",
-  "z": "tab1",
+  "z": "tab_writer",
   "name": "write error",
   "active": true,
   "tosidebar": true,
@@ -104,8 +1437,8 @@
   "tostatus": false,
   "complete": "payload",
   "targetType": "msg",
-  "x": 1070,
-  "y": 80,
+  "x": 1240,
+  "y": 100,
   "wires": []
  }
 ]

@@ -18,6 +18,12 @@ The browser never generates values; with no data it shows "No data".
 - `mddp_arm` (tag `side`, 20 Hz): `x` `y` px, `ak` (carrier no.), `disp`, `active`, `cell`, `temp` degC
 - `mddp_carrier` (tag `k`, 20 Hz): `x` px, `nL`, `nR` shots done
 
-The simulator model is `nodered/sim/mddp.js` (extracted from the legacy HTML in `legacy/`). CALUL_037 and HAll_013 are next.
+## Node-RED layout
+
+One tab per machine (`MDDP_184`, `CALUL_037`, `HAll_013`) plus `Influx writer`. Inside a machine tab every measurement is its own group/flow (inject every 250 ms -> function -> link out), so each value can be inspected and switched off on its own. The writer tab batches all lines for 250 ms into one InfluxDB write and logs any HTTP status other than 204.
+
+- The machine models are in `nodered/sim/*.js` (extracted from the legacy HTML in `legacy/`); each `gen_<machine>.js` exports one generator per measurement (`signals`).
+- `nodered/flows.json` is generated: edit `tools/build-flows.mjs` (or add a signal to the `signals` of a `gen_*.js` and to `INFO` in the script) and run `node tools/build-flows.mjs`.
+- Measurement, tag and field names must not change: the frontend reads them.
 
 Config: copy `.env.example` to `.env`.

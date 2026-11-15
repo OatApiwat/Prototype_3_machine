@@ -9,7 +9,7 @@ const mat = (c, r = 0.5, m = 0.1) => new THREE.MeshStandardMaterial({ color: c, 
 const box = (g, w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; g.add(o); return o; };
 function cyl(g, axis, r, len, m, x, y, z) { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 28), m); if (axis === 'x') o.rotation.z = Math.PI / 2; else if (axis === 'z') o.rotation.x = Math.PI / 2; o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; g.add(o); return o; }
 
-const LABELS = [['Blower', [0, 1300, 0]], ['Blower Motor', [820, 1850, 0]], ['Plate Heater', [260, 960, 360]], ['Thermometer', [0, 760, 0]], ['Vibration sensor', [820, 1520, 215]], ['Conveyor', [-1000, 330, 440]], ['IN (from CALUL)', [XS + 60, 520, 0]], ['OUT', [-XS - 60, 520, 0]]];
+const LABELS = [['Blower', [0, 1300, 0]], ['Blower Motor', [820, 1850, 0]], ['Plate Heater', [400, 980, 360]], ['Thermometer', [-300, 700, 300]], ['Vibration sensor', [820, 1520, 215]], ['Conveyor', [-1000, 330, 440]], ['IN (from CALUL)', [XS + 60, 520, 0]], ['OUT', [-XS - 60, 520, 0]]];
 
 export default function Hall3D() {
   const canvas = useRef(null), lab = useRef(null);

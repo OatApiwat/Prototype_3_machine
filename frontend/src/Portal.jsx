@@ -32,15 +32,15 @@ export default function Portal({ go }) {
     let raf;
     const draw = () => {
       raf = requestAnimationFrame(draw);
-      const cv = ref.current; if (!cv || !cv.clientWidth) return; cv.style.height = Math.round(cv.clientWidth * 0.2) + 'px';
-      const { g, w, h } = fit(cv), s = w / (XT - X0 + 40), yb = h - 30;
+      const cv = ref.current; if (!cv || !cv.clientWidth) return; cv.style.height = Math.round(cv.clientWidth * 0.23) + 'px';
+      const { g, w, h } = fit(cv), s = w / (XT - X0 + 40), yb = h - 42;
       g.clearRect(0, 0, w, h); g.fillStyle = css('--muted'); g.fillRect(0, yb + 2, w, 3);
       LINE.forEach((m, i) => {
         const x = (m.a - X0) * s + 4, mw = (m.b - m.a) * s - 6, mh = HT[m.k] * s * 1.15, live = !!m.tab;
         g.fillStyle = COL[m.k]; g.globalAlpha = live ? 1 : 0.55; g.fillRect(x, yb - mh, mw, mh);
         g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(x + 4, yb - mh + 6, mw - 8, mh * 0.35); g.globalAlpha = 1;
         if (live) { g.strokeStyle = '#22c55e'; g.lineWidth = hov.current === i ? 4 : 3; g.strokeRect(x - 2, yb - mh - 2, mw + 4, mh + 4); }
-        g.fillStyle = css('--text'); g.font = `${live ? 'bold ' : ''}12px "Segoe UI"`; g.textAlign = 'center'; g.fillText(m.n, x + mw / 2, yb + 18);
+        g.fillStyle = css('--text'); g.font = `${live ? 'bold ' : ''}${mw < 60 ? 10 : 12}px "Segoe UI"`; g.textAlign = 'center'; g.fillText(mw < 60 && m.n.length > 5 ? m.n.slice(0, 5) : m.n, Math.max(x + mw / 2, 16), yb + 18 + (i % 2) * 12);
       });
     };
     raf = requestAnimationFrame(draw); return () => cancelAnimationFrame(raf);

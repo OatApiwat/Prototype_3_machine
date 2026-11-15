@@ -23,7 +23,7 @@ export default function Portal3D({ line, colors, heights, go, info }) {
       g.position.x = ((m.a + m.b) / 2 - X0 - 750) * S; scene.add(g); body.userData.i = i; meshes.push(body);
     });
     const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(); let hover = -1;
-    const cam = { az: -14, el: 20, d: 1050 }; let drag = null, moved = false;
+    const cam = { az: -14, el: 20, d: 1250 }; let drag = null, moved = false;
     const down = (e) => { drag = { x: e.clientX, y: e.clientY, az: cam.az, el: cam.el }; moved = false; }, up = () => { drag = null; };
     const move = (e) => {
       const r = cv.getBoundingClientRect(); mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);

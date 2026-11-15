@@ -79,20 +79,9 @@ const peerTip = (peers, i, linesOf) =>
   });
 
 const SET_COLORS = ['#2563eb', '#ea580c', '#059669', '#9333ea', '#db2777', '#0891b2'];
-function SetColumn({
-  visit,
-  index,
-  rows,
-  hoverI,
-  hoverId,
-  onHover,
-  view,
-  onZoom,
-  loading,
-  error,
-  defectMax,
-}) {
+function SetColumn({ visit, index, rows, view, onZoom, loading, error, defectMax }) {
   const sm = summarize(rows);
+  const [colI, setColI] = useState(-1); // hovered suspension: every chart of this column shows its own tooltip for it
   const peers = [{ label: `Set ${index + 1}`, rows }]; // each chart's tooltip describes its own set
   const groups = Array.from({ length: STRIPS_PER_CARRIER }, (_, k) => ({
     from: k * PARTS_PER_STRIP,
@@ -201,9 +190,8 @@ function SetColumn({
           ylabel: 'Defective parts (%)',
         }}
         tip={defectTip}
-        hoverIndex={hoverI}
-        hoverId={hoverId}
-        onHover={onHover}
+        hoverIndex={colI}
+        onHover={(i) => setColI(i)}
         onZoom={onZoom}
       />
       {PARAMS.map((p) => (
@@ -215,9 +203,8 @@ function SetColumn({
           height={200}
           draw={lineChart(p)}
           tip={partTip(p)}
-          hoverIndex={hoverI}
-          hoverId={hoverId}
-          onHover={onHover}
+          hoverIndex={colI}
+          onHover={(i) => setColI(i)}
           onZoom={onZoom}
         />
       ))}
@@ -230,9 +217,8 @@ function SetColumn({
           height={200}
           draw={vibChart(v)}
           tip={vibTip(v)}
-          hoverIndex={hoverI}
-          hoverId={hoverId}
-          onHover={onHover}
+          hoverIndex={colI}
+          onHover={(i) => setColI(i)}
           onZoom={onZoom}
         />
       ))}
@@ -255,8 +241,6 @@ export default function ProductivityPage() {
     [dateEnd, setDateEnd] = usePersistentState('prod.dateEnd', today),
     [pickRc, setPickRc] = usePersistentState('prod.rc', null),
     [pickCarrier, setPickCarrier] = usePersistentState('prod.carrier', null),
-    [hoverI, setHoverI] = useState(-1),
-    [hoverId, setHoverId] = useState(null),
     [zoom, setZoom] = usePersistentState('prod.zoom', null),
     [pickSets, setPickSets] = usePersistentState('prod.sets', null); // null = all sets of the carrier, else a list of visit numbers
   const badRange = dateStart > dateEnd;
@@ -558,12 +542,6 @@ export default function ProductivityPage() {
                 visit={c}
                 index={sets.indexOf(c)}
                 rows={rowsOf[i]}
-                hoverI={hoverI}
-                hoverId={hoverId}
-                onHover={(i, id) => {
-                  setHoverI(i);
-                  setHoverId(i >= 0 ? id : null);
-                }}
                 view={view}
                 onZoom={setZoom}
                 loading={many.loading}

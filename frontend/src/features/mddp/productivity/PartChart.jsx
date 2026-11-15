@@ -80,8 +80,8 @@ export default function PartChart({
     setBox(i >= 0 ? { x: e.clientX - r.left, y: e.clientY - r.top, w: r.width } : null);
   };
   // the tooltip belongs to the chart it describes: here (hovered) or in the same chart of the other sets
-  const shownAt = hoverId != null && hoverIndex >= 0 ? hoverIndex : hover,
-    lines = shownAt >= 0 && tip && (hoverId == null || hoverId === id) ? tip(shownAt) : null,
+  const shownAt = hoverIndex != null && hoverIndex >= 0 ? hoverIndex : hover,
+    lines = shownAt >= 0 && tip ? tip(shownAt) : null,
     frac = shownAt >= 0 ? fracOf(shownAt, draw.n, draw.view) : 0,
     PLOT = 'calc(100% - 120px)';
   return (

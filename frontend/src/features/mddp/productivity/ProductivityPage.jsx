@@ -474,9 +474,6 @@ export default function ProductivityPage() {
               {carrierNos.map((n) => (
                 <option key={n} value={n}>
                   {carrierLabel(n)}
-                  {carriers.filter((c) => c.carrier === n).length > 1
-                    ? ` · ${carriers.filter((c) => c.carrier === n).length} sets`
-                    : ''}
                 </option>
               ))}
             </select>

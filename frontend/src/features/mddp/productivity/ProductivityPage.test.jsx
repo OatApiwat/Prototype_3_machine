@@ -82,7 +82,6 @@ describe('Productivity dashboard', () => {
     );
     const { container } = render(<ProductivityPage />);
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(2));
-    expect(container.textContent).toContain('2 sets');
     fireEvent.click(screen.getByLabelText(/Set 2/)); // untick set 2
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(1));
     fireEvent.click(screen.getByLabelText('All'));

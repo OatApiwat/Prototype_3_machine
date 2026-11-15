@@ -15,7 +15,7 @@ The browser never generates values; with no data it shows "No data".
 
 ## InfluxDB measurements (tag `machine=MDDP_184`)
 - `mddp_fast` (tag `side` L/R, 1 kHz): `p` kPa, `vx` `vy` `vz` g
-- `mddp_arm` (tag `side`, 20 Hz): `x` `y` px, `k`, `disp`, `active`, `cell`, `temp` degC
+- `mddp_arm` (tag `side`, 20 Hz): `x` `y` px, `ak` (carrier no.), `disp`, `active`, `cell`, `temp` degC
 - `mddp_carrier` (tag `k`, 20 Hz): `x` px, `nL`, `nR` shots done
 
 The simulator model is `nodered/sim/mddp.js` (extracted from the legacy HTML in `legacy/`). CALUL_037 and HAll_013 are next.

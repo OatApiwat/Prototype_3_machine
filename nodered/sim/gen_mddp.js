@@ -21,7 +21,7 @@ function gen(base, from, to) {
     const t = (ts - base) / 1000;
     for (const s of ['L', 'R']) {
       const a = m.armState(s, t);
-      out.push(`mddp_arm,${tag},side=${s} x=${r(a.p.x, 2)},y=${r(a.p.y, 2)},k=${a.k || 0}i,disp=${a.disp ? 1 : 0}i,active=${a.active ? 1 : 0}i,cell=${a.sn || 0}i,temp=${r(m.tempAt(s, t), 3)} ${ts}`);
+      out.push(`mddp_arm,${tag},side=${s} x=${r(a.p.x, 2)},y=${r(a.p.y, 2)},ak=${a.k || 0}i,disp=${a.disp ? 1 : 0}i,active=${a.active ? 1 : 0}i,cell=${a.sn || 0}i,temp=${r(m.tempAt(s, t), 3)} ${ts}`);
     }
     const c = Math.floor(t / m.P);
     for (let k = Math.max(1, c - 1); k <= c + 3; k++) {

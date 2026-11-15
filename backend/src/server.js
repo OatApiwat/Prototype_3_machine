@@ -139,6 +139,9 @@ both('/api/mddp/parts', async (req, res) => {
   } catch (e) { fail(res, e); }
 });
 
+// errors (e.g. a broken JSON payload) answer as JSON, never as an HTML page with a stack trace
+app.use((err, _req, res, _next) => res.status(err.status >= 400 && err.status < 500 ? err.status : 500).json({ error: err.type === 'entity.parse.failed' ? 'invalid JSON' : 'bad request' }));
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws', perMessageDeflate: { threshold: 1024 } });
 wss.on('connection', (ws) => {

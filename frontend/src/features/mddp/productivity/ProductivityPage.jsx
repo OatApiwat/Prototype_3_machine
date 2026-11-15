@@ -415,7 +415,11 @@ export default function ProductivityPage() {
               type="date"
               value={dateStart}
               max={dateEnd}
-              onChange={(e) => e.target.value && setDateStart(e.target.value)}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                setDateStart(e.target.value);
+                setSearched(null);
+              }}
             />
           </label>
           <label className="pfield">
@@ -425,7 +429,11 @@ export default function ProductivityPage() {
               type="date"
               value={dateEnd}
               min={dateStart}
-              onChange={(e) => e.target.value && setDateEnd(e.target.value)}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                setDateEnd(e.target.value);
+                setSearched(null);
+              }}
             />
           </label>
           <label className="pfield">

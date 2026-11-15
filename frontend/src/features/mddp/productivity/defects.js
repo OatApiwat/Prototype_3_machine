@@ -14,7 +14,17 @@ export const popcount = (m) => {
 export const hasDefect = (m, i) => ((m | 0) >> i) & 1;
 export const stripLabel = (n) => 'Strip ' + String(n).padStart(3, '0');
 export const carrierLabel = (n) => 'Carrier ' + String(n).padStart(2, '0');
-export const clock = (ms) => new Date(ms).toLocaleTimeString('en-GB');
+const p2 = (n, l = 2) => String(n).padStart(l, '0');
+/** time of day to the millisecond: 14:50:54.462 */
+export const clock = (ms) => {
+  const d = new Date(ms);
+  return `${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}.${p2(d.getMilliseconds(), 3)}`;
+};
+/** date and time to the millisecond: 2026-11-15 14:50:54.462 */
+export const stamp = (ms) => {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${clock(ms)}`;
+};
 /** short run card label: "RC-2611150231-02" -> same; kept as a function so the format lives in one place */
 export const runCardLabel = (rc) => rc;
 

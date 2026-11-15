@@ -1,7 +1,6 @@
 // Export of the Defect monitoring page: Excel (data) and PowerPoint (summary + chart images). Libraries load on first use.
-import { DEFECTS, hasDefect, summarize, stripLabel, carrierLabel } from './defects.js';
+import { DEFECTS, hasDefect, summarize, stripLabel, carrierLabel, stamp } from './defects.js';
 
-const stamp = (t) => new Date(t).toLocaleString('sv-SE');
 const names = (m) => DEFECTS.filter((_, i) => hasDefect(m, i)).join(', ');
 const fileBase = (rc, carrier) => `defect-monitoring_${rc}_${carrierLabel(carrier).replace(' ', '')}`;
 

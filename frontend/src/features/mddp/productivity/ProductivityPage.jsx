@@ -12,6 +12,7 @@ import {
   carrierLabel,
   carrierRows,
   clock,
+  stamp,
   hasDefect,
   niceAxis,
   stripLabel,
@@ -38,7 +39,6 @@ const X_LABEL = 'Suspension No.';
 
 const pad = (n) => String(n).padStart(2, '0');
 const dayStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const fmtT = (t) => new Date(t).toLocaleString('sv-SE');
 const defectNames = (m) => {
   const names = DEFECTS.filter((_, i) => hasDefect(m, i));
   return names.length ? `${names.length} defect(s): ${names.join(', ')}` : '';
@@ -71,7 +71,7 @@ const peerTip = (peers, i, linesOf) =>
     const r = p.rows[i];
     return r
       ? [
-          `${p.label} · Suspension ${i + 1} (strip ${r.strip}, part ${r.part}) · ${fmtT(r.t)}`,
+          `${p.label} · Suspension ${i + 1} (strip ${r.strip}, part ${r.part}) · ${stamp(r.t)}`,
           ...linesOf(r, p.rows).filter(Boolean),
         ]
       : [`${p.label} · Suspension ${i + 1}`];

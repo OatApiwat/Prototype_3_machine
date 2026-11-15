@@ -7,6 +7,19 @@ const tag = `machine=${MACHINE}`;
 const RAD = 180 / Math.PI;
 const FAST_DT = 10, SLOW_DT = 50;   // vacuum 100 Hz, robot 20 Hz
 
+// HA tray state: for the two alternating tray lanes (group % 2) a 12-pair bit mask of placed plates (bit 2n = front, 2n+1 = back) and the sideways shift (mm) while the set moves on
+function trayFields(t) {
+  const ph = c.phaseOf(t), NP = c.NPAIR, RF = c.T_RELF(), RB = c.T_RELB(), lanes = [{ m: 0, off: 0 }, { m: 0, off: 0 }];
+  if (ph.c >= 0) {
+    for (let G = Math.max(0, Math.floor(ph.c / NP) - 1); G <= Math.floor(ph.c / NP); G++) {
+      const ts = c.startOf(NP * G + NP - 1) + RB + 0.3; if (t > ts + 1.6) continue;
+      const lane = lanes[G % 2]; lane.off = t > ts ? 600 * c.minjerk((t - ts) / 1.4) : 0; lane.m = 0;
+      for (let n = 0; n < NP; n++) for (let s = 0; s < 2; s++) if (t >= c.startOf(NP * G + n) + (s ? RB : RF)) lane.m += 2 ** (2 * n + s);
+    }
+  }
+  return `m0=${lanes[0].m}i,o0=${r(lanes[0].off, 2)},m1=${lanes[1].m}i,o1=${r(lanes[1].off, 2)}`;
+}
+
 function gen(base, from, to) {
   const out = [];
   for (let ts = Math.floor(from / FAST_DT) * FAST_DT + FAST_DT; ts <= to; ts += FAST_DT) {
@@ -23,6 +36,7 @@ function gen(base, from, to) {
     const tf = T.map((v, i) => `t${i + 1}=${r(v, 3)}`).join(',');
     out.push(`calul_robot,${tag} ${qf},${jf},life=${r(730.5 * 86400 + t, 1)},${tf},x=${r(p[0], 3)},y=${r(p[1], 3)},z=${r(p[2], 3)},a=${r(abc[0], 3)},b=${r(abc[1], 3)},c=${r(abc[2], 3)},dx=${r(e[0], 4)},dy=${r(e[1], 4)},dz=${r(e[2], 4)},da=${r(ea[0], 4)},db=${r(ea[1], 4)},dc=${r(ea[2], 4)},wp=${wp}i,at=${at}i,cycle=${ph.c + 1}i,tc=${r(ph.tc, 3)} ${ts}`);
     out.push(`calul_flow,${tag} ready=${Math.min(c.readyCount(t), 1e6)}i,picked=${c.pickedCycles(t)}i,sent=${c.sentCount(t)}i ${ts}`);
+    out.push(`calul_tray,${tag} ${trayFields(t)},bufF=${Math.min(4, Math.ceil(Math.max(0, c.readyCount(t) - 2 * c.pickedCycles(t)) / 2))}i,bufB=${Math.min(4, Math.floor(Math.max(0, c.readyCount(t) - 2 * c.pickedCycles(t)) / 2))}i ${ts}`);
     for (let k = 0; k < 3; k++) out.push(`calul_festo,${tag},axis=${'XYZ'[k]} temp=${r(f.festoT(k, t), 3)} ${ts}`);
   }
   // measured arrivals: one event per waypoint arrival at the sim time of the measurement

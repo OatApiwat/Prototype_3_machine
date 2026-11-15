@@ -3,6 +3,7 @@ import Graph from './Graph.jsx';
 import { Stat, useTick, val, fmt, theme } from './Live.jsx';
 import { nowRender, sample, rowsOf } from './store.js';
 import { fit } from './canvasUtil.js';
+import Calul3D from './Calul3D.jsx';
 
 const KEY = 'calul_robot|', TOL = 0.10;
 const PN = ['Home', 'Above buffer', 'Pick Front + Back', 'Lift (loaded)', 'Transfer via-point', 'Above tray', 'Place Front (to HAll)', 'Place Back (to HAll)', 'Lift (empty)', 'Return via-point'];
@@ -69,7 +70,7 @@ function FestoErr() {
 
 export default function CalulTab() {
   const [win, setWin] = useState(() => +(localStorage.getItem('calul.win') || 20));
-  const [mode, setMode] = useState(() => localStorage.getItem('calul.mode') || '2d');
+  const [mode, setMode] = useState(() => localStorage.getItem('calul.mode') || '3d');
   const winRef = useRef(win); winRef.current = win; const getWin = useMemo(() => () => winRef.current, []);
   useEffect(() => { localStorage.setItem('calul.win', win); localStorage.setItem('calul.mode', mode); }, [win, mode]);
   useTick(500);
@@ -83,7 +84,7 @@ export default function CalulTab() {
       <h1>CALUL_037 — KUKA KR 6 R900-2 HO</h1>
       <div className="toolbar"><span className="seg"><button className={mode === '2d' ? 'on' : ''} onClick={() => setMode('2d')}>2D</button><button className={mode === '3d' ? 'on' : ''} onClick={() => setMode('3d')}>3D</button></span>
         <span>Window {Math.round(win)} s</span><button className="pill" onClick={() => setWin((w) => Math.max(1, w / 1.5))}>＋</button><button className="pill" onClick={() => setWin((w) => Math.min(60, w * 1.5))}>－</button></div>
-      <div className="card"><div style={{ fontWeight: 700, padding: '2px 4px 6px' }}>{status}</div><Robot mode={mode} /></div>
+      <div className="card"><div style={{ fontWeight: 700, padding: '2px 4px 6px' }}>{status}</div>{mode === '3d' ? <Calul3D /> : <Robot mode="2d" />}</div>
       <div className="stats">
         <Stat label="Cycle" k={KEY} f="cycle" d={0} step /><Stat label="Front vacuum" k="calul_vac|" f="front" d={1} unit="kPa" /><Stat label="Back vacuum" k="calul_vac|" f="back" d={1} unit="kPa" />
         <div className="stat"><span>Buffer (from MDDP_184)</span><b>{(val("calul_flow|", "ready", true) ?? 0) >= 1e5 ? "queue available" : fmt(val("calul_flow|", "ready", true), 0)}</b></div><Stat label="Picked cycles" k="calul_flow|" f="picked" d={0} step /><Stat label="Sent to HAll" k="calul_flow|" f="sent" d={0} step />

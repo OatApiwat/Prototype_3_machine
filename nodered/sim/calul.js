@@ -311,4 +311,4 @@
     return (t - T_RELF < 0 ? 0 : cycleIdx(t - T_RELF) + 1) + (t - T_RELB < 0 ? 0 : cycleIdx(t - T_RELB) + 1);
   }
   // ===== 3D scene (three.js, units = mm, root frame is z-up like the robot controller) =====
-module.exports = { fk, fkAll, phaseOf, cycleIdx, startOf, vOf, posAt, abcAt, targetAt, tempsAt, vacAt, lerpQ, errAt, angErrAt, readyCount, pickedCycles, sentCount, carrierId, WPS, NW, CT, TV, VP, arrivalsIn };
+module.exports = { NPAIR, T_RELF: () => T_RELF, T_RELB: () => T_RELB, minjerk, fk, fkAll, phaseOf, cycleIdx, startOf, vOf, posAt, abcAt, targetAt, tempsAt, vacAt, lerpQ, errAt, angErrAt, readyCount, pickedCycles, sentCount, carrierId, WPS, NW, CT, TV, VP, arrivalsIn };

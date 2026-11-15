@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { cardsUrl, carriersUrl, partsUrl, useLoaded } from './useProductivityData.js';
+import { cardsUrl, carriersUrl, partsUrl, useLoaded, useLoadedMany } from './useProductivityData.js';
 import PartChart from './PartChart.jsx';
 import {
   DEFECTS,
@@ -31,7 +31,7 @@ const AXES = [
   ['Y', '#d62728'],
   ['Z', '#1a9e6e'],
 ];
-const RIGHT = { rightMax: 6, rightTicks: [0, 2, 4, 6], rightLabel: 'Defects of the piece (count)' };
+const RIGHT = { rightMax: 6, rightTicks: [0, 2, 4, 6], rightLabel: 'Defects found (count, by code)' };
 const X_LABEL = `Suspension No. (1 - ${SUSPENSIONS}) · 1 carrier = ${STRIPS_PER_CARRIER} strips × ${PARTS_PER_STRIP}`;
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -65,9 +65,7 @@ function Legend() {
 }
 
 /** One "set" = one visit of a carrier = 3 strips x 20 pieces; shown as one column of charts */
-function SetColumn({ rc, visit, index, nonce, defectMax }) {
-  const res = useLoaded(partsUrl(rc, visit.seq), nonce);
-  const rows = useMemo(() => carrierRows(res.url ? res.data : []), [res]);
+function SetColumn({ visit, index, rows, loading, error, defectMax }) {
   const sm = summarize(rows);
   const groups = Array.from({ length: STRIPS_PER_CARRIER }, (_, k) => ({
     from: k * PARTS_PER_STRIP,
@@ -132,12 +130,12 @@ function SetColumn({ rc, visit, index, nonce, defectMax }) {
           {visit.pieces >= SUSPENSIONS ? '' : ' · in progress'}
         </span>
       </div>
-      {res.error && (
+      {error && (
         <div className="card" style={{ color: 'var(--red)' }}>
-          Cannot load data: {res.error}
+          Cannot load data: {error}
         </div>
       )}
-      {!res.error && !res.loading && sm.n === 0 && (
+      {!error && !loading && sm.n === 0 && (
         <div className="card" style={{ color: 'var(--muted)' }}>
           No parts yet for this set.
         </div>
@@ -231,22 +229,43 @@ export default function ProductivityPage() {
   const card = cards.find((c) => c.rc === rc);
   const err = step1.error || step2.error;
 
-  // run card overview: defects per carrier visit (click a bar to open that carrier's set)
-  const ov = carriers;
-  const ovMax = Math.max(2, ...ov.map((c) => c.cnt.reduce((a, b) => a + b, 0)));
-  const ovTop = Math.ceil(ovMax / 4) * 4, // multiple of 4 so the count ticks line up with the % grid lines
-    ovAxis = { lo: 0, hi: 100, ticks: [0, 25, 50, 75, 100] };
-  const ovTip = (i) => {
-    const c = ov[i];
-    return [
-      `${carrierLabel(c.carrier)} · visit ${c.seq} · ${clock(c.start)}`,
-      `Strips ${c.strips.join(', ')}`,
-      `Defective parts: ${c.defective} of ${c.pieces} pcs (${((100 * c.defective) / c.pieces).toFixed(1)}%)`,
-      ...DEFECTS.map((d, k) => (c.cnt[k] ? `${d}: ${c.cnt[k]}` : null)).filter(Boolean),
-    ];
+  // pieces of the shown sets (loaded once per selection) -> per strip statistics for the carrier chart
+  const many = useLoadedMany(
+    shown.map((c) => partsUrl(rc, c.seq)),
+    nonce
+  );
+  const rowsOf = shown.map((_, i) => carrierRows(many.data[i] || []));
+  const strips = shown.flatMap((c, i) =>
+    Array.from({ length: STRIPS_PER_CARRIER }, (_, k) => {
+      const made = rowsOf[i].slice(k * PARTS_PER_STRIP, (k + 1) * PARTS_PER_STRIP).filter(Boolean);
+      return {
+        no: c.strips[k],
+        pieces: made.length,
+        defective: made.filter((r) => r.defect > 0).length,
+        cnt: DEFECTS.map((_, d) => made.reduce((n, r) => n + hasDefect(r.defect, d), 0)),
+      };
+    })
+  );
+  // one defect axis (0..N, N a multiple of 4) shared by the carrier chart and every piece chart
+  const maxPiece = Math.max(
+    0,
+    ...rowsOf.flat().map((r) => (r ? DEFECTS.reduce((n, _, d) => n + hasDefect(r.defect, d), 0) : 0))
+  );
+  const maxStrip = Math.max(0, ...strips.map((x) => x.cnt.reduce((a, b) => a + b, 0)));
+  const defectMax = Math.ceil(Math.max(4, maxPiece, maxStrip) / 4) * 4;
+  const pctAxis = { lo: 0, hi: 100, ticks: [0, 25, 50, 75, 100] };
+  const stripTip = (i) => {
+    const x = strips[i];
+    return x
+      ? [
+          `${stripLabel(x.no)} · Set ${sets.indexOf(shown[Math.floor(i / STRIPS_PER_CARRIER)]) + 1}`,
+          `Defective parts: ${x.defective} of ${x.pieces} pcs${x.pieces ? ` (${((100 * x.defective) / x.pieces).toFixed(1)}%)` : ''}`,
+          ...DEFECTS.map((d, k) => (x.cnt[k] ? `${d}: ${x.cnt[k]}` : null)).filter(Boolean),
+        ]
+      : null;
   };
-  const totalN = ov.reduce((a, c) => a + c.pieces, 0),
-    totalD = ov.reduce((a, c) => a + c.defective, 0);
+  const carrierN = strips.reduce((a, x) => a + x.pieces, 0),
+    carrierD = strips.reduce((a, x) => a + x.defective, 0);
 
   return (
     <div>
@@ -373,26 +392,35 @@ export default function ProductivityPage() {
           No run cards in this period (InfluxDB keeps the last 7 days).
         </div>
       )}
-      {ov.length > 0 && (
+      {shown.length > 0 && (
         <div style={{ marginTop: 8 }}>
           <PartChart
-            title={`Defective parts per carrier — Run Card ${rc}`}
-            right={`${ov.length} carriers · ${totalN.toLocaleString()} pcs · ${totalN ? ((100 * totalD) / totalN).toFixed(1) : 0}% defective · click a bar to open a carrier`}
+            title={`Defective parts per strip — ${carrierLabel(carrierNo)} · Run Card ${rc}`}
+            right={`${shown.length} set(s) · ${carrierN.toLocaleString()} pcs · ${carrierN ? ((100 * carrierD) / carrierN).toFixed(1) : 0}% defective`}
             height={200}
-            onPick={(i) => (setPickCarrier(ov[i].carrier), setPickSets([ov[i].seq]))}
             draw={{
-              n: Math.max(ov.length, 45),
-              lines: [{ color: '#c0392b', values: ov.map((c) => (100 * c.defective) / c.pieces) }],
-              axis: ovAxis,
+              n: strips.length,
+              groups: shown.map((c, i) => ({
+                from: i * STRIPS_PER_CARRIER,
+                to: (i + 1) * STRIPS_PER_CARRIER,
+                label: `Set ${sets.indexOf(c) + 1} · visit ${c.seq}`,
+              })),
+              lines: [
+                {
+                  color: '#c0392b',
+                  values: strips.map((x) => (x.pieces ? (100 * x.defective) / x.pieces : null)),
+                },
+              ],
+              axis: pctAxis,
               leftFmt: (v) => v + '%',
-              bars: DEFECTS.map((_, d) => ov.map((c) => c.cnt[d])),
+              bars: DEFECTS.map((_, d) => strips.map((x) => x.cnt[d])),
               ylabel: 'Defective parts (%)',
-              xlabel: 'Carrier visit in the run card (1 run card = 45 carriers = 2,700 pieces)',
-              rightMax: ovTop,
-              rightTicks: [0, 1, 2, 3, 4].map((k) => (k * ovTop) / 4),
+              xlabel: `Strip No. (1 strip = ${PARTS_PER_STRIP} pieces, ${STRIPS_PER_CARRIER} strips per set)`,
+              rightMax: defectMax,
+              rightTicks: [0, 1, 2, 3, 4].map((k) => (k * defectMax) / 4),
               rightLabel: 'Defects found (count, by code)',
             }}
-            tip={(i) => (ov[i] ? ovTip(i) : null)}
+            tip={stripTip}
           />
         </div>
       )}
@@ -406,14 +434,15 @@ export default function ProductivityPage() {
               gridTemplateColumns: `repeat(${shown.length}, minmax(0, 1fr))`,
             }}
           >
-            {shown.map((c) => (
+            {shown.map((c, i) => (
               <SetColumn
                 key={rc + '/' + c.seq}
-                rc={rc}
                 visit={c}
                 index={sets.indexOf(c)}
-                nonce={nonce}
-                defectMax={ovTop}
+                rows={rowsOf[i]}
+                loading={many.loading}
+                error={many.error}
+                defectMax={defectMax}
               />
             ))}
           </div>

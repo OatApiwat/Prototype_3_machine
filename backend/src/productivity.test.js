@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
+const { groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
 
 const row = (carrier, strip_no, part, defect = 0) => ({ seq: 1, carrier, strip: 1, strip_no, part, susp: part, defect, t: strip_no * 100 + part });
 
@@ -37,4 +37,11 @@ test('rangeOf: dates are whole days in the given time zone, ms still accepted, b
   assert.strictEqual(rangeOf('2026-13-45', '2026-11-15', 420, now), null);
   assert.strictEqual(rangeOf('abc', null, 420, now), null);
   assert.strictEqual(rangeOf('2026-11-15', '2999-01-01', 420, now).to, now); // the future is clamped
+});
+
+test('groupStrips splits strips into groups of up to 3 consecutive numbers', () => {
+  assert.deepStrictEqual(
+    groupStrips(['Strip-1', 'Strip-2', 'Strip-3', 'Strip-4', 'Strip-76', 'Strip-77']),
+    [['Strip-1', 'Strip-2', 'Strip-3'], ['Strip-4'], ['Strip-76', 'Strip-77']]
+  );
 });

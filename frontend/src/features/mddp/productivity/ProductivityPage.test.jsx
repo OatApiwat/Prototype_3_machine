@@ -31,10 +31,10 @@ const row = (susp, defect) => ({
   defect,
 });
 // step 1 answer: run cards with their carriers and strip numbers (3 consecutive strips = one set)
-const runcards = (...s) => ({
+const runcards = (...groups) => ({
   dateStart: 'x',
   dateEnd: 'x',
-  runcards: [{ rc: 'RC-1-01', carriers: [{ carrier: 'CR-0007', strips: s }] }],
+  runcards: [{ rc: 'RC-1-01', carriers: [{ carrier: 'CR-0007', strips: groups }] }],
 });
 const set1 = ['Strip-1', 'Strip-2', 'Strip-3'];
 const set2 = ['Strip-4', 'Strip-5', 'Strip-6'];
@@ -54,7 +54,7 @@ describe('Productivity dashboard', () => {
         calls.push(String(url));
         const u = String(url);
         const data = u.includes('runcards')
-          ? runcards(...set1)
+          ? runcards(set1)
           : {
               rc: 'RC-1-01',
               strips: [],
@@ -88,7 +88,7 @@ describe('Productivity dashboard', () => {
       vi.fn(async (url) => {
         const u = String(url);
         const data = u.includes('runcards')
-          ? runcards(...set1, ...set2)
+          ? runcards(set1, set2)
           : {
               rc: 'RC-1-01',
               strips: [],
@@ -114,7 +114,7 @@ describe('Productivity dashboard', () => {
       vi.fn(async (url) => {
         const u = String(url);
         const data = u.includes('runcards')
-          ? runcards(...set1, ...set2)
+          ? runcards(set1, set2)
           : { rc: 'RC-1-01', strips: [], pieces: Array.from({ length: 60 }, (_, i) => row(i + 1, 0)) };
         return { ok: true, json: async () => data };
       })

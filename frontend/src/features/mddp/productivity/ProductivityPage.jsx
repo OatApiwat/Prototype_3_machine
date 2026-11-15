@@ -255,19 +255,16 @@ export default function ProductivityPage() {
   const carrierList = useMemo(() => cards.find((c) => c.rc === rc)?.carriers ?? [], [cards, rc]);
   const carrierNos = useMemo(() => carrierList.map((c) => c.carrier), [carrierList]);
   const carrierNo = carrierNos.includes(pickCarrier) ? pickCarrier : carrierNos[carrierNos.length - 1];
-  // the strips of the carrier come with the carriers; a set (one column) is one use of the carrier = a run of up to 3 consecutive strips
-  const sets = useMemo(() => {
-    const out = [];
-    for (const st of carrierList.find((c) => c.carrier === carrierNo)?.strips ?? []) {
-      const n = +st.replace(/\D/g, ''),
-        last = out[out.length - 1];
-      if (last && last.strips.length < STRIPS_PER_CARRIER && n === last.end + 1) {
-        last.strips.push(st);
-        last.end = n;
-      } else out.push({ carrier: carrierNo, key: st, strips: [st], end: n });
-    }
-    return out;
-  }, [carrierList, carrierNo]);
+  // the strips of the carrier come with the carriers; a set (one column) is one use of the carrier = one group of up to 3 strips
+  const sets = useMemo(
+    () =>
+      (carrierList.find((c) => c.carrier === carrierNo)?.strips ?? []).map((g) => ({
+        carrier: carrierNo,
+        key: g[0],
+        strips: g,
+      })),
+    [carrierList, carrierNo]
+  );
   const chosen = pickSets ? sets.filter((c) => pickSets.includes(c.key)) : sets;
   const shown = chosen.length ? chosen : sets;
   const allSets = shown.length === sets.length;

@@ -63,4 +63,13 @@ const partsOf = (rows, strips) => {
     .map(({ seq, strip, susp, part, ...r }) => ({ ...r, carrier: carrierName(r.carrier), strip_no: stripName(r.strip_no), suspension_no: part }));   // part = suspension no. 1..20 in the strip // eslint-disable-line no-unused-vars
 };
 
-module.exports = { stripName, carrierName, carriersOf, stripsOf, partsOf, rangeOf };
+/** "Strip-1","Strip-2","Strip-3","Strip-76",... (sorted) -> [["Strip-1","Strip-2","Strip-3"],["Strip-76",...]]: one group per use of the carrier (up to 3 consecutive strips) */
+function groupStrips(names, size = 3) {
+  const out = [];
+  for (const n of names) {
+    const no = +String(n).replace(/\D/g, ''), last = out[out.length - 1];
+    if (last && last.g.length < size && no === last.end + 1) { last.g.push(n); last.end = no; } else out.push({ g: [n], end: no });
+  }
+  return out.map((x) => x.g);
+}
+module.exports = { groupStrips, stripName, carrierName, carriersOf, stripsOf, partsOf, rangeOf };

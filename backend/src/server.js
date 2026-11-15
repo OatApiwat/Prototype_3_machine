@@ -5,7 +5,7 @@ const cors = require('cors');
 const { WebSocketServer } = require('ws');
 const { Cache } = require('./cache');
 const { makeInflux } = require('./influx');
-const { carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
+const { groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
 
 const cfg = {
   url: process.env.INFLUX_URL || 'http://localhost:8086',
@@ -113,7 +113,7 @@ app.get('/api/mddp/runcards', async (req, res) => {
     const runcards = await cached(`rcs:${Math.round(from / 1000)}:${Math.round(to / 1000)}`, cfg.pollMs, async () => (await influx.runCards(from, to)).map((c) => ({ rc: c.rc })).sort((a, b) => (a.rc < b.rc ? -1 : 1)));
     if (q.detail !== '1') return res.json({ ...echo, runcards });
     // detail=1: Run Card -> Carrier -> Strip no in one answer (no piece data)
-    const full = await Promise.all(runcards.map(async (c) => ({ rc: c.rc, carriers: carriersOf(await cached('parts:' + c.rc, cfg.pollMs, () => influx.parts(c.rc))).map((k) => ({ carrier: k.carrier, strips: k.strips.map((x) => x.strip_no) })) })));
+    const full = await Promise.all(runcards.map(async (c) => ({ rc: c.rc, carriers: carriersOf(await cached('parts:' + c.rc, cfg.pollMs, () => influx.parts(c.rc))).map((k) => ({ carrier: k.carrier, strips: groupStrips(k.strips.map((x) => x.strip_no)) })) })));
     res.json({ ...echo, runcards: full });
   } catch (e) { fail(res, e); }
 });

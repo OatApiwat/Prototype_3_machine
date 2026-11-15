@@ -97,7 +97,7 @@ function SetColumn({
   const groups = Array.from({ length: STRIPS_PER_CARRIER }, (_, k) => ({
     from: k * PARTS_PER_STRIP,
     to: (k + 1) * PARTS_PER_STRIP,
-    label: visit.strips[k] ? stripLabel(visit.strips[k]) : `Strip ${k + 1}`,
+    label: visit.strips[k] ? stripLabel(visit.strips[k]) : `Strip-${k + 1}`,
   }));
   const partTip = (p) => (i) =>
     peerTip(peers, i, (r) => [`${p.title}: ${r[p.f].toFixed(p.dec)} ${p.unit}`, defectNames(r.defect)]);
@@ -172,7 +172,8 @@ function SetColumn({
             Set {index + 1} · {carrierLabel(visit.carrier)} (visit {visit.seq})
           </b>{' '}
           <span style={{ opacity: 0.9 }}>
-            {sm.n ? clock(firstOf(rows).t) + ' · ' : ''}Strips {visit.strips.join(', ')}
+            {sm.n ? clock(firstOf(rows).t) + ' · ' : ''}
+            {visit.strips.join(', ')}
             {!loading && sm.n < SUSPENSIONS ? ' · in progress' : ''}
           </span>
         </div>
@@ -485,7 +486,7 @@ export default function ProductivityPage() {
                       checked={shown.some((x) => x.seq === c.seq)}
                       onChange={() => toggleSet(c.seq)}
                     />{' '}
-                    Set {k + 1} · Strips {c.strips.join(', ')}
+                    Set {k + 1} · {c.strips.join(', ')}
                   </label>
                 ))}
               </div>

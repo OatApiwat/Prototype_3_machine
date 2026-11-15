@@ -30,14 +30,15 @@ test('a reused carrier number stays a separate visit', () => {
 test('carriersOf lists each carrier of the run card with the strip numbers of each of its sets', () => {
   const c = carriersOf([row(26, 1, 1, 1, 0, 3), row(26, 1, 2, 1, 0, 4), row(1, 1, 1, 1, 0, 1), row(2, 7, 1, 1, 0, 2)]);
   assert.deepStrictEqual(c, [
-    { carrier: 1, sets: [{ seq: 1, strips: [1] }, { seq: 26, strips: [76, 77] }] },
-    { carrier: 7, sets: [{ seq: 2, strips: [4] }] },
+    { carrier: 1, sets: [{ seq: 1, strips: ['Strip-1'] }, { seq: 26, strips: ['Strip-76', 'Strip-77'] }] },
+    { carrier: 7, sets: [{ seq: 2, strips: ['Strip-4'] }] },
   ]);
 });
 
 test('partsOf returns one visit ordered by suspension', () => {
   const p = partsOf([row(2, 1, 2, 1, 0, 1), row(2, 1, 1, 5, 0, 2), row(3, 1, 1, 1, 0, 3)], 2);
   assert.deepStrictEqual(p.map((r) => r.susp), [5, 21]);
+  assert.strictEqual(p[0].strip_no, 'Strip-4'); // strip numbers are answered as "Strip-<no>"
 });
 
 test('rangeOf: dates are whole days in the given time zone, ms still accepted, bad input is rejected', () => {

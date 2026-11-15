@@ -2,6 +2,9 @@
 // Pure helpers for the MDDP productivity (defect) API. Rows are the `mddp_part` points of one run card.
 const DEFECTS = 6;   // bit 0..5 = ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5, MI
 
+/** Strip no as the API shows it: "Strip-76" (stored as a number) */
+const stripName = (n) => 'Strip-' + n;
+
 const bit = (mask, i) => ((mask | 0) >> i) & 1;
 
 /**
@@ -55,11 +58,15 @@ function carriersOf(rows) {
   const by = new Map();
   for (const v of visitsOf(rows)) {
     if (!by.has(v.carrier)) by.set(v.carrier, { carrier: v.carrier, sets: [] });
-    by.get(v.carrier).sets.push({ seq: v.seq, strips: v.strips });
+    by.get(v.carrier).sets.push({ seq: v.seq, strips: v.strips.map(stripName) });
   }
   return [...by.values()].sort((a, b) => a.carrier - b.carrier);
 }
 
-const partsOf = (rows, seq) => rows.filter((r) => r.seq === seq).sort((a, b) => a.susp - b.susp);
+const partsOf = (rows, seq) =>
+  rows
+    .filter((r) => r.seq === seq)
+    .sort((a, b) => a.susp - b.susp)
+    .map((r) => ({ ...r, strip_no: stripName(r.strip_no) }));
 
-module.exports = { carriersOf, visitsOf, partsOf, rangeOf, DEFECTS };
+module.exports = { stripName, carriersOf, visitsOf, partsOf, rangeOf, DEFECTS };

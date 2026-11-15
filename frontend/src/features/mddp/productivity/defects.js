@@ -12,7 +12,8 @@ export const popcount = (m) => {
   return n;
 };
 export const hasDefect = (m, i) => ((m | 0) >> i) & 1;
-export const stripLabel = (n) => 'Strip ' + String(n).padStart(3, '0');
+/** the API answers strip numbers as "Strip-76"; a bare number is formatted the same way */
+export const stripLabel = (n) => (typeof n === 'string' ? n : 'Strip-' + n);
 export const carrierLabel = (n) => 'Carrier ' + String(n).padStart(2, '0');
 const p2 = (n, l = 2) => String(n).padStart(l, '0');
 /** time of day to the millisecond: 14:50:54.462 */

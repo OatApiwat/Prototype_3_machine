@@ -16,7 +16,7 @@ const row = (susp, defect) => ({
   seq: 1,
   carrier: 7,
   strip: Math.ceil(susp / 20),
-  strip_no: Math.ceil(susp / 20),
+  strip_no: 'Strip-' + Math.ceil(susp / 20),
   part: ((susp - 1) % 20) + 1,
   susp,
   temp: 109,
@@ -32,8 +32,8 @@ const row = (susp, defect) => ({
 });
 // API 2 answer: carriers of the run card, each with its sets (seq) and their strip numbers
 const carriers = (...sets) => [{ carrier: 7, sets }];
-const set1 = { seq: 1, strips: [1, 2, 3] };
-const set2 = { seq: 2, strips: [4, 5, 6] };
+const set1 = { seq: 1, strips: ['Strip-1', 'Strip-2', 'Strip-3'] };
+const set2 = { seq: 2, strips: ['Strip-4', 'Strip-5', 'Strip-6'] };
 
 describe('Productivity dashboard', () => {
   it('walks date -> run card -> carrier and summarises the carrier', async () => {

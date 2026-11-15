@@ -7,6 +7,24 @@ const tag = `machine=${MACHINE}`;
 const RAD = 180 / Math.PI;
 const FAST_DT = 10, SLOW_DT = 50;   // vacuum 100 Hz, robot 20 Hz
 
+// ---- fault events, deterministic from the sim clock (legacy models) ----
+const FTH = [41.8, 45.4, 52.2], AXN = ['X', 'Y', 'Z'], FDESC = { E201: 'Axis temperature above warning level', E412: 'Positive end-position limit switch triggered', E330: 'Encoder signal lost (auto reset)' };
+const IAI = [['TF2', 'TF2 Position Error', 140, 31], ['TF1', 'TF1 Position Error', 170, 52], ['TOP CAM', 'TOP CAM Position Error', 230, 77], ['BOTTOM CAM', 'BUTTOM CAM Position Error', 260, 113], ['GRIPPER', 'GRIPPER Position Error', 190, 64], ['X', 'X Position Error', 310, 150], ['Y', 'Y Position Error', 350, 205], ['Z', 'Z Position Error', 400, 240]];
+let FEV = null;
+function faultEvents() {
+  if (FEV) return FEV; FEV = []; const H = 3 * 3600 + 60;
+  for (let k = 0; k < 3; k++) {
+    let on = null; const first = FEV.length;
+    for (let t = 0; t <= H; t += 0.5) { const T = f.festoT(k, t); if (T > FTH[k]) { if (on === null) on = t; } else if (on !== null) { FEV.push({ src: 'festo', t: on, t1: t, k, item: AXN[k], code: 'E201', desc: `Axis temperature above ${FTH[k]} \u00B0C (warning)`, val: FTH[k] }); on = null; } }
+    for (let q = FEV.length - 1; q > first; q--) if (FEV[q].t - FEV[q - 1].t1 < 40) { FEV[q - 1].t1 = FEV[q].t1; FEV.splice(q, 1); }
+  }
+  for (const e of FEV) { let mx = 0; for (let t = e.t; t <= e.t1; t += 0.5) mx = Math.max(mx, f.festoT(e.k, t)); e.val = mx; }
+  for (let n = 0; 95 + n * 420 < H; n++) FEV.push({ src: 'festo', t: 95 + n * 420, t1: 98 + n * 420, k: 0, item: 'X', code: 'E412', desc: FDESC.E412, val: 0 });
+  for (let n = 0; 250 + n * 310 < H; n++) FEV.push({ src: 'festo', t: 250 + n * 310, t1: 255 + n * 310, k: 1, item: 'Y', code: 'E330', desc: FDESC.E330, val: 0 });
+  IAI.forEach((q, k) => { for (let t = q[3]; t < H; t += q[2]) FEV.push({ src: 'iai', t, t1: t + 8, k, item: q[0], code: 'IE' + (101 + k), desc: q[1], val: 0 }); });
+  FEV.sort((a, b) => a.t - b.t); return FEV;
+}
+
 // HA tray state: for the two alternating tray lanes (group % 2) a 12-pair bit mask of placed plates (bit 2n = front, 2n+1 = back) and the sideways shift (mm) while the set moves on
 function trayFields(t) {
   const ph = c.phaseOf(t), NP = c.NPAIR, RF = c.T_RELF(), RB = c.T_RELB(), lanes = [{ m: 0, off: 0 }, { m: 0, off: 0 }];
@@ -45,14 +63,10 @@ function gen(base, from, to) {
     const ts = Math.round(base + a.t * 1000), tp = c.VP[c.vOf(a.c)][a.i], ta = [c.WPS[a.i].yaw, 0, 180];
     out.push(`calul_arrival,${tag},point=P${a.i + 1} cycle=${a.c + 1}i,x=${r(tp[0] + a.e[0], 4)},y=${r(tp[1] + a.e[1], 4)},z=${r(tp[2] + a.e[2], 4)},a=${r(ta[0] + a.a[0], 4)},b=${r(ta[1] + a.a[1], 4)},c=${r(ta[2] + a.a[2], 4)},ex=${r(a.e[0], 4)},ey=${r(a.e[1], 4)},ez=${r(a.e[2], 4)},ea=${r(a.a[0], 4)},eb=${r(a.a[1], 4)},ec=${r(a.a[2], 4)} ${ts}`);
   }
-  for (let k = 0; k < 3; k++) {
-    // Festo positioning error at each of its own point arrivals
-    for (let cc = Math.max(0, Math.floor((from - base) / 1000 / f.CF) - 1); cc <= Math.floor((to - base) / 1000 / f.CF); cc++) {
-      for (let i = 0; i < f.FP.length; i++) {
-        const ts = Math.round(base + f.fArr(cc, i) * 1000);
-        if (ts > from && ts <= to) out.push(`calul_festo_err,${tag},axis=${'XYZ'[k]},point=${f.FPN[i]} err=${r(f.festoE(k, cc, i), 5)},cycle=${cc + 1}i ${ts}`);
-      }
-    }
+  // fault-code log events (legacy Festo error codes + IAI error codes): one event per episode, written at its start time with its duration
+  for (const ev of faultEvents()) {
+    const ts = Math.round(base + ev.t * 1000);
+    if (ts > from && ts <= to) out.push(`calul_fault,${tag},src=${ev.src} item="${ev.item}",ki=${ev.k}i,code="${ev.code}",desc="${ev.desc}",dur=${r(ev.t1 - ev.t, 1)},val=${r(ev.val, 1)} ${ts}`);
   }
   return out.join('\n');
 }

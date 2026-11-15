@@ -20,7 +20,8 @@ const cfg = {
   port: +process.env.PORT || 3001
 };
 
-const cache = new Cache({ default: cfg.cacheSec, mddp_fast: cfg.cacheFastSec });
+const LOG_M = 'calul_fault', LOG_SEC = 3 * 3600;   // fault-code log: kept for the whole sim horizon so the "since start" tables are complete
+const cache = new Cache({ default: cfg.cacheSec, mddp_fast: cfg.cacheFastSec, [LOG_M]: LOG_SEC });
 const influx = makeInflux(cfg);
 const app = express();
 app.use(cors());
@@ -53,7 +54,9 @@ async function poll() {
   } catch (e) { lastError = String(e.message || e); console.error('poll failed:', lastError); }
   finally { polling = false; }
 }
-setInterval(poll, cfg.pollMs); poll();
+setInterval(poll, cfg.pollMs);
+// warm-up: the log measurement is refilled for its whole window once at start (the normal window is only cacheSec)
+influx.query(Date.now() - LOG_SEC * 1000, stopPrev, LOG_M).then((rows) => { if (rows.length) cache.add(LOG_M, rows); }).catch((e) => console.error('log warm-up failed:', String(e.message || e))).finally(poll);
 
 // ---- REST ----
 app.get('/api/config', (_q, res) => res.json({ pollMs: cfg.pollMs, renderDelayMs: cfg.renderDelayMs, cacheSec: cfg.cacheSec, cacheFastSec: cfg.cacheFastSec }));
@@ -84,7 +87,7 @@ wss.on('connection', (ws) => {
   clients.add(ws);
   const snap = {};   // initial backfill straight from the cache (no Influx query)
   const t0 = Date.now() - cfg.cacheSec * 1000;
-  for (const m of cache.measurements()) snap[m] = cache.since(m, t0);
+  for (const m of cache.measurements()) snap[m] = cache.since(m, m === LOG_M ? 0 : t0);
   ws.send(JSON.stringify({ type: 'snapshot', serverNow: Date.now(), data: snap }));
   ws.isAlive = true; ws.on('pong', () => { ws.isAlive = true; });
   ws.on('close', () => clients.delete(ws));

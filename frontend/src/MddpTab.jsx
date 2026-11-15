@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Graph from './Graph.jsx';
 import { nowRender, sample, keysWith, range, ui } from './store.js';
-import { useTick, val } from './Live.jsx';
+import { useTick, val, SpcBox } from './Live.jsx';
 import { css, fit } from './canvasUtil.js';
 
 // layout constants of the 2D drawing (pixels only; no data values)
@@ -53,29 +53,6 @@ function Line2D() {
   return <canvas ref={ref} />;
 }
 
-// SPC: I chart of the peak pressure of every dispense seen in the cached window (computed from stored samples only)
-function Spc({ side, win }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    let raf;
-    const draw = () => {
-      raf = requestAnimationFrame(draw);
-      const cv = ref.current; if (!cv || !cv.clientWidth) return;
-      const { g, w, h } = fit(cv); const tr = nowRender(), W = win() * 1000, t0 = tr - W, L = 46, T = 22, pw = w - L - 8, ph = h - T - 16;
-      g.clearRect(0, 0, w, h); g.font = '12px "Segoe UI"'; g.fillStyle = css('--muted'); g.textAlign = 'left'; g.fillText(`${side === 'L' ? 'Left' : 'Right'} dispense peak SPC (kPa)`, L, 10);
-      const rows = range('mddp_fast|' + side, tr - 60000, tr), peaks = []; let cur = null;
-      for (const r of rows) { if (r.p > 20) { if (!cur || r.t - cur.last > 5) { cur = { t: r.t, v: r.p, last: r.t }; peaks.push(cur); } cur.v = Math.max(cur.v, r.p); cur.last = r.t; } }
-      if (peaks.length < 5) { g.textAlign = 'center'; g.fillText('collecting dispenses…', L + pw / 2, T + ph / 2); return; }
-      const m = peaks.reduce((a, p) => a + p.v, 0) / peaks.length, sd = Math.sqrt(peaks.reduce((a, p) => a + (p.v - m) ** 2, 0) / (peaks.length - 1)) || 1;
-      const lo = m - 5 * sd, hi = m + 5 * sd, y = (v) => T + ph - ((v - lo) / (hi - lo)) * ph;
-      [[m, 'CL', '--green'], [m + 3 * sd, 'UCL', '--red'], [m - 3 * sd, 'LCL', '--red']].forEach(([v, lab, c]) => { g.strokeStyle = css(c); g.setLineDash(lab === 'CL' ? [] : [5, 4]); g.beginPath(); g.moveTo(L, y(v)); g.lineTo(L + pw, y(v)); g.stroke(); g.setLineDash([]); g.fillStyle = css(c); g.textAlign = 'right'; g.fillText(`${lab} ${v.toFixed(1)}`, L + pw, y(v) - 6); });
-      peaks.forEach((p) => { const x = L + ((p.t - t0) / W) * pw; if (x < L || x > L + pw) return; g.fillStyle = Math.abs(p.v - m) > 3 * sd ? css('--red') : css(side === 'L' ? '--blue' : '--cyan'); g.beginPath(); g.arc(x, y(p.v), 3, 0, 6.3); g.fill(); });
-    };
-    raf = requestAnimationFrame(draw); return () => cancelAnimationFrame(raf);
-  }, [side]);
-  return <canvas ref={ref} style={{ height: 150 }} />;
-}
-
 function RunCard() {
   useTick(500);
   let kL = 0; for (const key of keysWith('mddp_carrier|')) { const k = +key.split('|')[1], n = val(key, 'nL', true) ?? 0; if (n > 0 && k > kL) kL = k; }
@@ -98,14 +75,15 @@ export default function MddpTab() {
   const nc = (val) => (val === null ? '--' : String(val));
   return (
     <div>
-      <RunCard />
+      <div style={{ textAlign: 'right', margin: '4px 6px 2px' }}><SpcBox /></div>
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}><Line2D /></div>
       <div className="g2c" style={{ marginTop: 6 }}>
-        {['L', 'R'].map((s) => <div className="card" key={'p' + s}>{ui.spc ? <Spc side={s} win={getWin} /> : <Graph title={side(s) + ' arm pressure'} series={[{ key: 'mddp_fast|' + s, field: 'p', color: cv(s === 'L' ? '--blue' : '--cyan'), label: s }]} ymin={0} ymax={120} ticks={[0, 50, 100]} win={getWin} unit=" kPa" dec={1} spcOk={false} height={112} />}</div>)}
+        {['L', 'R'].map((s) => <div className="card" key={'p' + s}><Graph title={side(s) + ' arm pressure'} series={[{ key: 'mddp_fast|' + s, field: 'p', color: cv(s === 'L' ? '--blue' : '--cyan'), label: s }]} ymin={0} ymax={120} ticks={[0, 50, 100]} win={getWin} unit=" kPa" dec={1} height={112} /></div>)}
         {['L', 'R'].map((s) => <div className="card" key={'d' + s}><Graph title={side(s) + ' arm dispense time'} series={[{ key: 'mddp_dispense|' + s, field: 'dur', color: cv(s === 'L' ? '--blue' : '--cyan'), label: s }]} ymin={50} ymax={90} ticks={[60, 70, 80]} win={getWin} unit=" ms" dec={1} dots height={86} /></div>)}
         {['L', 'R'].map((s) => <div className="card" key={'t' + s}><Graph title={side(s) + ' head epoxy temperature'} series={[{ key: 'mddp_arm|' + s, field: 'temp', color: cv('--amber'), label: s }]} ymin={108} ymax={112} ticks={[108, 110, 112]} win={getWin} unit=" °C" dec={2} height={86} /></div>)}
-        {['L', 'R'].map((s) => <div className="card" key={'v' + s}>{AX.map(([f, nm, ymax, ticks, col]) => <Graph key={f} title={side(s) + ' robot vibration ' + nm} series={[{ key: 'mddp_fast|' + s, field: f, color: cv(col), label: nm[0] }]} ymin={0} ymax={ymax} ticks={ticks} win={getWin} unit=" g" dec={3} height={58} noTime={f !== 'vz'} />)}</div>)}
+        {['L', 'R'].map((s) => <div className="card" key={'v' + s}>{AX.map(([f, nm, ymax, ticks, col]) => <Graph key={f} title={f === 'vx' ? side(s) + ' robot vibration X' : nm} series={[{ key: 'mddp_fast|' + s, field: f, color: cv(col), label: nm[0] }]} ymin={0} ymax={ymax} ticks={ticks} win={getWin} unit=" g" dec={3} height={58} noTime={f !== 'vz'} />)}</div>)}
       </div>
+      <RunCard />
       <div className="dock">
         <span>Graph zoom <button className="pill" onClick={() => setWin((w) => Math.min(60, w * 1.5))}>−</button> <button className="pill" onClick={() => setWin((w) => Math.max(0.2, w / 1.5))}>+</button> {win < 10 ? win.toFixed(1) : Math.round(win)} s</span>
         <span className="legend"><span><i className="sw" style={{ background: '#bfdbfe' }} />Left arm zone (SN 1–10)</span><span><i className="sw" style={{ background: '#cffafe' }} />Right arm zone (SN 11–20)</span><span><i className="sw" style={{ background: '#86efac' }} />Dispensed</span><span><i className="sw" style={{ background: '#f97316', borderRadius: '50%' }} />Glue drop</span></span>

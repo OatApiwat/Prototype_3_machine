@@ -44,3 +44,12 @@ table.t { width:100%; border-collapse:collapse; font-size:13px; } table.t th, ta
 .legend span { margin-right:14px; } .sw { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-2px; margin-right:4px; }
 .ovtitle { position:absolute; left:10px; top:6px; font-weight:800; font-size:15px; z-index:2; } .ovtitle span { font-weight:500; color:var(--muted); }
 .tbl-compact table.t { font-size:11px; } .tbl-compact table.t th, .tbl-compact table.t td { padding:2px 4px; }
+
+.spc1 { display:inline-flex; align-items:center; gap:5px; font-weight:700; cursor:pointer; font-size:13px; }
+.spc1.abs { position:absolute; right:6px; top:-30px; z-index:3; }
+.kframe .spc1.kspc { position:absolute; right:12px; top:-10px; background:var(--panel); padding:1px 8px; border-radius:6px; border:1px solid var(--line); }
+.kframe.iai { border-color:#7c3aed; background:rgba(124,58,237,.06); } .kframe.iai .kh { background:#7c3aed; }
+.ferr th, .ferr td { text-align:left !important; } .ferr td.dsc, .ferr th.dsc { width:46%; } .ferr td.st-a { color:var(--red); font-weight:800; } .ferr td.st-c { color:var(--green); font-weight:700; } .ferr td.axc { font-weight:800; }
+.ferr table.t td { height:26px; } .fpg { display:flex; align-items:center; justify-content:flex-end; gap:6px; padding:6px 10px; font-size:13px; color:var(--muted); }
+.pchips { display:inline-flex; gap:2px; } .pchips button { font:700 11px 'Segoe UI',Arial,sans-serif; padding:1px 6px; border:1px solid var(--line); border-radius:5px; background:var(--panel); color:var(--text); cursor:pointer; } .pchips button.on { background:var(--text); color:var(--panel); }
+.scenehint { position:absolute; right:12px; bottom:8px; z-index:3; font-size:11px; color:var(--muted); }

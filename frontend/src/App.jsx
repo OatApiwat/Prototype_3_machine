@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useSyncExternalStore } from 'react';
-import { start, subscribe, state, ui, setPaused, setSpc } from './store.js';
+import { start, subscribe, state, ui, setPaused } from './store.js';
 import Portal from './Portal.jsx';
 import MddpTab from './MddpTab.jsx';
 import CalulTab from './CalulTab.jsx';
 import HallTab from './HallTab.jsx';
 
-const TABS = [['portal', 'Portal'], ['mddp', 'MDDP_184'], ['calul', 'CALUL_037'], ['hall', 'HAll_013']];
+const TABS = [['portal', 'Portal'], ['mddp', 'MDDP Process'], ['calul', 'CALUL Process'], ['hall', 'HAll Process']];
 let ver = 0; const snap = () => ver; const sub = (f) => subscribe(() => { ver++; f(); });
 export default function App() {
   useSyncExternalStore(sub, snap);
@@ -21,7 +21,6 @@ export default function App() {
         <span className="spacer" />
         <span className="status"><span className={'dot' + (state.connected ? ' on' : '')} />{state.connected ? 'live from InfluxDB' : 'reconnecting…'}</span>
         <button className="pill" onClick={() => setPaused(ui.pausedAt === null)}>{ui.pausedAt === null ? '⏸ Pause' : '▶ Live'}</button>
-        <label className="status"><input type="checkbox" checked={ui.spc} onChange={(e) => setSpc(e.target.checked)} /> SPC (all graphs)</label>
         <button className="pill" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? '☀️ Light' : '🌙 Dark'}</button>
       </div>
       {tab === 'portal' && <Portal go={setTab} />}

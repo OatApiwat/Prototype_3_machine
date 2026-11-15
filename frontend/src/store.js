@@ -4,7 +4,7 @@ const series = new Map();          // key -> rows sorted by t
 const listeners = new Set();
 export const state = { connected: false, offset: 0, delay: 8000, lastRowT: 0, rows: 0 };
 
-const keyOf = (r) => r.m + '|' + [r.side, r.k, r.axis, r.point].filter((v) => v !== undefined && v !== '').join('/');
+const keyOf = (r) => r.m + '|' + [r.side, r.k, r.axis, r.point, r.src].filter((v) => v !== undefined && v !== '').join('/');
 function merge(rows) {
   for (const r of rows) {
     const k = keyOf(r); let a = series.get(k); if (!a) { a = []; series.set(k, a); }
@@ -15,7 +15,8 @@ function merge(rows) {
   }
   state.rows += rows.length;
   const cut = state.lastRowT - KEEP_MS;
-  for (const a of series.values()) { let i = 0; while (i < a.length && a[i].t < cut) i++; if (i > 0) a.splice(0, i); }
+  for (const [key, a] of series) { if (key.startsWith('calul_fault|')) continue;   // the fault log keeps its whole history
+    let i = 0; while (i < a.length && a[i].t < cut) i++; if (i > 0) a.splice(0, i); }
 }
 export const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 const notify = () => listeners.forEach((f) => f());

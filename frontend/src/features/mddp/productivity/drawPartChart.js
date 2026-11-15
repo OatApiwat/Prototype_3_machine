@@ -40,7 +40,7 @@ export function drawPartChart(g, w, h, o) {
     g.lineTo(P.x + P.w, yL(v));
     g.stroke();
     g.fillStyle = mu;
-    g.fillText(o.leftFmt ? o.leftFmt(v) : String(+v.toFixed(3)), P.x - 6, yL(v));
+    if (!o.leftHidden) g.fillText(o.leftFmt ? o.leftFmt(v) : String(+v.toFixed(3)), P.x - 6, yL(v));
   }
   // right axis labels
   g.textAlign = 'left';
@@ -130,7 +130,7 @@ export function drawPartChart(g, w, h, o) {
   g.rotate(-Math.PI / 2);
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  g.fillText(o.ylabel, 0, 0);
+  if (!o.leftHidden) g.fillText(o.ylabel, 0, 0);
   g.restore();
   g.save();
   g.translate(w - 10, P.y + P.h / 2);

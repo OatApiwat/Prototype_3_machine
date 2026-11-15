@@ -127,12 +127,6 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
       ylabel: v.unit,
     };
   };
-  // red line: defective pieces counted so far along the suspensions of the set (cumulative)
-  const cumDefective = rows.map((r, i) =>
-    r ? rows.slice(0, i + 1).filter((x) => x && x.defect > 0).length : null
-  );
-  const cumMax = Math.max(4, Math.ceil(Math.max(0, ...cumDefective.filter((x) => x != null)) / 4) * 4);
-  const cumAxis = { lo: 0, hi: cumMax, ticks: [0, 1, 2, 3, 4].map((k) => (k * cumMax) / 4) };
   const cur = (f, dec) => {
     const r = lastOf(rows);
     return r ? r[f].toFixed(dec) : '--';
@@ -164,9 +158,9 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
         height={200}
         draw={{
           ...common,
-          lines: [{ color: '#c0392b', values: cumDefective }],
-          axis: cumAxis,
-          ylabel: 'Defective parts so far (count)',
+          lines: [],
+          axis: { lo: 0, hi: stackMax, ticks: common.rightTicks },
+          leftHidden: true,
         }}
         tip={defectTip}
         hoverIndex={hoverI}

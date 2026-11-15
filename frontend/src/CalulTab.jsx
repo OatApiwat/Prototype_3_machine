@@ -8,6 +8,7 @@ import FaultLog from './FaultLog.jsx';
 
 const KEY = 'calul_robot|', TOL = 0.10;
 const PN = ['Home', 'Above buffer', 'Pick Front + Back', 'Lift (loaded)', 'Transfer via-point', 'Above tray', 'Place Front (to HAll)', 'Place Back (to HAll)', 'Lift (empty)', 'Return via-point'];
+const PS = ['Home', 'Above buffer', 'Pick Front+Back', 'Lift (loaded)', 'Via-point', 'Above tray', 'Place Front', 'Place Back', 'Lift (empty)', 'Return via'];
 const J = ['j1', 'j2', 'j3', 'j4', 'j5'];
 
 // robot skeleton from the joint positions stored in InfluxDB (no kinematics in the browser)
@@ -55,7 +56,7 @@ function Arrivals() {
     const a = rowsOf('calul_arrival|P' + i); const last = a[a.length - 1];
     let pos = 0, ang = 0; for (const r of a) { pos = Math.max(pos, Math.hypot(r.ex, r.ey, r.ez)); ang = Math.max(ang, Math.abs(r.ea), Math.abs(r.eb), Math.abs(r.ec)); }
     const n3 = last ? Math.hypot(last.ex, last.ey, last.ez) : 0, good = last && n3 <= TOL && pos <= TOL && ang <= TOL;
-    rows.push(<tr key={i} style={wp === i - 1 ? { background: 'rgba(249,115,22,.25)' } : undefined}><td>{i}</td><td style={{ textAlign: 'left' }}>{PN[i - 1]}</td>{['x', 'y', 'z', 'a', 'b', 'c'].map((f) => <td key={f}>{last ? last[f].toFixed(3) : '–'}</td>)}<td>{last ? pos.toFixed(3) : '–'}</td><td>{last ? ang.toFixed(3) : '–'}</td><td className={good ? 'ok' : last ? 'bad' : ''}>{last ? (good ? '✔ OK' : '✘ OUT') : '–'}</td></tr>);
+    rows.push(<tr key={i} style={wp === i - 1 ? { background: 'rgba(249,115,22,.25)' } : undefined}><td>{i}</td><td style={{ textAlign: 'left' }}>{PS[i - 1]}</td>{['x', 'y', 'z', 'a', 'b', 'c'].map((f) => <td key={f}>{last ? last[f].toFixed(3) : '–'}</td>)}<td>{last ? pos.toFixed(3) : '–'}</td><td>{last ? ang.toFixed(3) : '–'}</td><td className={good ? 'ok' : last ? 'bad' : ''}>{last ? (good ? '✔ OK' : '✘ OUT') : '–'}</td></tr>);
   }
   return <table className="t"><thead><tr><th>#</th><th>Point</th><th>X</th><th>Y</th><th>Z</th><th>A</th><th>B</th><th>C</th><th>Max Δ mm</th><th>Max Δ °</th><th>Result</th></tr></thead><tbody>{rows}</tbody></table>;
 }
@@ -99,17 +100,17 @@ export default function CalulTab() {
       <div className="kframe"><span className="kh">KUKA</span>
         <div className="toolbar" style={{ marginTop: -6 }}><b>By point</b> {PN.map((n, i) => <button key={i} className={'pill' + (pt === i ? ' on' : '')} style={pt === i ? { background: 'var(--blue)', color: '#fff' } : undefined} title={n} onClick={() => setPt(i)}>P{i + 1}</button>)}<SpcBox style={{ marginLeft: 12 }} /></div>
         <div className="g3">
-          {G('Position X Y Z (mm)', [['x', '--red', 'X'], ['y', '--green', 'Y'], ['z', '--blue', 'Z']], -400, 900, [-300, 0, 300, 600, 900], ' mm', 2, KEY, { toggle: true, spcOk: false }, 'span3')}
+          {G('Position XYZ', [['x', '--red', 'X'], ['y', '--green', 'Y'], ['z', '--blue', 'Z']], -400, 900, [-300, 0, 300, 600, 900], ' mm', 2, KEY, { toggle: true, spcOk: false }, 'span3')}
           {bp('ex', '--red', 'X', 'X (mm)')}
           {bp('ey', '--green', 'Y', 'Y (mm)')}
           {bp('ez', '--blue', 'Z', 'Z (mm)')}
-          {G('Orientation A B C (°)', [['a', '--red', 'A'], ['b', '--green', 'B'], ['c', '--blue', 'C']], -10, 370, [0, 90, 180, 270, 360], '°', 1, KEY, { toggle: true, spcOk: false }, 'span3')}
+          {G('Orientation ABC', [['a', '--red', 'A'], ['b', '--green', 'B'], ['c', '--blue', 'C']], -10, 370, [0, 90, 180, 270, 360], '°', 1, KEY, { toggle: true, spcOk: false }, 'span3')}
           {bp('ea', '--red', 'A', 'A (°)')}
           {bp('eb', '--green', 'B', 'B (°)')}
           {bp('ec', '--blue', 'C', 'C (°)')}
-          {G('Joint temperature J1–J6 (°C)', [1, 2, 3, 4, 5, 6].map((i) => ['t' + i, ['--red', '--amber', '--green', '--cyan', '--blue', '--muted'][i - 1], 'J' + i]), 30, 60, [30, 40, 50, 60], '', 1, KEY, { toggle: true, ownSpc: true })}
-          {G('Vacuum Front (kPa)', [['front', '--blue', 'Front']], -120, 10, [-100, -50, 0], '', 1, 'calul_vac|', { refs: [{ v: -80, label: 'alarm -80', color: '--red' }], ownSpc: true })}
-          {G('Vacuum Back (kPa)', [['back', '--cyan', 'Back']], -120, 10, [-100, -50, 0], '', 1, 'calul_vac|', { refs: [{ v: -80, label: 'alarm -80', color: '--red' }], ownSpc: true })}
+          {G('Joint temperature', [1, 2, 3, 4, 5, 6].map((i) => ['t' + i, ['--red', '--amber', '--green', '--cyan', '--blue', '--muted'][i - 1], 'J' + i]), 30, 60, [30, 40, 50, 60], '', 1, KEY, { toggle: true, ownSpc: true })}
+          {G('Vacuum Front', [['front', '--blue', 'Front']], -120, 10, [-100, -50, 0], '', 1, 'calul_vac|', { refs: [{ v: -80, label: 'alarm −80', color: '--red' }], ownSpc: true })}
+          {G('Vacuum Back', [['back', '--cyan', 'Back']], -120, 10, [-100, -50, 0], '', 1, 'calul_vac|', { refs: [{ v: -80, label: 'alarm −80', color: '--red' }], ownSpc: true })}
         </div>
       </div>
       <div className="kframe festo"><span className="kh">FESTO</span>

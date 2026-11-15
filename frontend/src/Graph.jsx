@@ -3,7 +3,7 @@ import { nowRender, range, ui } from './store.js';
 import { css, fit, clock } from './canvasUtil.js';
 
 // Scrolling line graph. series: [{ key, field, color, label }], x axis = real (server) clock, drawn at render time.
-export default function Graph({ title, series, ymin, ymax, ticks, unit = '', win, height = 150, dec = 2, refs = [], spcOk = true, dots = false, noTime = false, toggle = false, ownSpc = false }) {
+export default function Graph({ title, series, ymin, ymax, ticks, unit = '', win, height = 150, dec = 2, refs = [], spcOk = true, dots = false, noTime = false, toggle = false, ownSpc = false, tickFmt = null, valFmt = null }) {
   const ref = useRef(null), hid = useRef({}), own = useRef(false), [, bump] = useState(0);
   useEffect(() => {
     let raf;
@@ -16,7 +16,7 @@ export default function Graph({ title, series, ymin, ymax, ticks, unit = '', win
       g.fillStyle = css('--muted'); g.textAlign = 'left'; g.fillText(title, L, 10);
       const y = (v) => T + ph - ((Math.max(ymin, Math.min(ymax, v)) - ymin) / (ymax - ymin)) * ph;
       g.strokeStyle = css('--grid'); g.fillStyle = css('--muted'); g.textAlign = 'right';
-      for (const v of ticks) { const yy = Math.round(y(v)) + 0.5; g.beginPath(); g.moveTo(L, yy); g.lineTo(L + pw, yy); g.stroke(); g.fillText(String(v), L - 4, yy); }
+      for (const v of ticks) { const yy = Math.round(y(v)) + 0.5; g.beginPath(); g.moveTo(L, yy); g.lineTo(L + pw, yy); g.stroke(); g.fillText(tickFmt ? tickFmt(v) : String(v), L - 4, yy); }
       g.textAlign = 'center'; if (!noTime) for (let i = 0; i < 4; i++) g.fillText(clock(t0 + (W * (i + 0.5)) / 4), L + (pw * (i + 0.5)) / 4, h - 6);
       g.save(); g.setLineDash([5, 4]); for (const rf of refs) { g.strokeStyle = css(rf.color || '--muted'); g.beginPath(); g.moveTo(L, y(rf.v)); g.lineTo(L + pw, y(rf.v)); g.stroke(); if (rf.label) { g.fillStyle = css(rf.color || '--muted'); g.textAlign = 'right'; g.fillText(rf.label, L + pw, y(rf.v) - 6); } } g.restore();
       let any = false, tx = L + pw; const minX = L + g.measureText(title).width + 14;
@@ -33,7 +33,7 @@ export default function Graph({ title, series, ymin, ymax, ticks, unit = '', win
         g.stroke();
         if (dots) { g.fillStyle = s.color; for (const r of rows) { const v = r[s.field]; if (typeof v === 'number') { g.beginPath(); g.arc(L + ((r.t - t0) / W) * pw, y(v), 2.5, 0, 6.3); g.fill(); } } }
         const last = rows[rows.length - 1][s.field];
-        if (tx - 70 > minX) { g.fillStyle = s.color; g.textAlign = 'right'; g.fillText(`${s.label} ${typeof last === 'number' ? last.toFixed(dec) : '--'}${unit}`, tx, 10); tx -= series.length > 3 ? 75 : 110; }
+        if (tx - 70 > minX) { g.fillStyle = s.color; g.textAlign = 'right'; g.fillText(`${s.label} ${typeof last === 'number' ? (valFmt ? valFmt(last) : last.toFixed(dec)) : '--'}${unit}`, tx, 10); tx -= series.length > 3 ? 75 : 110; }
       });
       if ((ownSpc ? own.current : ui.spc && spcOk) && series.length) {
         const rows = range(series[0].key, tr - 60000, tr).map((r) => r[series[0].field]).filter((v) => typeof v === 'number');

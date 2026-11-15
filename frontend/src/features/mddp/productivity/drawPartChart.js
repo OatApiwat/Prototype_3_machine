@@ -110,7 +110,7 @@ export function drawPartChart(g, w, h, o) {
     let pen = false;
     s.values.forEach((v, i) => {
       if (v == null) {
-        pen = false;
+        if (!s.connect) pen = false; // `connect`: a line through the points that exist (e.g. one % per strip)
         return;
       }
       const x = P.x + (i - v0 + 0.5) * P.slot,

@@ -149,7 +149,7 @@ function SetColumn({
       ylabel: v.unit,
     };
   };
-  // red marker: % of defective pieces of each strip, one point per strip (at the middle of its 20 suspensions)
+  // red line: % of defective pieces of each strip, one point per strip (at the middle of its 20 suspensions) joined by a line
   const stripPct = rows.map((_, i) => {
     const k = Math.floor(i / PARTS_PER_STRIP);
     if (i !== k * PARTS_PER_STRIP + PARTS_PER_STRIP / 2 - 1) return null;
@@ -195,7 +195,7 @@ function SetColumn({
         height={200}
         draw={{
           ...common,
-          lines: [{ color: '#c0392b', values: stripPct, marker: 6 }],
+          lines: [{ color: '#c0392b', values: stripPct, marker: 6, connect: true }],
           axis: PCT_AXIS,
           leftFmt: (v) => v + '%',
           ylabel: 'Defective parts (%)',

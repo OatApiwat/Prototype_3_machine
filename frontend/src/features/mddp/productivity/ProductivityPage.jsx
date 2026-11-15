@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { usePersistentState } from '../../../hooks/usePersistentState.js';
 import { cardsUrl, carriersUrl, partsUrl, useLoaded, useLoadedMany } from './useProductivityData.js';
+import { exportExcel, exportPowerPoint } from './exportReport.js';
 import PartChart from './PartChart.jsx';
 import {
   DEFECTS,
@@ -79,6 +80,7 @@ const peerTip = (peers, i, linesOf) =>
       : [`${p.label} · Suspension ${i + 1}`];
   });
 
+const SET_COLORS = ['#2563eb', '#ea580c', '#059669', '#9333ea', '#db2777', '#0891b2'];
 function SetColumn({
   visit,
   index,
@@ -160,13 +162,17 @@ function SetColumn({
     return r ? r[f].toFixed(dec) : '--';
   };
   return (
-    <div className="set-frame" data-testid="set-column">
-      <div className="card" style={{ padding: '6px 10px' }}>
+    <div
+      className="set-frame"
+      data-testid="set-column"
+      style={{ '--set': SET_COLORS[index % SET_COLORS.length] }}
+    >
+      <div className="card set-head">
         <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           <b>
             Set {index + 1} · {carrierLabel(visit.carrier)} (visit {visit.seq})
           </b>{' '}
-          <span style={{ color: 'var(--muted)' }}>
+          <span style={{ opacity: 0.9 }}>
             {clock(visit.start)} · Strips {visit.strips.join(', ')}
             {visit.pieces >= SUSPENSIONS ? '' : ' · in progress'}
           </span>
@@ -293,6 +299,39 @@ export default function ProductivityPage() {
       span = Math.min(SUSPENSIONS, Math.max(6, Math.round((to - from) * k))),
       f = Math.min(SUSPENSIONS - span, Math.max(0, Math.round((from + to - span) / 2)));
     setZoom(span >= SUSPENSIONS ? null : { from: f, to: f + span });
+  };
+  const [busy, setBusy] = useState(false);
+  // the charts of every shown set as light-background images (canvases are transparent)
+  const chartImages = () =>
+    [...document.querySelectorAll('[data-testid="set-column"]')].map((col) =>
+      [...col.querySelectorAll('canvas')].map((cv) => {
+        const o = document.createElement('canvas');
+        o.width = cv.width;
+        o.height = cv.height;
+        const g = o.getContext('2d');
+        g.fillStyle = getComputedStyle(document.body).backgroundColor || '#fff';
+        g.fillRect(0, 0, o.width, o.height);
+        g.drawImage(cv, 0, 0);
+        return o.toDataURL('image/png');
+      })
+    );
+  const runExport = async (fn, withImages) => {
+    setBusy(true);
+    try {
+      const images = withImages ? chartImages() : [];
+      await fn({
+        rc,
+        carrier: carrierNo,
+        sets: shown.map((c, i) => ({
+          no: sets.indexOf(c) + 1,
+          visit: c,
+          rows: rowsOf[i],
+          images: images[i] || [],
+        })),
+      });
+    } finally {
+      setBusy(false);
+    }
   };
   const reload = () => setNonce((n) => n + 1);
   // close the set dropdown when clicking anywhere else or pressing Esc
@@ -440,6 +479,16 @@ export default function ProductivityPage() {
           </span>
           <button className="pill" onClick={reload} title="Load the latest data from InfluxDB">
             ↻ Refresh
+          </button>
+          <button className="pill" onClick={() => runExport(exportExcel)} disabled={!shown.length || busy}>
+            Export Excel
+          </button>
+          <button
+            className="pill"
+            onClick={() => runExport(exportPowerPoint, true)}
+            disabled={!shown.length || busy}
+          >
+            Export PowerPoint
           </button>
         </div>
       </div>

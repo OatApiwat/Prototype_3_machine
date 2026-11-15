@@ -264,7 +264,7 @@ export default function ProductivityPage() {
   const [nonce, setNonce] = useState(0);
   const step1 = useLoaded(cardsUrl(dateStart, dateEnd), nonce);
   const cards = useMemo(
-    () => [...(step1.url ? step1.data : [])].sort((a, b) => (a.rc < b.rc ? -1 : 1)),
+    () => [...(step1.url ? (step1.data.runcards ?? []) : [])].sort((a, b) => (a.rc < b.rc ? -1 : 1)),
     [step1]
   );
   const rc = cards.some((c) => c.rc === pickRc) ? pickRc : (cards[cards.length - 1]?.rc ?? null);
@@ -272,7 +272,7 @@ export default function ProductivityPage() {
   // the API lists carriers with their Strip numbers; a set (one column) is one use of the carrier = a run of up to 3 consecutive strips
   const carriers = useMemo(
     () =>
-      (step2.url ? step2.data : []).flatMap((g) => {
+      (step2.url ? (step2.data.carriers ?? []) : []).flatMap((g) => {
         const sets = [];
         for (const st of g.strips) {
           const n = +st.replace(/\D/g, ''),
@@ -373,7 +373,7 @@ export default function ProductivityPage() {
   // suspension 1..60 of a set = position of the strip in the set x 20 + part
   const rowsOf = shown.map((c, i) =>
     carrierRows(
-      (many.data[i] || [])
+      (many.data[i]?.pieces || [])
         .map((r) => ({
           ...r,
           strip: c.strips.indexOf(r.strip_no) + 1,

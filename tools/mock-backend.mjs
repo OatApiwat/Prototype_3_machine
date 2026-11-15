@@ -9,9 +9,9 @@ const gm = require('../nodered/sim/gen_mddp.js');
 { const b0 = Date.now() - 600000; for (const l of gm.signals.part(b0, b0, b0 + 520000).split('\n')) if (l) partsAll.push(parse(l)); }
 const { carriersOf, partsOf, rangeOf } = require('../backend/src/productivity.js');
 const cardsIn = (from, to) => { const m = new Map(); for (const p of partsAll) { if (p.t < from || p.t > to) continue; const o = m.get(p.rc) || { rc: p.rc, pieces: 0, defective: 0, first: p.t, last: 0 }; o.pieces++; if (p.defect > 0) o.defective++; o.first = Math.min(o.first, p.t); o.last = Math.max(o.last, p.t); m.set(p.rc, o); } return [...m.values()]; };
-app.get('/api/mddp/runcards', (q, r) => { const d = q.query, byDate = d.dateStart != null || d.dateEnd != null, g = rangeOf(byDate ? d.dateStart ?? d.dateEnd : d.from, byDate ? d.dateEnd ?? d.dateStart : d.to, 420); if (!g) return r.status(400).json({ error: 'invalid date' }); r.json(cardsIn(g.from, g.to).map((c) => ({ rc: c.rc })).sort((a, b) => (a.rc < b.rc ? -1 : 1))); });
-app.get('/api/mddp/carriers', (q, r) => r.json(carriersOf(partsAll.filter((p) => p.rc === q.query.rc))));
-app.get('/api/mddp/parts', (q, r) => r.json(partsOf(partsAll.filter((p) => p.rc === q.query.rc), String(q.query.strip || '').split(','))));
+app.get('/api/mddp/runcards', (q, r) => { const d = q.query, byDate = d.dateStart != null || d.dateEnd != null, g = rangeOf(byDate ? d.dateStart ?? d.dateEnd : d.from, byDate ? d.dateEnd ?? d.dateStart : d.to, 420); if (!g) return r.status(400).json({ error: 'invalid date' }); r.json({ ...(byDate ? { dateStart: d.dateStart ?? d.dateEnd, dateEnd: d.dateEnd ?? d.dateStart } : { from: g.from, to: g.to }), runcards: cardsIn(g.from, g.to).map((c) => ({ rc: c.rc })).sort((a, b) => (a.rc < b.rc ? -1 : 1)) }); });
+app.get('/api/mddp/carriers', (q, r) => r.json({ rc: q.query.rc, carriers: carriersOf(partsAll.filter((p) => p.rc === q.query.rc)) }));
+app.get('/api/mddp/parts', (q, r) => { const strips = String(q.query.strip || '').split(','); r.json({ rc: q.query.rc, strips, pieces: partsOf(partsAll.filter((p) => p.rc === q.query.rc), strips) }); });
 app.get('/api/config', (_q, r) => r.json({ pollMs: 5000, renderDelayMs: delay }));
 function parse(line) {
   const sp = line.match(/^(\S+) (.+) (\d+)$/); const [h, f, ts] = [sp[1], sp[2], +sp[3]]; const [m, ...tg] = h.split(','); const o = { m, t: ts };

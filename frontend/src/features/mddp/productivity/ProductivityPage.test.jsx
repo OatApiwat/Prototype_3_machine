@@ -31,7 +31,7 @@ const row = (susp, defect) => ({
   defect,
 });
 // API 2 answer: carriers of the run card with their strip numbers (3 consecutive strips = one set)
-const carriers = (...strips) => [{ carrier: 'CR-0007', strips }];
+const carriers = (...strips) => ({ rc: 'RC-1-01', carriers: [{ carrier: 'CR-0007', strips }] });
 const set1 = ['Strip-1', 'Strip-2', 'Strip-3'];
 const set2 = ['Strip-4', 'Strip-5', 'Strip-6'];
 
@@ -44,10 +44,16 @@ describe('Productivity dashboard', () => {
         calls.push(String(url));
         const u = String(url);
         const data = u.includes('runcards')
-          ? [{ rc: 'RC-1-01' }]
+          ? { dateStart: 'x', dateEnd: 'x', runcards: [{ rc: 'RC-1-01' }] }
           : u.includes('carriers')
             ? carriers(...set1)
-            : Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : i === 30 ? 0b10000 : 0));
+            : {
+                rc: 'RC-1-01',
+                strips: [],
+                pieces: Array.from({ length: 60 }, (_, i) =>
+                  row(i + 1, i === 4 ? 0b00001 : i === 30 ? 0b10000 : 0)
+                ),
+              };
         return { ok: true, json: async () => data };
       })
     );
@@ -73,10 +79,14 @@ describe('Productivity dashboard', () => {
       vi.fn(async (url) => {
         const u = String(url);
         const data = u.includes('runcards')
-          ? [{ rc: 'RC-1-01' }]
+          ? { dateStart: 'x', dateEnd: 'x', runcards: [{ rc: 'RC-1-01' }] }
           : u.includes('carriers')
             ? carriers(...set1, ...set2)
-            : Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : 0));
+            : {
+                rc: 'RC-1-01',
+                strips: [],
+                pieces: Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : 0)),
+              };
         return { ok: true, json: async () => data };
       })
     );
@@ -93,10 +103,10 @@ describe('Productivity dashboard', () => {
       vi.fn(async (url) => {
         const u = String(url);
         const data = u.includes('runcards')
-          ? [{ rc: 'RC-1-01' }]
+          ? { dateStart: 'x', dateEnd: 'x', runcards: [{ rc: 'RC-1-01' }] }
           : u.includes('carriers')
             ? carriers(...set1, ...set2)
-            : Array.from({ length: 60 }, (_, i) => row(i + 1, 0));
+            : { rc: 'RC-1-01', strips: [], pieces: Array.from({ length: 60 }, (_, i) => row(i + 1, 0)) };
         return { ok: true, json: async () => data };
       })
     );
@@ -112,7 +122,7 @@ describe('Productivity dashboard', () => {
   it('explains an empty period', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => ({ ok: true, json: async () => [] }))
+      vi.fn(async () => ({ ok: true, json: async () => ({ runcards: [] }) }))
     );
     render(<ProductivityPage />);
     await waitFor(() => expect(screen.getByText(/No run cards in this period/)).toBeTruthy());

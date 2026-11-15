@@ -106,18 +106,22 @@ app.get('/api/mddp/runcards', async (req, res) => {
   if (!range) return res.status(400).json({ error: 'invalid date' });
   if (byDate && (q.dateStart ?? q.dateEnd) > (q.dateEnd ?? q.dateStart)) return res.status(400).json({ error: 'dateStart must not be after dateEnd' });
   const { from, to } = range;
-  if (!(from < to)) return res.json([]);
-  try { res.json(await cached(`rcs:${Math.round(from / 1000)}:${Math.round(to / 1000)}`, cfg.pollMs, async () => (await influx.runCards(from, to)).map((c) => ({ rc: c.rc })).sort((a, b) => (a.rc < b.rc ? -1 : 1)))); } catch (e) { fail(res, e); }
+  const echo = byDate ? { dateStart: q.dateStart ?? q.dateEnd, dateEnd: q.dateEnd ?? q.dateStart } : { from, to };   // the answer repeats what was asked
+  if (!(from < to)) return res.json({ ...echo, runcards: [] });
+  try {
+    const runcards = await cached(`rcs:${Math.round(from / 1000)}:${Math.round(to / 1000)}`, cfg.pollMs, async () => (await influx.runCards(from, to)).map((c) => ({ rc: c.rc })).sort((a, b) => (a.rc < b.rc ? -1 : 1)));
+    res.json({ ...echo, runcards });
+  } catch (e) { fail(res, e); }
 });
 app.get('/api/mddp/carriers', async (req, res) => {
   const rc = rcOf(req.query);
   if (!rc) return res.status(400).json({ error: 'rc required' });
-  try { res.json(carriersOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)))); } catch (e) { fail(res, e); }
+  try { res.json({ rc, carriers: carriersOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc))) }); } catch (e) { fail(res, e); }
 });
 app.get('/api/mddp/parts', async (req, res) => {
   const rc = rcOf(req.query), strips = String(req.query.strip || '').split(',').filter((x) => /^Strip-\d+$/.test(x));
   if (!rc || !strips.length) return res.status(400).json({ error: 'rc and strip required' });
-  try { res.json(partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), strips)); } catch (e) { fail(res, e); }
+  try { res.json({ rc, strips, pieces: partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), strips) }); } catch (e) { fail(res, e); }
 });
 
 const server = http.createServer(app);

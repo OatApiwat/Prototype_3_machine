@@ -40,7 +40,7 @@ export function drawPartChart(g, w, h, o) {
     g.lineTo(P.x + P.w, yL(v));
     g.stroke();
     g.fillStyle = mu;
-    g.fillText(String(+v.toFixed(3)), P.x - 6, yL(v));
+    g.fillText(o.leftFmt ? o.leftFmt(v) : String(+v.toFixed(3)), P.x - 6, yL(v));
   }
   // right axis labels
   g.textAlign = 'left';

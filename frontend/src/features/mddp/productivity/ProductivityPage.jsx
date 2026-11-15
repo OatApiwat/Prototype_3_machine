@@ -31,6 +31,7 @@ const AXES = [
   ['Y', '#d62728'],
   ['Z', '#1a9e6e'],
 ];
+const DEFECT_AXIS_MAX = 4;
 const RIGHT = { rightMax: 6, rightTicks: [0, 2, 4, 6], rightLabel: 'Defects of the piece (count)' };
 const X_LABEL = `Suspension No. (1 - ${SUSPENSIONS}) · 1 carrier = ${STRIPS_PER_CARRIER} strips × ${PARTS_PER_STRIP}`;
 
@@ -85,12 +86,11 @@ function SetColumn({ rc, visit, index, nonce }) {
         ]
       : [`Suspension ${i + 1}`, 'not made yet'];
   };
-  // defect bars: same stacked look as the overview chart; the count axis fits the data (min 2) so the bars stay tall
+  // defect bars: the same right axis (0-4 defects of the piece) in every chart; only a piece with more defects widens it
   const stackMax = Math.max(
-    2,
+    DEFECT_AXIS_MAX,
     ...rows.map((r) => (r ? DEFECTS.reduce((n, _, d) => n + hasDefect(r.defect, d), 0) : 0))
   );
-  const rightTicks = Array.from({ length: stackMax + 1 }, (_, k) => k);
   const common = {
     n: SUSPENSIONS,
     groups,
@@ -98,7 +98,7 @@ function SetColumn({ rc, visit, index, nonce }) {
     xlabel: X_LABEL,
     ...RIGHT,
     rightMax: stackMax,
-    rightTicks: stackMax > 6 ? [0, stackMax] : rightTicks,
+    rightTicks: Array.from({ length: stackMax + 1 }, (_, k) => k),
   };
   const lineChart = (p) => ({
     ...common,
@@ -232,8 +232,8 @@ export default function ProductivityPage() {
   // run card overview: defects per carrier visit (click a bar to open that carrier's set)
   const ov = carriers;
   const ovMax = Math.max(2, ...ov.map((c) => c.cnt.reduce((a, b) => a + b, 0)));
-  const ovAxis = niceAxis(0, ovMax);
-  ovAxis.lo = 0;
+  const ovTop = Math.ceil(ovMax / 4) * 4, // multiple of 4 so the count ticks line up with the % grid lines
+    ovAxis = { lo: 0, hi: 100, ticks: [0, 25, 50, 75, 100] };
   const ovTip = (i) => {
     const c = ov[i];
     return [
@@ -381,16 +381,14 @@ export default function ProductivityPage() {
             draw={{
               n: Math.max(ov.length, 45),
               lines: [{ color: '#c0392b', values: ov.map((c) => (100 * c.defective) / c.pieces) }],
-              lineRight: true,
-              barsLeft: true,
               axis: ovAxis,
+              leftFmt: (v) => v + '%',
               bars: DEFECTS.map((_, d) => ov.map((c) => c.cnt[d])),
-              ylabel: 'Defects found (count, by code)',
+              ylabel: 'Defective parts (%)',
               xlabel: 'Carrier visit in the run card (1 run card = 45 carriers = 2,700 pieces)',
-              rightMax: 100,
-              rightTicks: [0, 25, 50, 75, 100],
-              rightFmt: (v) => v + '%',
-              rightLabel: 'Defective parts (%)',
+              rightMax: ovTop,
+              rightTicks: [0, 1, 2, 3, 4].map((k) => (k * ovTop) / 4),
+              rightLabel: 'Defects found (count, by code)',
             }}
             tip={(i) => (ov[i] ? ovTip(i) : null)}
           />

@@ -885,3 +885,24 @@ select.pill {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
   white-space: nowrap;
 }
+
+.pselect-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+@media (max-width: 1100px) {
+  .pselect-row {
+    flex-wrap: wrap;
+  }
+}
+.pselect-row .pfield,
+.pselect-row .pill {
+  white-space: nowrap;
+  flex: none;
+}
+.pselect-row select.pill {
+  max-width: 260px;
+}

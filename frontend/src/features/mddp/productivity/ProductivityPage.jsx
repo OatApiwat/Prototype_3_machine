@@ -229,98 +229,102 @@ export default function ProductivityPage() {
           marginTop: 8,
         }}
       >
-        <b style={{ fontSize: 16 }}>Process parameter &amp; defect monitoring</b>
-        <label className="pfield">
-          Date Start :
-          <input
-            className="pill"
-            type="date"
-            value={dateStart}
-            max={dateEnd}
-            onChange={(e) => e.target.value && setDateStart(e.target.value)}
-          />
-        </label>
-        <label className="pfield">
-          Date End :
-          <input
-            className="pill"
-            type="date"
-            value={dateEnd}
-            min={dateStart}
-            onChange={(e) => e.target.value && setDateEnd(e.target.value)}
-          />
-        </label>
-        <label className="pfield">
-          Run Card :
-          <select
-            className="pill"
-            value={rc || ''}
-            onChange={(e) => (setPickRc(e.target.value), setPickCarrier(null), setPickSets(null))}
-            disabled={!cards.length}
-          >
-            {cards.map((c) => (
-              <option key={c.rc} value={c.rc}>
-                {c.rc} · {clock(c.first)} ({c.pieces.toLocaleString()} pcs
-                {c.pieces >= PIECES_PER_RUN_CARD ? '' : ' · in progress'})
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="pfield">
-          Carrier No :
-          <select
-            className="pill"
-            value={carrierNo ?? ''}
-            onChange={(e) => (setPickCarrier(+e.target.value), setPickSets(null))}
-            disabled={!carrierNos.length}
-          >
-            {carrierNos.map((n) => (
-              <option key={n} value={n}>
-                {carrierLabel(n)}
-                {carriers.filter((c) => c.carrier === n).length > 1
-                  ? ` · ${carriers.filter((c) => c.carrier === n).length} sets`
-                  : ''}
-              </option>
-            ))}
-          </select>
-        </label>
-        <span className="pfield">
-          Strip (3 strips per set) :
-          <details className="multi" role="group" aria-label="Sets of 3 strips">
-            <summary className="pill">
-              {allSets
-                ? `All ${sets.length} set(s)`
-                : shown.map((c) => `Set ${sets.indexOf(c) + 1}`).join(', ')}
-            </summary>
-            <div className="multi-list">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={allSets}
-                  disabled={!sets.length}
-                  onChange={() => setPickSets(null)}
-                />{' '}
-                All
-              </label>
-              {sets.map((c, k) => (
-                <label key={c.seq} title={`visit ${c.seq}`}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', flexWrap: 'wrap' }}>
+          <b style={{ fontSize: 16 }}>Process parameter &amp; defect monitoring</b>
+          <span style={{ flex: 1 }} />
+          <Legend />
+        </div>
+        <div className="pselect-row">
+          <label className="pfield">
+            Date Start :
+            <input
+              className="pill"
+              type="date"
+              value={dateStart}
+              max={dateEnd}
+              onChange={(e) => e.target.value && setDateStart(e.target.value)}
+            />
+          </label>
+          <label className="pfield">
+            Date End :
+            <input
+              className="pill"
+              type="date"
+              value={dateEnd}
+              min={dateStart}
+              onChange={(e) => e.target.value && setDateEnd(e.target.value)}
+            />
+          </label>
+          <label className="pfield">
+            Run Card :
+            <select
+              className="pill"
+              value={rc || ''}
+              onChange={(e) => (setPickRc(e.target.value), setPickCarrier(null), setPickSets(null))}
+              disabled={!cards.length}
+            >
+              {cards.map((c) => (
+                <option key={c.rc} value={c.rc}>
+                  {c.rc} · {clock(c.first)} ({c.pieces.toLocaleString()} pcs
+                  {c.pieces >= PIECES_PER_RUN_CARD ? '' : ' · in progress'})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="pfield">
+            Carrier No :
+            <select
+              className="pill"
+              value={carrierNo ?? ''}
+              onChange={(e) => (setPickCarrier(+e.target.value), setPickSets(null))}
+              disabled={!carrierNos.length}
+            >
+              {carrierNos.map((n) => (
+                <option key={n} value={n}>
+                  {carrierLabel(n)}
+                  {carriers.filter((c) => c.carrier === n).length > 1
+                    ? ` · ${carriers.filter((c) => c.carrier === n).length} sets`
+                    : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span className="pfield">
+            Strip (3 strips per set) :
+            <details className="multi" role="group" aria-label="Sets of 3 strips">
+              <summary className="pill">
+                {allSets
+                  ? `All ${sets.length} set(s)`
+                  : shown.map((c) => `Set ${sets.indexOf(c) + 1}`).join(', ')}
+              </summary>
+              <div className="multi-list">
+                <label>
                   <input
                     type="checkbox"
-                    checked={shown.some((x) => x.seq === c.seq)}
-                    onChange={() => toggleSet(c.seq)}
+                    checked={allSets}
+                    disabled={!sets.length}
+                    onChange={() => setPickSets(null)}
                   />{' '}
-                  Set {k + 1} · Strips {c.strips.join(', ')} · {clock(c.start)}
-                  {complete(c) ? '' : ' (in progress)'}
+                  All
                 </label>
-              ))}
-            </div>
-          </details>
-        </span>
-        <button className="pill" onClick={reload} title="Load the latest data from InfluxDB">
-          ↻ Refresh
-        </button>
-        <span style={{ flex: 1 }} />
-        <Legend />
+                {sets.map((c, k) => (
+                  <label key={c.seq} title={`visit ${c.seq}`}>
+                    <input
+                      type="checkbox"
+                      checked={shown.some((x) => x.seq === c.seq)}
+                      onChange={() => toggleSet(c.seq)}
+                    />{' '}
+                    Set {k + 1} · Strips {c.strips.join(', ')} · {clock(c.start)}
+                    {complete(c) ? '' : ' (in progress)'}
+                  </label>
+                ))}
+              </div>
+            </details>
+          </span>
+          <button className="pill" onClick={reload} title="Load the latest data from InfluxDB">
+            ↻ Refresh
+          </button>
+        </div>
       </div>
       {badRange && (
         <div className="card" style={{ marginTop: 8, color: 'var(--red)' }}>

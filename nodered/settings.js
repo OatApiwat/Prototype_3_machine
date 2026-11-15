@@ -3,7 +3,7 @@ module.exports = {
   uiPort: process.env.PORT || 1880,
   functionExternalModules: true,
   functionGlobalContext: {
-    genMddp: require('/data/sim/gen_mddp.js')
+    sim: require('/data/sim/index.js')
   },
   logging: { console: { level: 'info', metrics: false, audit: false } }
 };

@@ -2,7 +2,8 @@ import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { start, subscribe, state } from './store.js';
 import Portal from './Portal.jsx';
 import MddpTab from './MddpTab.jsx';
-import Placeholder from './Placeholder.jsx';
+import CalulTab from './CalulTab.jsx';
+import HallTab from './HallTab.jsx';
 
 const TABS = [['portal', 'Portal'], ['mddp', 'MDDP_184'], ['calul', 'CALUL_037'], ['hall', 'HAll_013']];
 let ver = 0; const snap = () => ver; const sub = (f) => subscribe(() => { ver++; f(); });
@@ -23,8 +24,8 @@ export default function App() {
       </div>
       {tab === 'portal' && <Portal go={setTab} />}
       {tab === 'mddp' && <MddpTab />}
-      {tab === 'calul' && <Placeholder name="CALUL_037" />}
-      {tab === 'hall' && <Placeholder name="HAll_013" />}
+      {tab === 'calul' && <CalulTab />}
+      {tab === 'hall' && <HallTab />}
     </div>
   );
 }

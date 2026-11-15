@@ -2,7 +2,7 @@
  {
   "id": "tab1",
   "type": "tab",
-  "label": "MDDP_184 simulator",
+  "label": "Machine simulators",
   "disabled": false
  },
  {
@@ -28,8 +28,8 @@
   "id": "fn",
   "type": "function",
   "z": "tab1",
-  "name": "MDDP_184 sim -> line protocol",
-  "func": "\n// MDDP_184 simulator tick. Emits every sim sample since the previous tick with its own ms timestamp.\nconst gen = global.get('genMddp').gen;\nconst now = Date.now();\nlet base = context.get('base');\nif (!base) { base = now; context.set('base', base); context.set('last', now); }\nconst last = context.get('last');\nconst to = now - 50;                 // small lag so a tick never emits a partial ms\nif (to <= last) return null;\ncontext.set('last', to);\nmsg.payload = gen(base, last, to);\nmsg.url = env.get('INFLUX_URL') + '/api/v2/write?org=' + encodeURIComponent(env.get('INFLUX_ORG')) +\n          '&bucket=' + encodeURIComponent(env.get('INFLUX_BUCKET')) + '&precision=ms';\nmsg.headers = { 'Authorization': 'Token ' + env.get('INFLUX_TOKEN'), 'Content-Type': 'text/plain; charset=utf-8' };\nmsg.method = 'POST';\nnode.status({ fill: 'green', shape: 'dot', text: msg.payload.split('\\n').length + ' points' });\nreturn msg;\n",
+  "name": "sim tick -> line protocol (MDDP_184, CALUL_037, HAll_013)",
+  "func": "// Emits every sim sample since the previous tick with its own ms timestamp.\nlet st = context.get('state'); if (!st) { st = {}; context.set('state', st); }\nconst lines = global.get('sim').tick(st, Date.now());\nif (!lines) return null;\nmsg.payload = lines;\nmsg.url = env.get('INFLUX_URL') + '/api/v2/write?org=' + encodeURIComponent(env.get('INFLUX_ORG')) +\n          '&bucket=' + encodeURIComponent(env.get('INFLUX_BUCKET')) + '&precision=ms';\nmsg.headers = { 'Authorization': 'Token ' + env.get('INFLUX_TOKEN'), 'Content-Type': 'text/plain; charset=utf-8' };\nmsg.method = 'POST';\nnode.status({ fill: 'green', shape: 'dot', text: lines.split('\\n').length + ' points' });\nreturn msg;\n",
   "outputs": 1,
   "timeout": 0,
   "noerr": 0,
@@ -106,16 +106,6 @@
   "targetType": "msg",
   "x": 1070,
   "y": 80,
-  "wires": []
- },
- {
-  "id": "note",
-  "type": "comment",
-  "z": "tab1",
-  "name": "CALUL_037 and HAll_013 generators are added in the next step",
-  "info": "",
-  "x": 300,
-  "y": 160,
   "wires": []
  }
 ]

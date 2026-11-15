@@ -4,7 +4,7 @@ const series = new Map();          // key -> rows sorted by t
 const listeners = new Set();
 export const state = { connected: false, offset: 0, delay: 8000, lastRowT: 0, rows: 0 };
 
-const keyOf = (r) => r.m + '|' + (r.side ?? r.k ?? '');
+const keyOf = (r) => r.m + '|' + [r.side, r.k, r.axis, r.point].filter((v) => v !== undefined && v !== '').join('/');
 function merge(rows) {
   for (const r of rows) {
     const k = keyOf(r); let a = series.get(k); if (!a) { a = []; series.set(k, a); }

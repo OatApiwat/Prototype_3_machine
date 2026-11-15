@@ -3,21 +3,21 @@ import { nowRender, range, ui } from './store.js';
 import { css, fit, clock } from './canvasUtil.js';
 
 // Scrolling line graph. series: [{ key, field, color, label }], x axis = real (server) clock, drawn at render time.
-export default function Graph({ title, series, ymin, ymax, ticks, unit = '', win, height = 150, dec = 2, refs = [], spcOk = true, dots = false }) {
+export default function Graph({ title, series, ymin, ymax, ticks, unit = '', win, height = 150, dec = 2, refs = [], spcOk = true, dots = false, noTime = false }) {
   const ref = useRef(null);
   useEffect(() => {
     let raf;
     const draw = () => {
       raf = requestAnimationFrame(draw);
       const cv = ref.current; if (!cv || !cv.clientWidth) return;
-      const { g, w, h } = fit(cv); const L = 46, T = 22, R = 8, B = 16, pw = w - L - R, ph = h - T - B;
+      const { g, w, h } = fit(cv); const L = 46, T = 22, R = 8, B = noTime ? 4 : 16, pw = w - L - R, ph = h - T - B;
       const tr = nowRender(), W = win() * 1000, t0 = tr - W;
       g.clearRect(0, 0, w, h); g.font = '12px "Segoe UI",Arial'; g.textBaseline = 'middle';
       g.fillStyle = css('--muted'); g.textAlign = 'left'; g.fillText(title, L, 10);
       const y = (v) => T + ph - ((Math.max(ymin, Math.min(ymax, v)) - ymin) / (ymax - ymin)) * ph;
       g.strokeStyle = css('--grid'); g.fillStyle = css('--muted'); g.textAlign = 'right';
       for (const v of ticks) { const yy = Math.round(y(v)) + 0.5; g.beginPath(); g.moveTo(L, yy); g.lineTo(L + pw, yy); g.stroke(); g.fillText(String(v), L - 4, yy); }
-      g.textAlign = 'center'; for (let i = 0; i < 4; i++) g.fillText(clock(t0 + (W * (i + 0.5)) / 4), L + (pw * (i + 0.5)) / 4, h - 6);
+      g.textAlign = 'center'; if (!noTime) for (let i = 0; i < 4; i++) g.fillText(clock(t0 + (W * (i + 0.5)) / 4), L + (pw * (i + 0.5)) / 4, h - 6);
       g.save(); g.setLineDash([5, 4]); for (const rf of refs) { g.strokeStyle = css(rf.color || '--muted'); g.beginPath(); g.moveTo(L, y(rf.v)); g.lineTo(L + pw, y(rf.v)); g.stroke(); if (rf.label) { g.fillStyle = css(rf.color || '--muted'); g.textAlign = 'right'; g.fillText(rf.label, L + pw, y(rf.v) - 6); } } g.restore();
       let any = false, tx = L + pw; const minX = L + g.measureText(title).width + 14;
       series.forEach((s) => {

@@ -98,7 +98,7 @@ export default function Calul3D() {
     let raf;
     const draw = () => {
       raf = requestAnimationFrame(draw);
-      const w = cv.clientWidth; if (!w) return; const h = Math.round(w * 0.5); cv.style.height = h + 'px';
+      const w = cv.clientWidth; if (!w) return; const h = 404; cv.style.height = h + 'px';
       const dpr = window.devicePixelRatio || 1; if (cv.width !== Math.round(w * dpr)) { renderer.setPixelRatio(dpr); renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
       const bg = new THREE.Color(theme('--bg') || '#f1f5f9'); renderer.setClearColor(bg); scene.fog.color.copy(bg);
       const t = nowRender(), K = 'calul_robot|', q = [1, 2, 3, 4, 5, 6].map((i) => sample(K, 'q' + i, t));

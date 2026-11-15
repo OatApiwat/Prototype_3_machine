@@ -27,3 +27,20 @@ table.t { width:100%; border-collapse:collapse; font-size:13px; } table.t th, ta
 .ok { color:var(--green); font-weight:700; } .bad { color:var(--red); font-weight:700; }
 .seg { display:inline-flex; border:1px solid var(--line); border-radius:14px; overflow:hidden; } .seg button { border:0; background:var(--panel); color:var(--text); padding:3px 12px; cursor:pointer; font-weight:700; } .seg button.on { background:var(--blue); color:#fff; }
 .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+/* layout copied from the legacy HTML */
+.topgrid2 { display:grid; grid-template-columns:770fr 788fr; gap:10px; margin-top:8px; }
+.topgrid3 { display:grid; grid-template-columns:1000fr 558fr; gap:10px; margin-top:8px; }
+.rightcol { display:grid; grid-template-rows:1fr 62px; gap:6px; min-width:0; }
+.kframe { margin-top:14px; border:2px solid #f97316; border-radius:12px; padding:0 8px 8px; background:rgba(249,115,22,.06); position:relative; }
+.kframe .kh { display:inline-block; transform:translateY(-13px); margin-bottom:-6px; background:#f97316; color:#fff; font-weight:800; font-size:14px; letter-spacing:.08em; padding:1px 12px; border-radius:6px; }
+.kframe.festo { border-color:#0091dc; background:rgba(0,145,220,.06); } .kframe.festo .kh { background:#0091dc; }
+.kframe.halll { border-color:#0d9488; background:rgba(13,148,136,.06); } .kframe.halll .kh { background:#0d9488; }
+.g3 { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.g3 .span3 { grid-column:1 / 4; }
+.g3 .card, .g2c .card { padding:2px; margin:0; }
+.g2c { display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; }
+.g2c .card { padding:0; margin:0; }
+.dock { margin-top:8px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; font-size:13px; color:var(--muted); }
+.legend span { margin-right:14px; } .sw { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-2px; margin-right:4px; }
+.ovtitle { position:absolute; left:10px; top:6px; font-weight:800; font-size:15px; z-index:2; } .ovtitle span { font-weight:500; color:var(--muted); }
+.tbl-compact table.t { font-size:11px; } .tbl-compact table.t th, .tbl-compact table.t td { padding:2px 4px; }

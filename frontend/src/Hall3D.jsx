@@ -58,7 +58,7 @@ export default function Hall3D() {
     const v = new THREE.Vector3(); let raf;
     const draw = () => {
       raf = requestAnimationFrame(draw);
-      const w = cv.clientWidth; if (!w) return; const h = Math.round(w * 0.42); cv.style.height = h + 'px';
+      const w = cv.clientWidth; if (!w) return; const h = 335; cv.style.height = h + 'px';
       const dpr = window.devicePixelRatio || 1; if (cv.width !== Math.round(w * dpr)) { renderer.setPixelRatio(dpr); renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
       const bg = new THREE.Color(theme('--bg') || '#f1f5f9'); renderer.setClearColor(bg); scene.fog.color.copy(bg);
       const t = nowRender(), K = 'hall_oven|', temp = sample(K, 'temp', t);

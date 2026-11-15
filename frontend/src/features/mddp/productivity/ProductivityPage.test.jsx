@@ -50,8 +50,8 @@ describe('Productivity dashboard', () => {
     const calls = [];
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (url) => {
-        calls.push(String(url));
+      vi.fn(async (url, init) => {
+        calls.push(`${init?.method} ${url} ${init?.body}`);
         const u = String(url);
         const data = u.includes('runcards')
           ? runcards(set1)
@@ -75,9 +75,13 @@ describe('Productivity dashboard', () => {
     expect(container.textContent).toContain('LM-5');
     expect(screen.getByText('MI')).toBeTruthy();
     expect(container.querySelectorAll('canvas')).toHaveLength(6);
-    expect(calls.some((c) => c.includes('/api/mddp/parts?rc=RC-1-01&strip=Strip-1,Strip-2,Strip-3'))).toBe(
-      true
-    );
+    expect(
+      calls.some(
+        (c) =>
+          c.startsWith('POST /api/mddp/parts ') &&
+          JSON.parse(c.split(' ').slice(2).join(' ')).strips.join() === 'Strip-1,Strip-2,Strip-3'
+      )
+    ).toBe(true);
     const n = calls.length;
     await new Promise((r) => setTimeout(r, 50));
     expect(calls.length).toBe(n); // loaded once, no polling

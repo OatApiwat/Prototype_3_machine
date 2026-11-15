@@ -27,6 +27,7 @@ const cache = new Cache({ default: cfg.cacheSec, mddp_fast: cfg.cacheFastSec, [L
 const influx = makeInflux(cfg);
 const app = express();
 app.use(cors());
+app.use(express.json({ limit: '100kb' }));   // POST payloads of /api/mddp/*
 
 let stopPrev = Date.now() - cfg.cacheSec * 1000;   // warm-up window: refill the cache once at start
 let polling = false, lastPollOk = null, lastError = null;
@@ -101,8 +102,10 @@ const cached = (key, ttl, fn) => {
 // GET /api/mddp/parts?rc=<run card>&strip=Strip-76,Strip-77   the pieces (20 per strip) of the strips
 const rcOf = (q) => String(q.rc || '').replace(/[^A-Za-z0-9_-]/g, '');
 const fail = (res, e) => res.status(502).json({ error: String(e.message || e) });
-app.get('/api/mddp/runcards', async (req, res) => {
-  const q = req.query, byDate = q.dateStart != null || q.dateEnd != null;
+const qOf = (req) => ({ ...req.query, ...(req.body && typeof req.body === 'object' ? req.body : {}) });   // GET query string or POST JSON payload
+const both = (path, h) => { app.get(path, h); app.post(path, h); };
+both('/api/mddp/runcards', async (req, res) => {
+  const q = qOf(req), byDate = q.dateStart != null || q.dateEnd != null;
   const range = rangeOf(byDate ? q.dateStart ?? q.dateEnd : q.from, byDate ? q.dateEnd ?? q.dateStart : q.to, cfg.tzOffsetMin);
   if (!range) return res.status(400).json({ error: 'invalid date' });
   if (byDate && (q.dateStart ?? q.dateEnd) > (q.dateEnd ?? q.dateStart)) return res.status(400).json({ error: 'dateStart must not be after dateEnd' });
@@ -111,24 +114,24 @@ app.get('/api/mddp/runcards', async (req, res) => {
   if (!(from < to)) return res.json({ ...echo, runcards: [] });
   try {
     const runcards = await cached(`rcs:${Math.round(from / 1000)}:${Math.round(to / 1000)}`, cfg.pollMs, async () => (await influx.runCards(from, to)).map((c) => ({ rc: c.rc })).sort((a, b) => (a.rc < b.rc ? -1 : 1)));
-    if (q.detail !== '1') return res.json({ ...echo, runcards });
+    if (String(q.detail) !== '1') return res.json({ ...echo, runcards });
     // detail=1: Run Card -> Carrier -> Strip no in one answer (no piece data)
     const full = await Promise.all(runcards.map(async (c) => ({ rc: c.rc, carriers: carriersOf(await cached('parts:' + c.rc, cfg.pollMs, () => influx.parts(c.rc))).map((k) => ({ carrier: k.carrier, strips: groupStrips(k.strips.map((x) => x.strip_no)) })) })));
     res.json({ ...echo, runcards: full });
   } catch (e) { fail(res, e); }
 });
-app.get('/api/mddp/carriers', async (req, res) => {
-  const rc = rcOf(req.query);
+both('/api/mddp/carriers', async (req, res) => {
+  const rc = rcOf(qOf(req));
   if (!rc) return res.status(400).json({ error: 'rc required' });
   try { res.json({ rc, carriers: carriersOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc))) }); } catch (e) { fail(res, e); }
 });
-app.get('/api/mddp/strips', async (req, res) => {
-  const rc = rcOf(req.query), carrier = /^CR-\d+$/.test(req.query.carrier || '') ? req.query.carrier : '';
+both('/api/mddp/strips', async (req, res) => {
+  const q = qOf(req), rc = rcOf(q), carrier = /^CR-\d+$/.test(q.carrier || '') ? q.carrier : '';
   if (!rc || !carrier) return res.status(400).json({ error: 'rc and carrier required' });
   try { res.json({ rc, carrier, strips: stripsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), carrier) }); } catch (e) { fail(res, e); }
 });
-app.get('/api/mddp/parts', async (req, res) => {
-  const rc = rcOf(req.query), strips = String(req.query.strip || '').split(',').filter((x) => /^Strip-\d+$/.test(x));
+both('/api/mddp/parts', async (req, res) => {
+  const q = qOf(req), rc = rcOf(q), strips = (Array.isArray(q.strips) ? q.strips : String(q.strip || '').split(',')).filter((x) => /^Strip-\d+$/.test(x));
   if (!rc || !strips.length) return res.status(400).json({ error: 'rc and strip required' });
   try {
     const pieces = partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), strips);

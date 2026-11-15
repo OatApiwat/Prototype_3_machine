@@ -37,14 +37,18 @@ function makeInflux(cfg) {
     return out;
   };
   const safe = (s) => String(s).replace(/[^A-Za-z0-9_-]/g, '');
-  const runCards = () => rows(
-    `from(bucket: "${cfg.bucket}") |> range(start: -${cfg.partsRetention || '24h'}) |> filter(fn: (r) => r._measurement == "mddp_part" and r._field == "defect") ` +
-    `|> group(columns: ["rc"]) |> reduce(identity: {n: 0, d: 0, last: 0}, fn: (r, accumulator) => ({n: accumulator.n + 1, d: accumulator.d + (if r._value > 0 then 1 else 0), last: if int(v: r._time) > accumulator.last then int(v: r._time) else accumulator.last}))`,
-    (o) => ({ rc: o.rc, pieces: o.n, defective: o.d, last: Math.round(o.last / 1e6) }));
+  const iso = (ms) => new Date(ms).toISOString();
+  // run cards that have pieces in [from, to]: pieces, defective pieces, first/last piece time
+  const runCards = (from, to) => rows(
+    `from(bucket: "${cfg.bucket}") |> range(start: ${iso(from)}, stop: ${iso(to)}) |> filter(fn: (r) => r._measurement == "mddp_part" and r._field == "defect") ` +
+    `|> group(columns: ["rc"]) |> reduce(identity: {n: 0, d: 0, first: 9223372036854775807, last: 0}, fn: (r, accumulator) => ({n: accumulator.n + 1, d: accumulator.d + (if r._value > 0 then 1 else 0), ` +
+    `first: if int(v: r._time) < accumulator.first then int(v: r._time) else accumulator.first, last: if int(v: r._time) > accumulator.last then int(v: r._time) else accumulator.last}))`,
+    (o) => ({ rc: o.rc, pieces: o.n, defective: o.d, first: Math.round(o.first / 1e6), last: Math.round(o.last / 1e6) }));
+  // every piece of one run card (2,700 rows when complete)
   const parts = (rc) => rows(
-    `from(bucket: "${cfg.bucket}") |> range(start: -${cfg.partsRetention || '24h'}) |> filter(fn: (r) => r._measurement == "mddp_part" and r.rc == "${safe(rc)}") ` +
+    `from(bucket: "${cfg.bucket}") |> range(start: 2000-01-01T00:00:00Z) |> filter(fn: (r) => r._measurement == "mddp_part" and r.rc == "${safe(rc)}") ` +
     `|> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value") |> group() |> sort(columns: ["_time"])`,
-    (o) => ({ t: Date.parse(o._time), side: o.side, strip: o.strip, part: o.part, carrier: o.carrier, temp: o.temp, peak: o.peak, dur: o.dur, velx: o.velx, vely: o.vely, velz: o.velz, accx: o.accx, accy: o.accy, accz: o.accz, defect: o.defect }));
+    (o) => ({ t: Date.parse(o._time), side: o.side, seq: o.seq, carrier: o.carrier, strip: o.strip, strip_no: o.strip_no, part: o.part, susp: o.susp, temp: o.temp, peak: o.peak, dur: o.dur, velx: o.velx, vely: o.vely, velz: o.velz, accx: o.accx, accy: o.accy, accz: o.accz, defect: o.defect }));
   return { query, runCards, parts };
 }
 module.exports = { makeInflux };

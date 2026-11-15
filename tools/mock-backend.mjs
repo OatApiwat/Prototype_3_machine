@@ -6,9 +6,12 @@ const express = require('../backend/node_modules/express'); const { WebSocketSer
 const http = require('node:http'); const { tick } = require('../nodered/sim/index.js');
 const state = {}, buf = [], faults = [], partsAll = []; const app = express(); const delay = 8000;
 const gm = require('../nodered/sim/gen_mddp.js');
-{ const b0 = Date.now() - 600000; for (const l of gm.signals.part(b0, b0, b0 + 460000).split('\n')) if (l) partsAll.push(parse(l)); }
-app.get('/api/mddp/runcards', (_q, r) => { const m = new Map(); for (const p of partsAll) { const o = m.get(p.rc) || { rc: p.rc, pieces: 0, defective: 0, last: 0 }; o.pieces++; if (p.defect > 0) o.defective++; o.last = Math.max(o.last, p.t); m.set(p.rc, o); } r.json([...m.values()]); });
-app.get('/api/mddp/parts', (q, r) => r.json(partsAll.filter((p) => p.rc === q.query.rc)));
+{ const b0 = Date.now() - 600000; for (const l of gm.signals.part(b0, b0, b0 + 520000).split('\n')) if (l) partsAll.push(parse(l)); }
+const { carriersOf, partsOf } = require('../backend/src/productivity.js');
+const cardsIn = (from, to) => { const m = new Map(); for (const p of partsAll) { if (p.t < from || p.t > to) continue; const o = m.get(p.rc) || { rc: p.rc, pieces: 0, defective: 0, first: p.t, last: 0 }; o.pieces++; if (p.defect > 0) o.defective++; o.first = Math.min(o.first, p.t); o.last = Math.max(o.last, p.t); m.set(p.rc, o); } return [...m.values()]; };
+app.get('/api/mddp/runcards', (q, r) => { const to = +q.query.to || Date.now(), from = +q.query.from || to - 864e5; r.json(cardsIn(from, to)); });
+app.get('/api/mddp/carriers', (q, r) => r.json(carriersOf(partsAll.filter((p) => p.rc === q.query.rc))));
+app.get('/api/mddp/parts', (q, r) => r.json(partsOf(partsAll.filter((p) => p.rc === q.query.rc), +q.query.seq)));
 app.get('/api/config', (_q, r) => r.json({ pollMs: 5000, renderDelayMs: delay }));
 function parse(line) {
   const sp = line.match(/^(\S+) (.+) (\d+)$/); const [h, f, ts] = [sp[1], sp[2], +sp[3]]; const [m, ...tg] = h.split(','); const o = { m, t: ts };

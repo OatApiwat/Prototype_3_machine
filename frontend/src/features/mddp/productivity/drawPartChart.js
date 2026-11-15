@@ -55,7 +55,8 @@ export function drawPartChart(g, w, h, o) {
     g.fillRect(P.x + o.hover * P.slot, P.y, P.slot, P.h);
     g.globalAlpha = 1;
   }
-  // stacked defect bars (right axis)
+  // stacked defect bars (right axis, or the left axis when o.barsLeft)
+  const yB = o.barsLeft ? yL : yR;
   if (o.bars) {
     const bw = Math.max(1.5, P.slot * 0.6);
     for (let i = 0; i < n; i++) {
@@ -64,10 +65,28 @@ export function drawPartChart(g, w, h, o) {
         const c = col[i] || 0;
         if (!c) return;
         g.fillStyle = DEFECT_COLORS[d];
-        g.fillRect(P.x + i * P.slot + (P.slot - bw) / 2, yR(acc + c), bw, yR(acc) - yR(acc + c));
+        g.fillRect(P.x + i * P.slot + (P.slot - bw) / 2, yB(acc + c), bw, yB(acc) - yB(acc + c));
         acc += c;
       });
     }
+  }
+  // group separators and labels (e.g. the 3 strips of a carrier)
+  if (o.groups) {
+    g.setLineDash([4, 4]);
+    g.fillStyle = mu;
+    g.textAlign = 'center';
+    g.textBaseline = 'top';
+    o.groups.forEach((gr, k) => {
+      if (k > 0) {
+        g.strokeStyle = mu;
+        g.beginPath();
+        g.moveTo(P.x + gr.from * P.slot, P.y);
+        g.lineTo(P.x + gr.from * P.slot, P.y + P.h);
+        g.stroke();
+      }
+      g.fillText(gr.label, P.x + ((gr.from + gr.to) / 2) * P.slot, P.y + 3);
+    });
+    g.setLineDash([]);
   }
   // lines
   for (const s of o.lines) {

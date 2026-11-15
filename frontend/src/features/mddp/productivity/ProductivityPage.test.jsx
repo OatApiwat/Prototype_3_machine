@@ -8,12 +8,16 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const row = (strip, part, defect) => ({
-  t: 1.7e12 + part * 1000,
+const now = Date.now();
+const row = (susp, defect) => ({
+  t: now + susp * 1000,
   side: 'L',
-  strip,
-  part,
-  carrier: 1,
+  seq: 1,
+  carrier: 7,
+  strip: Math.ceil(susp / 20),
+  strip_no: Math.ceil(susp / 20),
+  part: ((susp - 1) % 20) + 1,
+  susp,
   temp: 109,
   peak: 90,
   dur: 70,
@@ -25,33 +29,53 @@ const row = (strip, part, defect) => ({
   accz: 1,
   defect,
 });
+const carrier = {
+  seq: 1,
+  carrier: 7,
+  strips: [1, 2, 3],
+  start: now,
+  end: now + 60000,
+  pieces: 60,
+  defective: 2,
+  cnt: [1, 0, 0, 0, 1],
+};
 
 describe('Productivity dashboard', () => {
-  it('loads run cards and shows the selected strip with its summary', async () => {
+  it('walks date -> run card -> carrier and summarises the carrier', async () => {
+    const calls = [];
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (url) => ({
-        ok: true,
-        json: async () =>
-          String(url).includes('runcards')
-            ? [{ rc: 'RC-1-01', pieces: 3, defective: 1 }]
-            : [row(1, 1, 0), row(1, 2, 0b11), row(1, 3, 0)],
-      }))
+      vi.fn(async (url) => {
+        calls.push(String(url));
+        const u = String(url);
+        const data = u.includes('runcards')
+          ? [{ rc: 'RC-1-01', pieces: 2700, defective: 100, first: now, last: now + 1000 }]
+          : u.includes('carriers')
+            ? [carrier]
+            : Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : i === 30 ? 0b10000 : 0));
+        return { ok: true, json: async () => data };
+      })
     );
     const { container } = render(<ProductivityPage />);
-    await waitFor(() => expect(container.textContent).toContain('3 parts inspected'));
+    await waitFor(() => expect(container.textContent).toContain('60 parts inspected'));
+    expect(container.textContent).toContain('Carrier 07');
     expect(container.textContent).toContain('2 defects found');
-    expect(container.textContent).toContain('Top defect type: ASQ-LCM');
-    expect(container.textContent).toContain('Defect :');
-    expect(screen.getByText(/Defective parts per suspension/)).toBeTruthy();
+    expect(container.textContent).toContain('2 defective parts');
+    expect(container.textContent).toContain('Date Start');
+    expect(container.textContent).toContain('LM-5');
+    expect(container.textContent).not.toMatch(/\bMI\b/);
     expect(container.querySelectorAll('canvas')).toHaveLength(6);
+    expect(calls.some((c) => c.includes('/api/mddp/parts?rc=RC-1-01&seq=1'))).toBe(true);
+    const n = calls.length;
+    await new Promise((r) => setTimeout(r, 50));
+    expect(calls.length).toBe(n); // loaded once, no polling
   });
-  it('explains an empty database', async () => {
+  it('explains an empty period', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => ({ ok: true, json: async () => [] }))
     );
     render(<ProductivityPage />);
-    await waitFor(() => expect(screen.getByText(/No finished pieces/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/No run cards in this period/)).toBeTruthy());
   });
 });

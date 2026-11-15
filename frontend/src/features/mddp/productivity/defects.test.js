@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { popcount, niceAxis, stripRows, bySuspension, summarize, hasDefect } from './defects.js';
+import { popcount, niceAxis, carrierRows, summarize, hasDefect } from './defects.js';
 
 describe('defect helpers', () => {
   it('counts bits', () => {
@@ -15,31 +15,26 @@ describe('defect helpers', () => {
     expect(a.ticks.length).toBeGreaterThan(2);
     expect(niceAxis(5, 5).hi).toBeGreaterThan(5);
   });
-  it('places rows of a strip by part number', () => {
+  it('places the rows of a carrier by suspension number', () => {
     const rows = [
-      { strip: 2, part: 1, defect: 0 },
-      { strip: 2, part: 20, defect: 1 },
-      { strip: 3, part: 5, defect: 0 },
+      { susp: 1, defect: 0 },
+      { susp: 60, defect: 1 },
+      { susp: 25, defect: 0 },
     ];
-    const s = stripRows(rows, 2);
-    expect(s).toHaveLength(20);
+    const s = carrierRows(rows);
+    expect(s).toHaveLength(60);
     expect(s[0]).toBe(rows[0]);
-    expect(s[19]).toBe(rows[1]);
-    expect(s[4]).toBeNull();
+    expect(s[59]).toBe(rows[1]);
+    expect(s[24]).toBe(rows[2]);
+    expect(s[10]).toBeNull();
   });
-  it('groups by suspension and summarises a strip', () => {
+  it('summarises a carrier', () => {
     const rows = [
-      { strip: 1, part: 1, defect: 0b000011 },
-      { strip: 4, part: 1, defect: 0 }, // strip 4 = strip 1 of the second carrier
-      { strip: 2, part: 3, defect: 0b100000 },
+      { susp: 1, defect: 0b00011 },
+      { susp: 2, defect: 0 },
+      { susp: 3, defect: 0b10000 },
     ];
-    const b = bySuspension(rows);
-    expect(b[0].n).toBe(2);
-    expect(b[0].d).toBe(1);
-    expect(b[0].cnt[0]).toBe(1);
-    expect(b[20 + 2].cnt[5]).toBe(1);
-    const sm = summarize(stripRows(rows, 1));
-    expect(sm).toMatchObject({ n: 1, total: 2, defective: 1 });
+    expect(summarize(carrierRows(rows))).toMatchObject({ n: 3, total: 3, defective: 2 });
     expect(summarize([null]).top).toBe('-');
   });
 });

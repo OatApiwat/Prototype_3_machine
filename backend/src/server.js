@@ -5,6 +5,7 @@ const cors = require('cors');
 const { WebSocketServer } = require('ws');
 const { Cache } = require('./cache');
 const { makeInflux } = require('./influx');
+const { carriersOf, partsOf } = require('./productivity');
 
 const cfg = {
   url: process.env.INFLUX_URL || 'http://localhost:8086',
@@ -92,13 +93,25 @@ const cached = (key, ttl, fn) => {
   }
   return h.promise;
 };
-app.get('/api/mddp/runcards', async (_q, res) => {
-  try { res.json(await cached('rcs', cfg.pollMs, () => influx.runCards())); } catch (e) { res.status(502).json({ error: String(e.message || e) }); }
+// GET /api/mddp/runcards?from=<ms>&to=<ms>      run cards with pieces in the range (default: last 24 h)
+// GET /api/mddp/carriers?rc=<run card>          carrier visits of a run card: carrier number, strip numbers, pieces, defects per code
+// GET /api/mddp/parts?rc=<run card>&seq=<visit> the 60 pieces (suspensions) of one carrier visit
+const rcOf = (q) => String(q.rc || '').replace(/[^A-Za-z0-9_-]/g, '');
+const fail = (res, e) => res.status(502).json({ error: String(e.message || e) });
+app.get('/api/mddp/runcards', async (req, res) => {
+  const to = +req.query.to || Date.now(), from = +req.query.from || to - 24 * 3600 * 1000;
+  if (!(from < to)) return res.status(400).json({ error: 'from must be before to' });
+  try { res.json(await cached(`rcs:${Math.round(from / 1000)}:${Math.round(to / 1000)}`, cfg.pollMs, () => influx.runCards(from, to))); } catch (e) { fail(res, e); }
+});
+app.get('/api/mddp/carriers', async (req, res) => {
+  const rc = rcOf(req.query);
+  if (!rc) return res.status(400).json({ error: 'rc required' });
+  try { res.json(carriersOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)))); } catch (e) { fail(res, e); }
 });
 app.get('/api/mddp/parts', async (req, res) => {
-  const rc = String(req.query.rc || '').replace(/[^A-Za-z0-9_-]/g, '');
-  if (!rc) return res.status(400).json({ error: 'rc required' });
-  try { res.json(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc))); } catch (e) { res.status(502).json({ error: String(e.message || e) }); }
+  const rc = rcOf(req.query), seq = +req.query.seq;
+  if (!rc || !seq) return res.status(400).json({ error: 'rc and seq required' });
+  try { res.json(partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), seq)); } catch (e) { fail(res, e); }
 });
 
 const server = http.createServer(app);

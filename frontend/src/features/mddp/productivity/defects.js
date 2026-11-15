@@ -1,8 +1,10 @@
 // Defect types (bit 0..5 of the `defect` field of mddp_part) and helpers for the Productivity Dashboard.
-export const DEFECTS = ['ASQ-LCM', 'ASQ-MCM', 'ASQ-PCM', 'ISAD-CM', 'LM-5', 'MI'];
-export const DEFECT_COLORS = ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#b07aa1', '#edc948'];
+export const DEFECTS = ['ASQ-LCM', 'ASQ-MCM', 'ASQ-PCM', 'ISAD-CM', 'LM-5'];
+export const DEFECT_COLORS = ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#b07aa1'];
 export const PARTS_PER_STRIP = 20;
 export const STRIPS_PER_CARRIER = 3;
+export const SUSPENSIONS = PARTS_PER_STRIP * STRIPS_PER_CARRIER; // per carrier
+export const PIECES_PER_RUN_CARD = 2700;
 
 export const popcount = (m) => {
   let n = 0;
@@ -11,6 +13,8 @@ export const popcount = (m) => {
 };
 export const hasDefect = (m, i) => ((m | 0) >> i) & 1;
 export const stripLabel = (n) => 'Strip ' + String(n).padStart(3, '0');
+export const carrierLabel = (n) => 'Carrier ' + String(n).padStart(2, '0');
+export const clock = (ms) => new Date(ms).toLocaleTimeString('en-GB');
 /** short run card label: "RC-2611150231-02" -> same; kept as a function so the format lives in one place */
 export const runCardLabel = (rc) => rc;
 
@@ -34,36 +38,14 @@ export function niceAxis(min, max) {
   return { lo, hi: ticks[ticks.length - 1], step, ticks };
 }
 
-/** rows of one strip -> array of PARTS_PER_STRIP entries (index = part no. - 1), null where the part is not made yet */
-export function stripRows(rows, strip) {
-  const out = Array(PARTS_PER_STRIP).fill(null);
-  for (const r of rows)
-    if (r.strip === strip && r.part >= 1 && r.part <= PARTS_PER_STRIP) out[r.part - 1] = r;
+/** rows of one carrier -> SUSPENSIONS entries (index = suspension no. - 1), null where the piece is not made yet */
+export function carrierRows(rows) {
+  const out = Array(SUSPENSIONS).fill(null);
+  for (const r of rows) if (r.susp >= 1 && r.susp <= SUSPENSIONS) out[r.susp - 1] = r;
   return out;
 }
 
-/** per suspension (strip-in-carrier x part, 60 per carrier) defect counts over the whole run card */
-export function bySuspension(rows) {
-  const out = Array.from({ length: STRIPS_PER_CARRIER * PARTS_PER_STRIP }, (_, i) => ({
-    n: 0,
-    d: 0,
-    cnt: DEFECTS.map(() => 0),
-    strip: Math.floor(i / PARTS_PER_STRIP) + 1,
-    part: (i % PARTS_PER_STRIP) + 1,
-  }));
-  for (const r of rows) {
-    const s = out[((r.strip - 1) % STRIPS_PER_CARRIER) * PARTS_PER_STRIP + (r.part - 1)];
-    if (!s) continue;
-    s.n++;
-    if (r.defect > 0) s.d++;
-    DEFECTS.forEach((_, i) => {
-      s.cnt[i] += hasDefect(r.defect, i);
-    });
-  }
-  return out;
-}
-
-/** summary of one strip: parts made, defects found, defective parts, most frequent defect type */
+/** summary of one carrier: parts made, defects found, defective parts, most frequent defect type */
 export function summarize(parts) {
   const made = parts.filter(Boolean);
   const cnt = DEFECTS.map(() => 0);

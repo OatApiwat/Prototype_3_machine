@@ -3,7 +3,7 @@ import { fit } from '../../../lib/canvasUtil.js';
 import { drawPartChart, slotAt } from './drawPartChart.js';
 
 /** Canvas chart + hover tooltip. `tip(i)` returns the tooltip lines of category i (or null). */
-export default function PartChart({ title, right, height = 200, draw, tip }) {
+export default function PartChart({ title, right, height = 200, draw, tip, onPick }) {
   const ref = useRef(null),
     [hover, setHover] = useState(-1),
     [box, setBox] = useState(null),
@@ -54,6 +54,8 @@ export default function PartChart({ title, right, height = 200, draw, tip }) {
         ref={ref}
         style={{ height, width: '100%', display: 'block' }}
         onMouseMove={onMove}
+        onClick={() => onPick && hover >= 0 && onPick(hover)}
+        data-clickable={onPick ? '1' : undefined}
         onMouseLeave={() => {
           setHover(-1);
           setBox(null);

@@ -120,7 +120,7 @@ export function drawPartChart(g, w, h, o) {
       pen = true;
     });
     g.stroke();
-    const rad = v1 - v0 > 30 ? 1.6 : 2.6;
+    const rad = s.marker || (v1 - v0 > 30 ? 1.6 : 2.6);
     s.values.forEach((v, i) => {
       if (v == null) return;
       g.beginPath();

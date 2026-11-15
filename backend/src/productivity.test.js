@@ -1,13 +1,13 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { carriersOf, partsOf, rangeOf } = require('./productivity');
+const { carriersOf, visitsOf, partsOf, rangeOf } = require('./productivity');
 
 const row = (seq, carrier, strip, part, defect, t) => ({ seq, carrier, strip, strip_no: (seq - 1) * 3 + strip, part, susp: (strip - 1) * 20 + part, defect, t });
 
-test('carriersOf groups by visit and counts defects per type', () => {
+test('visitsOf groups by visit and counts defects per type', () => {
   const rows = [row(1, 7, 1, 1, 0b00011, 10), row(1, 7, 2, 3, 0, 20), row(2, 8, 1, 1, 0b10000, 30), row(41, 1, 1, 1, 1, 40)];
-  const c = carriersOf(rows);
+  const c = visitsOf(rows);
   assert.strictEqual(c.length, 3);
   assert.deepStrictEqual(c[0].strips, [1, 2]);
   assert.deepStrictEqual(c[0].cnt, [1, 1, 0, 0, 0, 0]);
@@ -23,8 +23,16 @@ test('points without a carrier are ignored', () => {
 });
 
 test('a reused carrier number stays a separate visit', () => {
-  const c = carriersOf([row(1, 3, 1, 1, 0, 1), row(44, 3, 1, 1, 0, 2)]);
+  const c = visitsOf([row(1, 3, 1, 1, 0, 1), row(44, 3, 1, 1, 0, 2)]);
   assert.deepStrictEqual(c.map((x) => [x.seq, x.carrier]), [[1, 3], [44, 3]]);
+});
+
+test('carriersOf lists each carrier of the run card with the strip numbers of each of its sets', () => {
+  const c = carriersOf([row(26, 1, 1, 1, 0, 3), row(26, 1, 2, 1, 0, 4), row(1, 1, 1, 1, 0, 1), row(2, 7, 1, 1, 0, 2)]);
+  assert.deepStrictEqual(c, [
+    { carrier: 1, sets: [{ seq: 1, strips: [1] }, { seq: 26, strips: [76, 77] }] },
+    { carrier: 7, sets: [{ seq: 2, strips: [4] }] },
+  ]);
 });
 
 test('partsOf returns one visit ordered by suspension', () => {

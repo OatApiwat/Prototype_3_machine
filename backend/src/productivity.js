@@ -8,7 +8,7 @@ const bit = (mask, i) => ((mask | 0) >> i) & 1;
  * One entry per carrier visit (seq = position in the run card; carrier numbers are reused, so seq is the key):
  * { seq, carrier, strips: [strip numbers], start, end, pieces, defective, cnt: [count per defect type] }
  */
-function carriersOf(rows) {
+function visitsOf(rows) {
   const by = new Map();
   for (const r of rows) {
     if (r.seq == null || r.carrier == null) continue; // incomplete point: cannot be placed on a carrier
@@ -47,6 +47,19 @@ function rangeOf(from, to, tzMin, now = Date.now()) {
   return { from: f ?? hi - 24 * 3600 * 1000, to: hi };
 }
 
+/**
+ * Carriers of a run card, each with its sets (one entry per visit, `seq` = key for /parts) and the Strip numbers of every set:
+ * [{ carrier, sets: [{ seq, strips: [strip numbers] }] }]   (carriers and their sets in ascending order)
+ */
+function carriersOf(rows) {
+  const by = new Map();
+  for (const v of visitsOf(rows)) {
+    if (!by.has(v.carrier)) by.set(v.carrier, { carrier: v.carrier, sets: [] });
+    by.get(v.carrier).sets.push({ seq: v.seq, strips: v.strips });
+  }
+  return [...by.values()].sort((a, b) => a.carrier - b.carrier);
+}
+
 const partsOf = (rows, seq) => rows.filter((r) => r.seq === seq).sort((a, b) => a.susp - b.susp);
 
-module.exports = { carriersOf, partsOf, rangeOf, DEFECTS };
+module.exports = { carriersOf, visitsOf, partsOf, rangeOf, DEFECTS };

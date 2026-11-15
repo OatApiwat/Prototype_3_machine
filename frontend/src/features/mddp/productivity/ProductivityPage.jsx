@@ -44,6 +44,7 @@ const defectNames = (m) => {
   return names.length ? `${names.length} defect(s): ${names.join(', ')}` : '';
 };
 const bars = (rows) => DEFECTS.map((_, d) => rows.map((r) => (r ? hasDefect(r.defect, d) : 0)));
+const firstOf = (rows) => rows.find(Boolean);
 const lastOf = (rows) => [...rows].reverse().find(Boolean);
 const range = (vals) => {
   const v = vals.filter((x) => typeof x === 'number');
@@ -148,10 +149,11 @@ function SetColumn({
       ylabel: v.unit,
     };
   };
-  // red line: % of defective pieces of each strip, as a step over its 20 suspensions
+  // red marker: % of defective pieces of each strip, one point per strip (at the middle of its 20 suspensions)
   const stripPct = rows.map((_, i) => {
-    const k = Math.floor(i / PARTS_PER_STRIP),
-      made = rows.slice(k * PARTS_PER_STRIP, (k + 1) * PARTS_PER_STRIP).filter(Boolean);
+    const k = Math.floor(i / PARTS_PER_STRIP);
+    if (i !== k * PARTS_PER_STRIP + PARTS_PER_STRIP / 2 - 1) return null;
+    const made = rows.slice(k * PARTS_PER_STRIP, (k + 1) * PARTS_PER_STRIP).filter(Boolean);
     return made.length ? (100 * made.filter((r) => r.defect > 0).length) / made.length : null;
   });
   const cur = (f, dec) => {
@@ -170,8 +172,8 @@ function SetColumn({
             Set {index + 1} · {carrierLabel(visit.carrier)} (visit {visit.seq})
           </b>{' '}
           <span style={{ opacity: 0.9 }}>
-            {clock(visit.start)} · Strips {visit.strips.join(', ')}
-            {visit.pieces >= SUSPENSIONS ? '' : ' · in progress'}
+            {sm.n ? clock(firstOf(rows).t) + ' · ' : ''}Strips {visit.strips.join(', ')}
+            {!loading && sm.n < SUSPENSIONS ? ' · in progress' : ''}
           </span>
         </div>
       </div>
@@ -192,7 +194,7 @@ function SetColumn({
         height={200}
         draw={{
           ...common,
-          lines: [{ color: '#c0392b', values: stripPct }],
+          lines: [{ color: '#c0392b', values: stripPct, marker: 6 }],
           axis: PCT_AXIS,
           leftFmt: (v) => v + '%',
           ylabel: 'Defective parts (%)',
@@ -266,10 +268,16 @@ export default function ProductivityPage() {
   );
   const rc = cards.some((c) => c.rc === pickRc) ? pickRc : (cards[cards.length - 1]?.rc ?? null);
   const step2 = useLoaded(carriersUrl(rc), nonce);
-  const carriers = useMemo(() => (step2.url ? step2.data : []).filter((c) => c.carrier != null), [step2]);
-  const complete = (c) => c.pieces >= SUSPENSIONS;
+  // the API lists carriers with their sets; the page works with one entry per set (visit), in run card order
+  const carriers = useMemo(
+    () =>
+      (step2.url ? step2.data : [])
+        .flatMap((g) => g.sets.map((s) => ({ carrier: g.carrier, seq: s.seq, strips: s.strips })))
+        .sort((a, b) => a.seq - b.seq),
+    [step2]
+  );
   const carrierNos = useMemo(() => [...new Set(carriers.map((c) => c.carrier))], [carriers]);
-  const defaultVisit = carriers.filter(complete).slice(-1)[0] ?? carriers[carriers.length - 1];
+  const defaultVisit = carriers[carriers.length - 1];
   const carrierNo = carrierNos.includes(pickCarrier) ? pickCarrier : defaultVisit?.carrier;
   // the sets of the selected carrier: every visit of that carrier number in the run card (carrier numbers are reused)
   const sets = carriers.filter((c) => c.carrier === carrierNo);
@@ -477,8 +485,7 @@ export default function ProductivityPage() {
                       checked={shown.some((x) => x.seq === c.seq)}
                       onChange={() => toggleSet(c.seq)}
                     />{' '}
-                    Set {k + 1} · Strips {c.strips.join(', ')} · {clock(c.start)}
-                    {complete(c) ? '' : ' (in progress)'}
+                    Set {k + 1} · Strips {c.strips.join(', ')}
                   </label>
                 ))}
               </div>

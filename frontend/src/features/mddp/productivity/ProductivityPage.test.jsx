@@ -30,16 +30,10 @@ const row = (susp, defect) => ({
   accz: 1,
   defect,
 });
-const carrier = {
-  seq: 1,
-  carrier: 7,
-  strips: [1, 2, 3],
-  start: now,
-  end: now + 60000,
-  pieces: 60,
-  defective: 2,
-  cnt: [1, 0, 0, 0, 1, 0],
-};
+// API 2 answer: carriers of the run card, each with its sets (seq) and their strip numbers
+const carriers = (...sets) => [{ carrier: 7, sets }];
+const set1 = { seq: 1, strips: [1, 2, 3] };
+const set2 = { seq: 2, strips: [4, 5, 6] };
 
 describe('Productivity dashboard', () => {
   it('walks date -> run card -> carrier and summarises the carrier', async () => {
@@ -50,9 +44,9 @@ describe('Productivity dashboard', () => {
         calls.push(String(url));
         const u = String(url);
         const data = u.includes('runcards')
-          ? [{ rc: 'RC-1-01', pieces: 2700, defective: 100, first: now, last: now + 1000 }]
+          ? [{ rc: 'RC-1-01' }]
           : u.includes('carriers')
-            ? [carrier]
+            ? carriers(set1)
             : Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : i === 30 ? 0b10000 : 0));
         return { ok: true, json: async () => data };
       })
@@ -72,22 +66,14 @@ describe('Productivity dashboard', () => {
     expect(calls.length).toBe(n); // loaded once, no polling
   });
   it('shows one column per set of 3 strips of a reused carrier, all or picked', async () => {
-    const second = {
-      ...carrier,
-      seq: 2,
-      strips: [4, 5, 6],
-      start: now + 100000,
-      defective: 0,
-      cnt: [0, 0, 0, 0, 0, 0],
-    };
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url) => {
         const u = String(url);
         const data = u.includes('runcards')
-          ? [{ rc: 'RC-1-01', pieces: 2700, defective: 100, first: now, last: now + 1000 }]
+          ? [{ rc: 'RC-1-01' }]
           : u.includes('carriers')
-            ? [carrier, second]
+            ? carriers(set1, set2)
             : Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : 0));
         return { ok: true, json: async () => data };
       })
@@ -101,15 +87,14 @@ describe('Productivity dashboard', () => {
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(2));
   });
   it('remembers the selection in localStorage', async () => {
-    const second = { ...carrier, seq: 2, strips: [4, 5, 6], start: now + 100000 };
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url) => {
         const u = String(url);
         const data = u.includes('runcards')
-          ? [{ rc: 'RC-1-01', pieces: 2700, defective: 100, first: now, last: now + 1000 }]
+          ? [{ rc: 'RC-1-01' }]
           : u.includes('carriers')
-            ? [carrier, second]
+            ? carriers(set1, set2)
             : Array.from({ length: 60 }, (_, i) => row(i + 1, 0));
         return { ok: true, json: async () => data };
       })

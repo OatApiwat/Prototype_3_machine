@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { start, subscribe, state, ui, setPaused, setTab as setStoreTab } from './lib/store.js';
 import { DASHBOARDS, MACHINES, parseRoute, routeHash } from './config/machines.js';
+import NavBar from './components/NavBar.jsx';
 import MachineMenu from './components/MachineMenu.jsx';
 import PortalPage from './pages/portal/PortalPage.jsx';
 import MddpSensorPage from './features/mddp/MddpSensorPage.jsx';
@@ -57,38 +58,15 @@ export default function App() {
   const Page = loc.m && loc.d === 'sensor' ? SENSOR_PAGES[loc.m] : null;
   return (
     <div className="app">
-      <div className="tabbar">
-        {loc.m ? (
-          <>
-            <button className="pill" onClick={() => setLoc({ m: null, d: 'sensor' })}>
-              ← Portal
-            </button>
-            <b style={{ margin: '0 8px 4px' }}>{MACHINES[loc.m].name}</b>
-            <select className="pill" value={loc.d} onChange={(e) => setLoc({ m: loc.m, d: e.target.value })}>
-              {DASHBOARDS.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-          </>
-        ) : (
-          <b style={{ margin: '4px 8px' }}>Portal</b>
-        )}
-        <span className="spacer" />
-        <span className="status">
-          <span className={'dot' + (state.connected ? ' on' : '')} />
-          {state.connected ? 'live from InfluxDB' : 'reconnecting…'}
-        </span>
-        {Page && (
-          <button className="pill" onClick={() => setPaused(ui.pausedAt === null)}>
-            {ui.pausedAt === null ? '⏸ Pause' : '▶ Live'}
-          </button>
-        )}
-        <button className="pill" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-          {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
-        </button>
-      </div>
+      <NavBar
+        loc={loc}
+        go={setLoc}
+        connected={state.connected}
+        paused={ui.pausedAt !== null}
+        onPause={() => setPaused(ui.pausedAt === null)}
+        theme={theme}
+        onTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      />
       {!loc.m && <PortalPage go={(m, x, y) => setMenu({ m, x, y })} />}
       {Page && <Page />}
       {loc.m && !Page && <ComingSoon machine={loc.m} dash={loc.d} />}

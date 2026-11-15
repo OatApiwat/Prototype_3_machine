@@ -1,9 +1,9 @@
 // The three machines that have live data, and the dashboards every machine offers.
 // Routes look like #/m/<machine id>/<dashboard id>.
 export const MACHINES = {
-  mddp: { id: 'mddp', name: 'MDDP_184' },
-  calul: { id: 'calul', name: 'CALUL_037' },
-  hall: { id: 'hall', name: 'HAll_013' },
+  mddp: { id: 'mddp', name: 'MDDP_184', prefix: 'mddp_' },
+  calul: { id: 'calul', name: 'CALUL_037', prefix: 'calul_' },
+  hall: { id: 'hall', name: 'HAll_013', prefix: 'hall_' },
 };
 
 export const DASHBOARDS = [

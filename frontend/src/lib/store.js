@@ -32,6 +32,13 @@ function merge(rows) {
     if (i > 0) a.splice(0, i);
   }
 }
+/** Age (ms) of the newest row of a machine's measurements (key prefix such as 'mddp_'); Infinity when none. */
+export function dataAge(prefix) {
+  let last = 0;
+  for (const [key, a] of series)
+    if (key.startsWith(prefix) && a.length && a[a.length - 1].t > last) last = a[a.length - 1].t;
+  return last ? Date.now() + state.offset - last : Infinity;
+}
 export const subscribe = (fn) => {
   listeners.add(fn);
   return () => listeners.delete(fn);

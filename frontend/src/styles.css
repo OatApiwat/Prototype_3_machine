@@ -703,3 +703,111 @@ table.t td:first-child {
 select.pill {
   padding: 3px 10px;
 }
+
+/* top navigation bar */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 4px 0;
+  background: var(--bg);
+  border-bottom: 2px solid var(--line);
+}
+.navbar .pill,
+.navbar .status {
+  margin-bottom: 0;
+}
+.navitem {
+  position: relative;
+}
+.navbtn {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font:
+    700 14px 'Segoe UI',
+    Arial,
+    sans-serif;
+  cursor: pointer;
+}
+.navbtn:hover {
+  background: var(--grid);
+}
+.navbtn.active {
+  background: var(--panel);
+  border-color: var(--line);
+}
+.navbtn:focus-visible,
+.navdd button:focus-visible {
+  outline: 2px solid var(--blue);
+}
+.navdd {
+  position: absolute;
+  z-index: 45;
+  top: 100%;
+  left: 0;
+  min-width: 220px;
+  margin-top: 4px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.3);
+}
+.navdd button {
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font:
+    600 14px 'Segoe UI',
+    Arial,
+    sans-serif;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.navdd button:hover,
+.navdd button.cur {
+  background: var(--grid);
+}
+.navshade {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.sdot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: var(--red);
+}
+.sdot.ok {
+  background: var(--green);
+}
+.sdot.slow {
+  background: #eab308;
+}
+.crumb {
+  margin-left: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .crumb {
+    display: none;
+  }
+  .navbtn {
+    padding: 6px 8px;
+  }
+}

@@ -1,9 +1,11 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import NavBar from './NavBar.jsx';
 
 const base = { connected: true, paused: false, onPause() {}, theme: 'light', onTheme() {} };
+
+afterEach(cleanup);
 
 describe('NavBar', () => {
   it('lists the machines and opens their dashboards', () => {

@@ -95,12 +95,24 @@ const signals = {
           }
           const G = 9.81, W2 = 2 * Math.PI * 30;   // acceleration m/s2; velocity mm/s assuming a 30 Hz dominant vibration
           const zP = Math.min(1, Math.abs(peak - 90) / 4.5), zD = Math.min(1, Math.abs(dur - 70) / 7), zV = Math.min(1, ax / 0.9);
-          let mask = 0;
+          // defect model (deterministic per piece): each code has its own base rate and its own process driver
+          //   ASQ-LCM / ASQ-PCM <- dispense pressure,  ASQ-MCM / ISAD-CM <- dispense time,  LM-5 / MI <- vibration
+          // plus: a slow tool-wear drift over the run, "bad" carrier visits (fixture problem, one code x5), one weak strip
+          // per bad visit (x3), and related codes that tend to appear together on the same piece.
           const seed = k * 7919 + (side === 'L' ? 0 : 3571) + j * 31;
+          const BASE = [0.008, 0.006, 0.005, 0.004, 0.003, 0.007];
+          const DRIVE = [zP, zD, zP, zD, zV, zV];
+          const wear = 1 + 0.5 * Math.sin(k / 9);
+          const badVisit = hash(k * 131 + 7) < 0.1, badCode = Math.floor(hash(k * 131 + 11) * 6), weakStrip = 1 + Math.floor(hash(k * 131 + 13) * 3);
+          let mask = 0;
           for (let d = 0; d < 6; d++) {
-            const p = 0.006 + 0.07 * Math.max(0, zP - 0.6) + 0.07 * Math.max(0, zD - 0.6) + (d === 5 ? 0.05 * Math.max(0, zV - 0.5) : 0);
+            let p = (BASE[d] + 0.06 * Math.max(0, DRIVE[d] - 0.55)) * wear;
+            if (badVisit && d === badCode) p *= ord[j][0] === weakStrip ? 8 : 4;
             if (hash(seed + d * 101) < p) mask |= 1 << d;
           }
+          const PAIR = [1, 0, 3, 2, 5, 4];   // codes that tend to occur together
+          if (mask && hash(seed + 977) < 0.22) for (let d = 0; d < 6; d++) if (mask & (1 << d)) mask |= 1 << PAIR[d];
+          if (mask && hash(seed + 983) < 0.04) mask |= 1 << Math.floor(hash(seed + 991) * 6);
           const seq = ((k - 1) % RUN_CARRIERS) + 1, rc = 'RC-' + new Date(base).toISOString().slice(2, 16).replace(/[-:T]/g, '') + '-' + String(Math.floor((k - 1) / RUN_CARRIERS) + 1).padStart(2, '0');
           const row = ord[j][0], carrier = m.cid(k);   // carrier number is reused (40 carriers, 45 visits per run card); seq = visit position in the run card
           out.push(`mddp_part,${tag},side=${side},rc=${rc} seq=${seq}i,carrier=${carrier}i,strip=${row}i,strip_no=${(seq - 1) * 3 + row}i,part=${ord[j][1]}i,susp=${(row - 1) * 20 + ord[j][1]}i,temp=${r(m.tempAt(side, start + b.s1), 3)},peak=${r(peak, 3)},dur=${r(dur, 2)},accx=${r(ax * G, 3)},accy=${r(ay * G, 3)},accz=${r(az * G, 3)},velx=${r(ax * G / W2 * 1000, 3)},vely=${r(ay * G / W2 * 1000, 3)},velz=${r(az * G / W2 * 1000, 3)},defect=${mask}i ${ts}`);

@@ -31,6 +31,18 @@ function gen(base, from, to) {
       out.push(`mddp_carrier,${tag},k=${k} x=${r(x, 2)},nL=${nL}i,nR=${nR}i ${ts}`);
     }
   }
+  // one event per finished dispense at the sim time it ends: duration (ms) and peak pressure (kPa)
+  const f0 = (from - base) / 1000, t1 = (to - base) / 1000;
+  for (const side of ['L', 'R']) {
+    for (let k = Math.max(1, Math.floor(f0 / m.P) - 1); k <= Math.floor(t1 / m.P) + 2; k++) {
+      const start = (side === 'L' ? k - 1 : k) * m.P;
+      if (start > t1 + 1 || start + m.W < f0 - 1) continue;
+      m.getSched(side, k).segs.forEach((sg, i) => {
+        const ts = Math.round(base + (start + sg.s1) * 1000);
+        if (ts > from && ts <= to) out.push(`mddp_dispense,${tag},side=${side} dur=${r(sg.dur * 1000, 2)},peak=${r(sg.peak, 2)},carrier=${k}i,shot=${i + 1}i ${ts}`);
+      });
+    }
+  }
   return out.join('\n');
 }
 module.exports = { gen, MACHINE };

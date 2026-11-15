@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Graph from './Graph.jsx';
-import { nowRender, sample, keysWith, range } from './store.js';
+import { nowRender, sample, keysWith, range, ui } from './store.js';
+import { Stat } from './Live.jsx';
 import { css, fit } from './canvasUtil.js';
 
 // layout constants of the 2D drawing (pixels only; no data values)
@@ -77,28 +78,28 @@ function Spc({ side, win }) {
 
 export default function MddpTab() {
   const [win, setWin] = useState(() => +(localStorage.getItem('mddp.win') || 15));
-  const [spc, setSpc] = useState(() => localStorage.getItem('mddp.spc') === '1');
   const winRef = useRef(win); winRef.current = win;
   const getWin = useMemo(() => () => winRef.current, []);
-  useEffect(() => { localStorage.setItem('mddp.win', win); localStorage.setItem('mddp.spc', spc ? '1' : '0'); }, [win, spc]);
-  const B = 'var(--blue)', C = 'var(--cyan)';
-  const col = (v) => v; // CSS vars are resolved by the canvas through getComputedStyle at draw time
-  const cv = (v) => css(v.slice(4, -1));
-  const sL = (f, c) => ({ key: 'mddp_fast|L', field: f, color: cv(c), label: 'L' });
+  useEffect(() => { localStorage.setItem('mddp.win', win); }, [win]);
+  const cv = (v) => css(v);
+  const side = (s) => (s === 'L' ? 'Left' : 'Right');
+  const AX = [['vx', 'X axis', 0.8, [0, 0.2, 0.4, 0.6, 0.8], '--red'], ['vy', 'Y axis', 0.4, [0, 0.1, 0.2, 0.3, 0.4], '--green'], ['vz', 'Z axis', 0.4, [0, 0.1, 0.2, 0.3, 0.4], '--blue']];
   return (
     <div>
       <h1>MDDP_184</h1>
-      <div className="card"><Line2D /></div>
-      <div className="toolbar">
-        <span>Window {win < 10 ? win.toFixed(1) : Math.round(win)} s</span>
-        <button className="pill" onClick={() => setWin((w) => Math.max(0.2, w / 1.5))}>＋</button>
-        <button className="pill" onClick={() => setWin((w) => Math.min(60, w * 1.5))}>－</button>
-        <label style={{ marginLeft: 'auto' }}><input type="checkbox" checked={spc} onChange={(e) => setSpc(e.target.checked)} /> SPC</label>
+      <div className="stats">
+        <Stat label="Left pressure" k="mddp_fast|L" f="p" d={1} unit="kPa" /><Stat label="Right pressure" k="mddp_fast|R" f="p" d={1} unit="kPa" />
+        <Stat label="Left head temp" k="mddp_arm|L" f="temp" d={2} unit="°C" /><Stat label="Right head temp" k="mddp_arm|R" f="temp" d={2} unit="°C" />
+        <Stat label="Left carrier" k="mddp_arm|L" f="ak" d={0} step /><Stat label="Right carrier" k="mddp_arm|R" f="ak" d={0} step />
       </div>
+      <div className="card"><Line2D /></div>
+      <div className="toolbar"><span>Window {win < 10 ? win.toFixed(1) : Math.round(win)} s</span>
+        <button className="pill" onClick={() => setWin((w) => Math.max(0.2, w / 1.5))}>＋</button><button className="pill" onClick={() => setWin((w) => Math.min(60, w * 1.5))}>－</button></div>
       <div className="grid2">
-        {['L', 'R'].map((s) => <div className="card" key={'p' + s}>{spc ? <Spc side={s} win={getWin} /> : <Graph title={(s === 'L' ? 'Left' : 'Right') + ' pressure (kPa)'} series={[{ key: 'mddp_fast|' + s, field: 'p', color: cv(s === 'L' ? '--blue' : '--cyan'), label: s }]} ymin={0} ymax={120} ticks={[0, 50, 100]} win={getWin} unit=" kPa" dec={1} />}</div>)}
-        {['L', 'R'].map((s) => <div className="card" key={'t' + s}><Graph title={(s === 'L' ? 'Left' : 'Right') + ' head epoxy temperature (°C)'} series={[{ key: 'mddp_arm|' + s, field: 'temp', color: cv('--amber'), label: s }]} ymin={108} ymax={112} ticks={[108, 109, 110, 111, 112]} win={getWin} unit=" °C" dec={2} />}</div>)}
-        {['L', 'R'].map((s) => <div className="card" key={'v' + s}><Graph title={(s === 'L' ? 'Left' : 'Right') + ' motor vibration (g)'} series={[{ key: 'mddp_fast|' + s, field: 'vx', color: cv('--red'), label: 'X' }, { key: 'mddp_fast|' + s, field: 'vy', color: cv('--green'), label: 'Y' }, { key: 'mddp_fast|' + s, field: 'vz', color: cv('--blue'), label: 'Z' }]} ymin={0} ymax={0.8} ticks={[0, 0.2, 0.4, 0.6, 0.8]} win={getWin} unit=" g" dec={3} height={170} />}</div>)}
+        {['L', 'R'].map((s) => <div className="card" key={'p' + s}>{ui.spc ? <Spc side={s} win={getWin} /> : <Graph title={side(s) + ' arm pressure (kPa)'} series={[{ key: 'mddp_fast|' + s, field: 'p', color: cv(s === 'L' ? '--blue' : '--cyan'), label: s }]} ymin={0} ymax={120} ticks={[0, 50, 100]} win={getWin} unit=" kPa" dec={1} spcOk={false} />}</div>)}
+        {['L', 'R'].map((s) => <div className="card" key={'d' + s}><Graph title={side(s) + ' arm dispense time (ms)'} series={[{ key: 'mddp_dispense|' + s, field: 'dur', color: cv(s === 'L' ? '--blue' : '--cyan'), label: s }]} ymin={50} ymax={90} ticks={[50, 60, 70, 80, 90]} win={getWin} unit=" ms" dec={1} dots /></div>)}
+        {['L', 'R'].map((s) => <div className="card" key={'t' + s}><Graph title={side(s) + ' head epoxy temperature (°C)'} series={[{ key: 'mddp_arm|' + s, field: 'temp', color: cv('--amber'), label: s }]} ymin={108} ymax={112} ticks={[108, 109, 110, 111, 112]} win={getWin} unit=" °C" dec={2} /></div>)}
+        {['L', 'R'].map((s) => <div key={'v' + s}>{AX.map(([f, nm, ymax, ticks, col]) => <div className="card" key={f}><Graph title={side(s) + ' robot vibration ' + nm + ' (g)'} series={[{ key: 'mddp_fast|' + s, field: f, color: cv(col), label: nm[0] }]} ymin={0} ymax={ymax} ticks={ticks} win={getWin} unit=" g" dec={3} height={120} /></div>)}</div>)}
       </div>
     </div>
   );

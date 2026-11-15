@@ -17,6 +17,12 @@ function gen(base, from, to) {
       out.push(`hall_tray,${tag},k=${k} x=${r(x, 2)},in_oven=${Math.abs(x) <= h.XOV ? 1 : 0}i ${ts}`);
     }
   }
+  // curing time of every tray, written when the tray leaves the oven
+  const f0 = (from - base) / 1000, t1 = (to - base) / 1000;
+  for (let k = 0; k < h.READY.length; k++) {
+    const to_ = h.tOut(k);
+    if (to_ > f0 && to_ <= t1) out.push(`hall_cure,${tag} cure_s=${r(h.dwellActual(k), 2)},set_s=${r(h.DWELL, 2)},tray=${k}i ${Math.round(base + to_ * 1000)}`);
+  }
   return out.join('\n');
 }
 module.exports = { gen, MACHINE };

@@ -16,11 +16,12 @@ function gen(base, from, to) {
   for (let ts = Math.floor(from / SLOW_DT) * SLOW_DT + SLOW_DT; ts <= to; ts += SLOW_DT) {
     const t = (ts - base) / 1000, ph = c.phaseOf(t);
     const q = c.lerpQ(ph.tc, c.vOf(ph.c)), p = c.posAt(t), abc = c.abcAt(t), T = c.tempsAt(t), e = c.errAt(t), ea = c.angErrAt(t);
+    let wp = 0, at = -1; for (let i = 0; i < c.NW; i++) { if (ph.tc < c.WPS[i].l) { wp = i; break; } } for (let i = 0; i < c.NW; i++) if (ph.tc >= c.WPS[i].a && ph.tc < c.WPS[i].l) at = i;
     const F = c.fkAll(q), pts = [F.S, F.E, F.W, F.F.p, F.T.p];
     const jf = pts.map((P, i) => `j${i + 1}x=${r(P[0], 2)},j${i + 1}y=${r(P[1], 2)},j${i + 1}z=${r(P[2], 2)}`).join(',');
     const qf = q.map((v, i) => `q${i + 1}=${r(v * RAD, 4)}`).join(',');
     const tf = T.map((v, i) => `t${i + 1}=${r(v, 3)}`).join(',');
-    out.push(`calul_robot,${tag} ${qf},${jf},life=${r(730.5 * 86400 + t, 1)},${tf},x=${r(p[0], 3)},y=${r(p[1], 3)},z=${r(p[2], 3)},a=${r(abc[0], 3)},b=${r(abc[1], 3)},c=${r(abc[2], 3)},dx=${r(e[0], 4)},dy=${r(e[1], 4)},dz=${r(e[2], 4)},da=${r(ea[0], 4)},db=${r(ea[1], 4)},dc=${r(ea[2], 4)},cycle=${ph.c + 1}i,tc=${r(ph.tc, 3)} ${ts}`);
+    out.push(`calul_robot,${tag} ${qf},${jf},life=${r(730.5 * 86400 + t, 1)},${tf},x=${r(p[0], 3)},y=${r(p[1], 3)},z=${r(p[2], 3)},a=${r(abc[0], 3)},b=${r(abc[1], 3)},c=${r(abc[2], 3)},dx=${r(e[0], 4)},dy=${r(e[1], 4)},dz=${r(e[2], 4)},da=${r(ea[0], 4)},db=${r(ea[1], 4)},dc=${r(ea[2], 4)},wp=${wp}i,at=${at}i,cycle=${ph.c + 1}i,tc=${r(ph.tc, 3)} ${ts}`);
     out.push(`calul_flow,${tag} ready=${Math.min(c.readyCount(t), 1e6)}i,picked=${c.pickedCycles(t)}i,sent=${c.sentCount(t)}i ${ts}`);
     for (let k = 0; k < 3; k++) out.push(`calul_festo,${tag},axis=${'XYZ'[k]} temp=${r(f.festoT(k, t), 3)} ${ts}`);
   }

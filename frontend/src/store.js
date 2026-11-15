@@ -20,7 +20,11 @@ function merge(rows) {
 export const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 const notify = () => listeners.forEach((f) => f());
 
-export const nowRender = () => Date.now() + state.offset - state.delay;
+export const ui = { pausedAt: null, spc: false, hoverT: null, hoverFrozen: null };
+export const nowRender = () => (ui.pausedAt !== null ? ui.pausedAt : ui.hoverFrozen != null ? ui.hoverFrozen : Date.now() + state.offset - state.delay);
+export const setPaused = (p) => { ui.pausedAt = p ? Date.now() + state.offset - state.delay : null; notify(); };
+export const setSpc = (v) => { ui.spc = v; try { localStorage.setItem('ui.spc', v ? '1' : '0'); } catch (e) { /* ignore */ } notify(); };
+try { ui.spc = localStorage.getItem('ui.spc') === '1'; } catch (e) { /* ignore */ }
 
 export function rowsOf(key) { return series.get(key) || []; }
 export function keysWith(prefix) { return [...series.keys()].filter((k) => k.startsWith(prefix)); }

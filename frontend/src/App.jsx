@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useSyncExternalStore } from 'react';
-import { start, subscribe, state } from './store.js';
+import { start, subscribe, state, ui, setPaused, setSpc } from './store.js';
 import Portal from './Portal.jsx';
 import MddpTab from './MddpTab.jsx';
 import CalulTab from './CalulTab.jsx';
@@ -20,6 +20,8 @@ export default function App() {
         {TABS.map(([id, label]) => <button key={id} className={'tab' + (tab === id ? ' active' : '')} onClick={() => setTab(id)}>{label}</button>)}
         <span className="spacer" />
         <span className="status"><span className={'dot' + (state.connected ? ' on' : '')} />{state.connected ? 'live from InfluxDB' : 'reconnecting…'}</span>
+        <button className="pill" onClick={() => setPaused(ui.pausedAt === null)}>{ui.pausedAt === null ? '⏸ Pause' : '▶ Live'}</button>
+        <label className="status"><input type="checkbox" checked={ui.spc} onChange={(e) => setSpc(e.target.checked)} /> SPC (all graphs)</label>
         <button className="pill" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? '☀️ Light' : '🌙 Dark'}</button>
       </div>
       {tab === 'portal' && <Portal go={setTab} />}

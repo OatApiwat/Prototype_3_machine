@@ -32,29 +32,36 @@ function Oven() {
   return <canvas ref={ref} />;
 }
 
+const mmss = (s) => (typeof s === 'number' ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}` : '--');
+
 export default function HallTab() {
-  const [win, setWin] = useState(() => +(localStorage.getItem('hall.win') || 60));
+  const [win, setWin] = useState(() => +(localStorage.getItem('hall.win') || 120));
   const winRef = useRef(win); winRef.current = win; const getWin = useMemo(() => () => winRef.current, []);
   useEffect(() => { localStorage.setItem('hall.win', win); }, [win]);
   useTick(1000);
-  const c = (n) => theme(n), K = 'hall_oven|';
-  const G = (title, series, ymin, ymax, ticks, unit, dec = 2) => <div className="card"><Graph title={title} series={series.map(([f, col, lab]) => ({ key: K, field: f, color: c(col), label: lab }))} ymin={ymin} ymax={ymax} ticks={ticks} unit={unit} dec={dec} win={getWin} /></div>;
-  const trays = keysWith('hall_tray|').map((k) => ({ k: k.split('|')[1], x: sample(k, 'x', nowRender()) })).filter((o) => o.x !== null && Math.abs(o.x) <= XOV).sort((a, b) => a.x - b.x);
+  const c = (n) => theme(n), K = 'hall_oven|', t = nowRender();
+  const G = (title, series, ymin, ymax, ticks, unit, dec = 2, extra = {}, key = K, h = 150) => <div className="card"><Graph title={title} series={series.map(([f, col, lab]) => ({ key, field: f, color: c(col), label: lab }))} ymin={ymin} ymax={ymax} ticks={ticks} unit={unit} dec={dec} win={getWin} height={h} {...extra} /></div>;
+  const trays = keysWith('hall_tray|').map((k) => ({ k: k.split('|')[1], x: sample(k, 'x', t) })).filter((o) => o.x !== null && Math.abs(o.x) <= XOV).sort((a, b) => a.x - b.x);
+  const cure = rowsOf('hall_cure|'), lastCure = [...cure].reverse().find((r) => r.t <= t);
+  const v = (f, d = 2) => { const x = sample(K, f, t); return typeof x === 'number' ? x.toFixed(d) : '--'; };
+  const P = [['Oven temperature setting', SETPT + ' °C'], ['Oven temperature actual', v('temp', 1) + ' °C'], ['Curing time (last tray out)', mmss(lastCure && lastCure.cure_s)], ['Curing time (set)', mmss(lastCure && lastCure.set_s)], ['Blower speed', v('rpm', 0) + ' rpm'], ['Blower vibration X / Y / Z', `${v('vx')} / ${v('vy')} / ${v('vz')} mm/s`], ['Conveyor speed', v('conv', 2) + ' mm/s'], ['Blower temperature', v('blower_temp', 1) + ' °C'], ['Heater duty', v('duty', 0) + ' %'], ['Trays in oven', String(trays.length)]];
   return (
     <div>
       <h1>HAll_013 — convection oven</h1>
-      <div className="toolbar"><span>Window {Math.round(win)} s</span><button className="pill" onClick={() => setWin((w) => Math.max(5, w / 1.5))}>＋</button><button className="pill" onClick={() => setWin((w) => Math.min(60, w * 1.5))}>－</button></div>
+      <div className="toolbar"><span>Window {win >= 60 ? (win / 60).toFixed(1) + ' min' : Math.round(win) + ' s'}</span><button className="pill" onClick={() => setWin((w) => Math.max(5, w / 1.5))}>＋</button><button className="pill" onClick={() => setWin((w) => Math.min(120, w * 1.5))}>－</button></div>
       <div className="card"><Oven /></div>
-      <div className="stats"><Stat label="Oven temp" k={K} f="temp" d={1} unit="°C" /><Stat label="Heater duty" k={K} f="duty" d={0} unit="%" /><Stat label="Blower" k={K} f="rpm" d={0} unit="rpm" /><Stat label="Conveyor" k={K} f="conv" d={2} unit="mm/s" /><Stat label="Blower motor temp" k={K} f="blower_temp" d={1} unit="°C" /><div className="stat"><span>Trays in oven</span><b>{trays.length}</b></div></div>
       <div className="grid2">
-        {G('Oven temperature (°C)', [['temp', '--red', 'T']], 156, 164, [156, 158, 160, 162, 164], ' °C', 2)}
+        <div className="card"><div style={{ fontWeight: 700, marginBottom: 4 }}>Oven parameters</div><table className="t"><tbody>{P.map(([n, x]) => <tr key={n}><td>{n}</td><td>{x}</td></tr>)}</tbody></table></div>
+        <div className="card"><div style={{ fontWeight: 700, marginBottom: 4 }}>Trays on the belt (12 carriers per tray, from CALUL_037)</div><table className="t"><thead><tr><th>Tray</th><th>Position (mm)</th></tr></thead><tbody>{trays.map((o) => <tr key={o.k}><td>#{o.k}</td><td>{o.x.toFixed(0)}</td></tr>)}</tbody></table></div>
+        {G('Oven temperature actual / setting (°C)', [['temp', '--red', 'T']], 154, 164, [154, 157, 160, 163], ' °C', 2, { refs: [{ v: SETPT, label: 'setting 160', color: '--muted' }] })}
         {G('Blower speed (rpm)', [['rpm', '--blue', 'rpm']], 1445, 1455, [1445, 1450, 1455], ' rpm', 1)}
+        {G('Conveyor speed (mm/s)', [['conv', '--green', 'v']], 22.7, 23.1, [22.7, 22.9, 23.1], ' mm/s', 3)}
+        {G('Blower temperature (°C)', [['blower_temp', '--cyan', 'T']], 58, 68, [58, 63, 68], ' °C', 1)}
         {G('Heater duty (%)', [['duty', '--amber', 'duty']], 0, 100, [0, 50, 100], ' %', 0)}
-        {G('Blower vibration X Y Z (mm/s RMS)', [['vx', '--red', 'X'], ['vy', '--green', 'Y'], ['vz', '--blue', 'Z']], 0, 2, [0, 0.5, 1, 1.5, 2], '', 3)}
-        {G('Blower motor temperature (°C)', [['blower_temp', '--cyan', 'T']], 55, 75, [55, 60, 65, 70, 75], ' °C', 1)}
-        {G('Conveyor speed (mm/s)', [['conv', '--green', 'v']], 22.5, 23.3, [22.6, 22.9, 23.2], ' mm/s', 3)}
+        {G('Oven curing time per tray (s)', [['cure_s', '--green', 'cure']], 162, 170, [162, 164, 166, 168, 170], ' s', 1, { dots: true, refs: [{ v: 165.94, label: 'set', color: '--muted' }] }, 'hall_cure|')}
       </div>
-      <div className="card"><table className="t"><thead><tr><th>Tray</th><th>Position (mm)</th></tr></thead><tbody>{trays.map((o) => <tr key={o.k}><td>#{o.k}</td><td>{o.x.toFixed(0)}</td></tr>)}</tbody></table></div>
+      <div className="card">{[['vx', 'X', '--red'], ['vy', 'Y', '--green'], ['vz', 'Z', '--blue']].map(([f, a, col]) => <div key={f}>{G('Blower vibration ' + a + ' (mm/s RMS)', [[f, col, a]], f === 'vx' ? 0.8 : f === 'vy' ? 0.6 : 0.4, f === 'vx' ? 1.6 : f === 'vy' ? 1.2 : 0.9, f === 'vx' ? [0.8, 1.2, 1.6] : f === 'vy' ? [0.6, 0.9, 1.2] : [0.4, 0.6, 0.9], ' mm/s', 3, {}, K, 110)}</div>)}</div>
+      <div className="nodata" style={{ padding: 6 }}>Trays come from CALUL_037 (12 carriers per tray) → IN → oven → OUT. Amber = in oven (curing), green = on the belt.</div>
     </div>
   );
 }

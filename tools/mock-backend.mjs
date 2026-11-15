@@ -1,0 +1,20 @@
+// Dev/CI helper: backend look-alike WITHOUT InfluxDB (feeds the same Node-RED sim lines straight into the WebSocket),
+// used to smoke-test the frontend where Docker is not available.  node tools/mock-backend.mjs  (needs backend/node_modules)
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const express = require('../backend/node_modules/express'); const { WebSocketServer } = require('../backend/node_modules/ws');
+const http = require('node:http'); const { tick } = require('../nodered/sim/index.js');
+const state = {}, buf = []; const app = express(); const delay = 8000;
+app.get('/api/config', (_q, r) => r.json({ pollMs: 5000, renderDelayMs: delay }));
+function parse(line) {
+  const sp = line.match(/^(\S+) (\S+) (\d+)$/); const [h, f, ts] = [sp[1], sp[2], +sp[3]]; const [m, ...tg] = h.split(','); const o = { m, t: ts };
+  tg.forEach((x) => { const [k, v] = x.split('='); o[k] = v; });
+  f.split(',').forEach((x) => { const [k, v] = x.split('='); o[k] = v.endsWith('i') ? parseInt(v) : parseFloat(v); }); return o;
+}
+const server = http.createServer(app); const wss = new WebSocketServer({ server, path: '/ws' }); const clients = new Set();
+wss.on('connection', (ws) => { clients.add(ws); const by = {}; for (const r of buf) (by[r.m] = by[r.m] || []).push(r); ws.send(JSON.stringify({ type: 'snapshot', serverNow: Date.now(), data: by })); ws.on('close', () => clients.delete(ws)); });
+tick(state, Date.now() - 120000);
+let pending = [];
+setInterval(() => { const l = tick(state, Date.now() - 1000); if (l) for (const x of l.split("\n")) pending.push(parse(x)); }, 250);
+setInterval(() => { const rows = pending; pending = []; for (const r of rows) buf.push(r); const cut = Date.now() - 120000; while (buf.length && buf[0].t < cut) buf.shift(); const by = {}; for (const r of rows) (by[r.m] = by[r.m] || []).push(r); const msg = JSON.stringify({ type: 'batch', data: by }); clients.forEach((c) => c.readyState === 1 && c.send(msg)); }, 5000);
+server.listen(3001, () => console.log('mock backend :3001'));

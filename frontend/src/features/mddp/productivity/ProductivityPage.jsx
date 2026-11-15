@@ -76,7 +76,7 @@ export default function ProductivityPage() {
   const cards = useMemo(() => [...(step1.url ? step1.data : [])].sort((a, b) => a.first - b.first), [step1]);
   const rc = cards.some((c) => c.rc === pickRc) ? pickRc : (cards[cards.length - 1]?.rc ?? null);
   const step2 = useLoaded(carriersUrl(rc), nonce);
-  const carriers = step2.url ? step2.data : [];
+  const carriers = useMemo(() => (step2.url ? step2.data : []).filter((c) => c.carrier != null), [step2]);
   const complete = (c) => c.pieces >= SUSPENSIONS;
   const doneCarriers = carriers.filter(complete);
   const seq = carriers.some((c) => c.seq === pickSeq)

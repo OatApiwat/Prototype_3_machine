@@ -11,6 +11,7 @@ const bit = (mask, i) => ((mask | 0) >> i) & 1;
 function carriersOf(rows) {
   const by = new Map();
   for (const r of rows) {
+    if (r.seq == null || r.carrier == null) continue; // incomplete point: cannot be placed on a carrier
     let c = by.get(r.seq);
     if (!c) {
       c = { seq: r.seq, carrier: r.carrier, strips: [], start: r.t, end: r.t, pieces: 0, defective: 0, cnt: Array(DEFECTS).fill(0) };

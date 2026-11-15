@@ -37,7 +37,7 @@ services:
       - |
         set -e
         ID=$$(influx bucket list --host http://influxdb:8086 --org "$$INFLUX_ORG" --token "$$INFLUX_TOKEN" --name "$$INFLUX_BUCKET" --hide-headers | cut -f1)
-        influx bucket update --host http://influxdb:8086 --org "$$INFLUX_ORG" --token "$$INFLUX_TOKEN" --id "$$ID" --retention "$$INFLUX_RETENTION"
+        influx bucket update --host http://influxdb:8086 --token "$$INFLUX_TOKEN" --id "$$ID" --retention "$$INFLUX_RETENTION"
         echo "retention of $$INFLUX_BUCKET set to $$INFLUX_RETENTION"
 
   nodered:

@@ -99,8 +99,8 @@ const cached = (key, ttl, fn) => {
 const rcOf = (q) => String(q.rc || '').replace(/[^A-Za-z0-9_-]/g, '');
 const fail = (res, e) => res.status(502).json({ error: String(e.message || e) });
 app.get('/api/mddp/runcards', async (req, res) => {
-  const to = +req.query.to || Date.now(), from = +req.query.from || to - 24 * 3600 * 1000;
-  if (!(from < to)) return res.status(400).json({ error: 'from must be before to' });
+  const to = Math.min(+req.query.to || Date.now(), Date.now()), from = +req.query.from || to - 24 * 3600 * 1000;   // nothing exists in the future
+  if (!(from < to)) return res.json([]);
   try { res.json(await cached(`rcs:${Math.round(from / 1000)}:${Math.round(to / 1000)}`, cfg.pollMs, () => influx.runCards(from, to))); } catch (e) { fail(res, e); }
 });
 app.get('/api/mddp/carriers', async (req, res) => {

@@ -18,6 +18,10 @@ test('carriersOf groups by visit and counts defects per type', () => {
   assert.strictEqual(c[0].end, 20);
 });
 
+test('points without a carrier are ignored', () => {
+  assert.deepStrictEqual(carriersOf([{ seq: 1, carrier: null, strip_no: 1, defect: 0, t: 1 }, { seq: 2, strip_no: 4, defect: 0, t: 2 }]), []);
+});
+
 test('a reused carrier number stays a separate visit', () => {
   const c = carriersOf([row(1, 3, 1, 1, 0, 1), row(44, 3, 1, 1, 0, 2)]);
   assert.deepStrictEqual(c.map((x) => [x.seq, x.carrier]), [[1, 3], [44, 3]]);

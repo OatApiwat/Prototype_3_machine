@@ -39,8 +39,6 @@ const X_LABEL = 'Suspension No.';
 
 const pad = (n) => String(n).padStart(2, '0');
 const dayStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const dayStart = (s) => new Date(s + 'T00:00:00').getTime();
-const dayEnd = (s) => new Date(s + 'T23:59:59.999').getTime();
 const fmtT = (t) => new Date(t).toLocaleString('sv-SE');
 const defectNames = (m) => {
   const names = DEFECTS.filter((_, i) => hasDefect(m, i));
@@ -259,12 +257,10 @@ export default function ProductivityPage() {
     [hoverId, setHoverId] = useState(null),
     [zoom, setZoom] = usePersistentState('prod.zoom', null),
     [pickSets, setPickSets] = usePersistentState('prod.sets', null); // null = all sets of the carrier, else a list of visit numbers
-  const from = dayStart(dateStart),
-    to = dayEnd(dateEnd),
-    badRange = !(from < to);
+  const badRange = dateStart > dateEnd;
   // loaded in steps (date range -> run cards -> carriers of the run card; the pieces are loaded by each set column), each once per selection
   const [nonce, setNonce] = useState(0);
-  const step1 = useLoaded(cardsUrl(from, to), nonce);
+  const step1 = useLoaded(cardsUrl(dateStart, dateEnd), nonce);
   const cards = useMemo(() => [...(step1.url ? step1.data : [])].sort((a, b) => a.first - b.first), [step1]);
   const rc = cards.some((c) => c.rc === pickRc) ? pickRc : (cards[cards.length - 1]?.rc ?? null);
   const step2 = useLoaded(carriersUrl(rc), nonce);

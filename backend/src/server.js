@@ -5,7 +5,7 @@ const cors = require('cors');
 const { WebSocketServer } = require('ws');
 const { Cache } = require('./cache');
 const { makeInflux } = require('./influx');
-const { carriersOf, partsOf } = require('./productivity');
+const { carriersOf, partsOf, rangeOf } = require('./productivity');
 
 const cfg = {
   url: process.env.INFLUX_URL || 'http://localhost:8086',
@@ -15,6 +15,7 @@ const cfg = {
   pollMs: +process.env.POLL_MS || 5000,
   renderDelayMs: +process.env.RENDER_DELAY_MS || 9000,
   cacheSec: +process.env.CACHE_SECONDS || 120,
+  tzOffsetMin: Number.isFinite(+process.env.TZ_OFFSET_MIN) && process.env.TZ_OFFSET_MIN ? +process.env.TZ_OFFSET_MIN : 420,   // day boundaries when the request has no tz (Asia/Bangkok)
   cacheFastSec: +process.env.CACHE_FAST_SECONDS || 60,
   marginMs: +process.env.POLL_MARGIN_MS || 2000,
   historyTtlMs: +process.env.HISTORY_TTL_MS || 45000,
@@ -93,13 +94,18 @@ const cached = (key, ttl, fn) => {
   }
   return h.promise;
 };
-// GET /api/mddp/runcards?from=<ms>&to=<ms>      run cards with pieces in the range (default: last 24 h)
+// GET /api/mddp/runcards?dateStart=YYYY-MM-DD&dateEnd=YYYY-MM-DD   run cards with pieces from 00:00 of dateStart to the end of dateEnd (TZ_OFFSET_MIN, default Asia/Bangkok);
+//     no dateEnd = dateStart; legacy from/to (epoch ms) still accepted; no parameters = last 24 h
 // GET /api/mddp/carriers?rc=<run card>          carrier visits of a run card: carrier number, strip numbers, pieces, defects per code
 // GET /api/mddp/parts?rc=<run card>&seq=<visit> the 60 pieces (suspensions) of one carrier visit
 const rcOf = (q) => String(q.rc || '').replace(/[^A-Za-z0-9_-]/g, '');
 const fail = (res, e) => res.status(502).json({ error: String(e.message || e) });
 app.get('/api/mddp/runcards', async (req, res) => {
-  const to = Math.min(+req.query.to || Date.now(), Date.now()), from = +req.query.from || to - 24 * 3600 * 1000;   // nothing exists in the future
+  const q = req.query, byDate = q.dateStart != null || q.dateEnd != null;
+  const range = rangeOf(byDate ? q.dateStart ?? q.dateEnd : q.from, byDate ? q.dateEnd ?? q.dateStart : q.to, cfg.tzOffsetMin);
+  if (!range) return res.status(400).json({ error: 'invalid date' });
+  if (byDate && (q.dateStart ?? q.dateEnd) > (q.dateEnd ?? q.dateStart)) return res.status(400).json({ error: 'dateStart must not be after dateEnd' });
+  const { from, to } = range;
   if (!(from < to)) return res.json([]);
   try { res.json(await cached(`rcs:${Math.round(from / 1000)}:${Math.round(to / 1000)}`, cfg.pollMs, () => influx.runCards(from, to))); } catch (e) { fail(res, e); }
 });

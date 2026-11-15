@@ -39,7 +39,9 @@ export function useLoadedMany(urls, nonce) {
   return res.key === key ? res : { key, data: [], error: null, loading: !!key };
 }
 
-export const cardsUrl = (from, to) => (from < to ? `/api/mddp/runcards?from=${from}&to=${to}` : null);
+/** run cards of the dates (YYYY-MM-DD, whole days, end date included); null when the range is empty */
+export const cardsUrl = (dateStart, dateEnd) =>
+  dateStart <= dateEnd ? `/api/mddp/runcards?dateStart=${dateStart}&dateEnd=${dateEnd}` : null;
 export const carriersUrl = (rc) => (rc ? `/api/mddp/carriers?rc=${encodeURIComponent(rc)}` : null);
 export const partsUrl = (rc, seq) =>
   rc && seq ? `/api/mddp/parts?rc=${encodeURIComponent(rc)}&seq=${seq}` : null;

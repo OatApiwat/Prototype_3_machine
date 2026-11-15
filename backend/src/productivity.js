@@ -27,6 +27,26 @@ function carriersOf(rows) {
   return [...by.values()].map((c) => ({ ...c, strips: c.strips.sort((a, b) => a - b) })).sort((a, b) => a.seq - b.seq);
 }
 
+/**
+ * Query range of /api/mddp/runcards: calendar dates ("YYYY-MM-DD", from = start of that day, to = end of that day, in the time zone
+ * `tzMin` minutes east of UTC) or epoch ms. Returns { from, to } in ms, or null when a value is not understood.
+ */
+function rangeOf(from, to, tzMin, now = Date.now()) {
+  const DAY = /^\d{4}-\d{2}-\d{2}$/;
+  const one = (v, end) => {
+    if (v == null || v === '') return null;
+    if (DAY.test(v)) {
+      const t = Date.parse(v + 'T00:00:00Z') - tzMin * 60000 + (end ? 86400000 - 1 : 0);
+      return Number.isNaN(t) ? undefined : t;
+    }
+    return /^\d+$/.test(v) ? +v : undefined;
+  };
+  const t = one(to, true), f = one(from, false);
+  if (t === undefined || f === undefined) return null;
+  const hi = Math.min(t ?? now, now);   // nothing exists in the future
+  return { from: f ?? hi - 24 * 3600 * 1000, to: hi };
+}
+
 const partsOf = (rows, seq) => rows.filter((r) => r.seq === seq).sort((a, b) => a.susp - b.susp);
 
-module.exports = { carriersOf, partsOf, DEFECTS };
+module.exports = { carriersOf, partsOf, rangeOf, DEFECTS };

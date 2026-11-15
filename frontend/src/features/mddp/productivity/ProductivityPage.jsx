@@ -409,7 +409,10 @@ export default function ProductivityPage() {
               groups: strips.map((x, i) => ({
                 from: i * PARTS_PER_STRIP,
                 to: (i + 1) * PARTS_PER_STRIP,
-                label: stripLabel(x.no),
+                label:
+                  (shown.length > 1
+                    ? `Set ${sets.indexOf(shown[Math.floor(i / STRIPS_PER_CARRIER)]) + 1} · `
+                    : '') + stripLabel(x.no),
               })),
               lines: [
                 {

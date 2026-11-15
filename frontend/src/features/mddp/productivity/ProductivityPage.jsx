@@ -149,7 +149,7 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
     return r ? r[f].toFixed(dec) : '--';
   };
   return (
-    <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }} data-testid="set-column">
+    <div className="set-frame" data-testid="set-column">
       <div className="card" style={{ padding: '6px 10px' }}>
         <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           <b>

@@ -72,7 +72,11 @@ export default function PartChart({ title, right, height = 200, draw, tip, onPic
       {lines && box && (
         <div
           className="ptip"
-          style={{ left: Math.min(box.x + 14, box.w - 190), top: Math.max(28, box.y - 10) }}
+          style={{
+            // open to the side of the pointer that has room, so a wide tooltip stays inside the chart
+            ...(box.x > box.w / 2 ? { right: box.w - box.x + 14 } : { left: box.x + 14 }),
+            top: Math.max(28, box.y - 10),
+          }}
         >
           {lines.map((l, i) => (
             <div key={i} style={i === 0 ? { fontWeight: 700 } : undefined}>

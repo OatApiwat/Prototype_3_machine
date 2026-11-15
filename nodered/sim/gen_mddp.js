@@ -13,6 +13,8 @@ const tag = `machine=${MACHINE}`;
 const fastTs = (from, to) => { const a = []; for (let ts = Math.floor(from / FAST_DT) * FAST_DT + FAST_DT; ts <= to; ts += FAST_DT) a.push(ts); return a; };
 const slowTs = (from, to) => { const a = []; for (let ts = Math.floor(from / SLOW_DT) * SLOW_DT + SLOW_DT; ts <= to; ts += SLOW_DT) a.push(ts); return a; };
 
+// 45 visits -> 25 carriers: visits 1-25 = carriers 1-25, visits 26-40 = carriers 1-15 again, visits 41-45 = carriers 1-5 a third time
+const carrierOfVisit = (v) => (v <= 25 ? v : v <= 40 ? v - 25 : v - 40);
 const RUN_CARRIERS = 45;   // carriers per run card (2,700 pieces / 60)
 const hash = (n) => { n = (n ^ 61) ^ (n >>> 16); n = (n + (n << 3)) | 0; n = n ^ (n >>> 4); n = Math.imul(n, 0x27d4eb2d); n = n ^ (n >>> 15); return (n >>> 0) / 4294967296; };
 const signals = {
@@ -114,7 +116,7 @@ const signals = {
           if (mask && hash(seed + 977) < 0.22) for (let d = 0; d < 6; d++) if (mask & (1 << d)) mask |= 1 << PAIR[d];
           if (mask && hash(seed + 983) < 0.04) mask |= 1 << Math.floor(hash(seed + 991) * 6);
           const seq = ((k - 1) % RUN_CARRIERS) + 1, rc = 'RC-' + new Date(base).toISOString().slice(2, 16).replace(/[-:T]/g, '') + '-' + String(Math.floor((k - 1) / RUN_CARRIERS) + 1).padStart(2, '0');
-          const row = ord[j][0], carrier = m.cid(k);   // carrier number is reused (40 carriers, 45 visits per run card); seq = visit position in the run card
+          const row = ord[j][0], carrier = carrierOfVisit(seq);   // carrier numbers are reused inside a run card (25 carriers: 5 used 3x, 10 used 2x, 10 used 1x); seq = visit position in the run card
           out.push(`mddp_part,${tag},side=${side},rc=${rc} seq=${seq}i,carrier=${carrier}i,strip=${row}i,strip_no=${(seq - 1) * 3 + row}i,part=${ord[j][1]}i,susp=${(row - 1) * 20 + ord[j][1]}i,temp=${r(m.tempAt(side, start + b.s1), 3)},peak=${r(peak, 3)},dur=${r(dur, 2)},accx=${r(ax * G, 3)},accy=${r(ay * G, 3)},accz=${r(az * G, 3)},velx=${r(ax * G / W2 * 1000, 3)},vely=${r(ay * G / W2 * 1000, 3)},velz=${r(az * G / W2 * 1000, 3)},defect=${mask}i ${ts}`);
         }
       }

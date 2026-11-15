@@ -6,7 +6,7 @@ Services (`docker compose up --build`):
 |---|---|---|
 | frontend | http://localhost:8080 | React UI (nginx, proxies `/api` and `/ws`) |
 | backend | http://localhost:3001 | Express + WebSocket, in-memory cache, polls InfluxDB |
-| influxdb | http://localhost:8086 | time-series DB (bucket `machines`, 24 h retention) |
+| influxdb | http://localhost:8086 | time-series DB (bucket `machines`, 7 days retention (`INFLUX_RETENTION`)) |
 | nodered | http://localhost:1880 | simulator flow: writes every value into InfluxDB |
 
 ## Data path
@@ -36,4 +36,4 @@ Source: measurement `mddp_part` (one row per finished piece; tags `side`, `rc` =
 - `GET /api/mddp/carriers?rc=<run card>` carrier visits: carrier number, strip numbers, pieces, defective, count per defect code
 - `GET /api/mddp/parts?rc=<run card>&seq=<visit>` the 60 pieces of one carrier visit
 
-InfluxDB keeps `INFLUX_RETENTION` (default 24 h) of data, so the Date Start / Date End pickers can only find that much history; raise it in `.env` (and recreate the volume) for longer analysis.
+InfluxDB keeps `INFLUX_RETENTION` (default 168 h = 7 days) of data, so the Date Start / Date End pickers can find 7 days of history. The one-shot `influx-retention` service applies the value to the existing bucket on every `docker compose up`, so changing it in `.env` needs no volume reset. Disk use grows with the retention (`mddp_fast` alone is 2,000 rows/s): watch it with `docker system df -v`.

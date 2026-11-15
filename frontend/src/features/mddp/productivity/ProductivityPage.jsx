@@ -230,7 +230,7 @@ export default function ProductivityPage() {
       )}
       {!badRange && !err && cards.length === 0 && step1.url && !step1.loading && (
         <div className="card" style={{ marginTop: 8, color: 'var(--muted)' }}>
-          No run cards in this period (InfluxDB keeps the last 24 hours by default).
+          No run cards in this period (InfluxDB keeps the last 7 days).
         </div>
       )}
       {ov.length > 0 && (

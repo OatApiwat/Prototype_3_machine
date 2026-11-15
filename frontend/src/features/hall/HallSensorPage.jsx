@@ -12,8 +12,12 @@ import { XOV } from './hallScene.js';
 import { storeGet, storeSet } from '../../lib/safeStorage.js';
 
 const SETPT = 160;
-const mmss = (s) =>
-  typeof s === 'number' ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}` : '--';
+// duration in seconds -> m:ss.mmm (millisecond resolution)
+const mmss = (s) => {
+  if (typeof s !== 'number') return '--';
+  const t = Math.round(s * 1000);
+  return `${Math.floor(t / 60000)}:${String(Math.floor((t % 60000) / 1000)).padStart(2, '0')}.${String(t % 1000).padStart(3, '0')}`;
+};
 
 export default function HallSensorPage() {
   const { win, setWin, getWin } = useGraphWindow('hall.win', 120);
@@ -54,8 +58,8 @@ export default function HallSensorPage() {
   const P = [
     ['Oven Temperature setting', SETPT + ' °C'],
     ['Oven Temperature actual', v('temp', 1) + ' °C'],
-    ['Oven Curing Time (last tray out)', mmss(lastCure && lastCure.cure_s) + ' min:s'],
-    ['Oven Curing Time (set)', mmss(lastCure && lastCure.set_s) + ' min:s'],
+    ['Oven Curing Time (last tray out)', mmss(lastCure && lastCure.cure_s) + ' min:s.ms'],
+    ['Oven Curing Time (set)', mmss(lastCure && lastCure.set_s) + ' min:s.ms'],
     ['Blower Speed', v('rpm', 0) + ' rpm'],
     ['Blower Vibration X / Y / Z', v('vx', 2) + ' / ' + v('vy', 2) + ' / ' + v('vz', 2) + ' mm/s'],
     ['Conveyor Speed', v('conv', 2) + ' mm/s'],
@@ -218,7 +222,7 @@ export default function HallSensorPage() {
             160,
             172,
             [160, 163, 166, 169, 172],
-            ' min:s',
+            ' min:s.ms',
             1,
             {
               dots: true,

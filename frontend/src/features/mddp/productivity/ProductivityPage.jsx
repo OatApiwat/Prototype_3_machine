@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { usePersistentState } from '../../../hooks/usePersistentState.js';
 import { cardsUrl, carriersUrl, partsUrl, useLoaded, useLoadedMany } from './useProductivityData.js';
 import PartChart from './PartChart.jsx';
 import {
@@ -204,12 +205,13 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
 
 export default function ProductivityPage() {
   const today = dayStr(new Date());
-  const [dateStart, setDateStart] = useState(today),
-    [dateEnd, setDateEnd] = useState(today),
-    [pickRc, setPickRc] = useState(null),
-    [pickCarrier, setPickCarrier] = useState(null),
+  // the selections are remembered in localStorage (an unknown run card / carrier / set falls back to the default)
+  const [dateStart, setDateStart] = usePersistentState('prod.dateStart', today),
+    [dateEnd, setDateEnd] = usePersistentState('prod.dateEnd', today),
+    [pickRc, setPickRc] = usePersistentState('prod.rc', null),
+    [pickCarrier, setPickCarrier] = usePersistentState('prod.carrier', null),
     [hoverI, setHoverI] = useState(-1),
-    [pickSets, setPickSets] = useState(null); // null = all sets of the carrier, else a list of visit numbers
+    [pickSets, setPickSets] = usePersistentState('prod.sets', null); // null = all sets of the carrier, else a list of visit numbers
   const from = dayStart(dateStart),
     to = dayEnd(dateEnd),
     badRange = !(from < to);

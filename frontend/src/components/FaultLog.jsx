@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { usePersistentState } from '../hooks/usePersistentState.js';
 import { useTick } from '../hooks/useLive.js';
 import { nowRender, rowsOf } from '../lib/store.js';
 
@@ -17,7 +18,7 @@ const AXC = { X: 'var(--red)', Y: 'var(--green)', Z: 'var(--blue)' };
 
 export default function FaultLog({ src, title, filters, itemLabel }) {
   useTick(1000);
-  const [f, setF] = useState(-1),
+  const [f, setF] = usePersistentState('faultlog.' + src, -1),
     [page, setPage] = useState(0);
   const t = nowRender();
   const all = rowsOf('calul_fault|' + src).filter((r) => r.t <= t && (f < 0 || r.item === filters[f]));

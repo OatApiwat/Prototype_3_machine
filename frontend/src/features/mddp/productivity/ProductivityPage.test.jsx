@@ -5,6 +5,7 @@ import ProductivityPage from './ProductivityPage.jsx';
 
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   vi.unstubAllGlobals();
 });
 
@@ -98,6 +99,29 @@ describe('Productivity dashboard', () => {
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(1));
     fireEvent.click(screen.getByLabelText('All'));
     await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(2));
+  });
+  it('remembers the selection in localStorage', async () => {
+    const second = { ...carrier, seq: 2, strips: [4, 5, 6], start: now + 100000 };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url) => {
+        const u = String(url);
+        const data = u.includes('runcards')
+          ? [{ rc: 'RC-1-01', pieces: 2700, defective: 100, first: now, last: now + 1000 }]
+          : u.includes('carriers')
+            ? [carrier, second]
+            : Array.from({ length: 60 }, (_, i) => row(i + 1, 0));
+        return { ok: true, json: async () => data };
+      })
+    );
+    localStorage.setItem('prod.sets', JSON.stringify([2]));
+    const { container, unmount } = render(<ProductivityPage />);
+    await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(1));
+    expect(container.textContent).toContain('visit 2');
+    fireEvent.click(screen.getByLabelText('All'));
+    await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(2));
+    expect(JSON.parse(localStorage.getItem('prod.sets'))).toBeNull();
+    unmount();
   });
   it('explains an empty period', async () => {
     vi.stubGlobal(

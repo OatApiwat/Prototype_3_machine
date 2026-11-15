@@ -48,6 +48,23 @@ export default function App() {
   useEffect(() => {
     start();
   }, []);
+  // reopening the app without a link goes back to the page that was open last
+  useEffect(() => {
+    try {
+      const last = localStorage.getItem('ui.route');
+      if (!location.hash && last && last !== routeHash(loc)) location.hash = last;
+    } catch {
+      /* no storage */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem('ui.route', routeHash(loc));
+    } catch {
+      /* no storage */
+    }
+  }, [loc]);
   useEffect(() => {
     setStoreTab(loc.m || 'portal');
     window.scrollTo(0, 0);

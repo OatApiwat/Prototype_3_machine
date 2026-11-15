@@ -43,7 +43,7 @@ export default function Graph({ title, series, ymin, ymax, ticks, unit = '', win
         if (rows.length > 20) {
           const m = rows.reduce((a, v) => a + v, 0) / rows.length, sd = Math.sqrt(rows.reduce((a, v) => a + (v - m) ** 2, 0) / (rows.length - 1));
           g.save(); g.setLineDash([6, 4]); g.lineWidth = 1;
-          [['UCL', m + 3 * sd, '--red'], ['CL', m, '--green'], ['LCL', m - 3 * sd, '--red']].forEach(([lab, v, c]) => { g.strokeStyle = css(c); g.fillStyle = css(c); g.beginPath(); g.moveTo(L, y(v)); g.lineTo(L + pw, y(v)); g.stroke(); g.textAlign = 'left'; g.fillText(`${lab} ${v.toFixed(dec)}`, L + 2, y(v) - 6); });
+          [['UCL', m + 3 * sd, '--red'], ['CL', m, '--green'], ['LCL', m - 3 * sd, '--red']].forEach(([lab, v, c]) => { g.strokeStyle = css(c); g.fillStyle = css(c); g.beginPath(); g.moveTo(L, y(v)); g.lineTo(L + pw, y(v)); g.stroke(); g.textAlign = 'right'; g.fillText(`${lab} ${v.toFixed(dec)}`, L + pw - 2, y(v) - 6); });
           g.restore();
           const vis = range(series[0].key, t0, tr); g.fillStyle = css('--red');
           for (const r of vis) { const v = r[series[0].field]; if (typeof v === 'number' && (v > m + 3 * sd || v < m - 3 * sd)) { g.beginPath(); g.arc(L + ((r.t - t0) / W) * pw, y(v), 3, 0, 6.3); g.fill(); } }

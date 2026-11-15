@@ -377,6 +377,16 @@ export default function ProductivityPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', flexWrap: 'wrap' }}>
           <b style={{ fontSize: 16 }}>Defect monitoring</b>
           <span style={{ flex: 1 }} />
+          <button className="pill" onClick={() => runExport(exportExcel)} disabled={!shown.length || busy}>
+            Export Excel
+          </button>
+          <button
+            className="pill"
+            onClick={() => runExport(exportPowerPoint, true)}
+            disabled={!shown.length || busy}
+          >
+            Export PowerPoint
+          </button>
           <span className="zoombtns">
             <button className="pill" title="Zoom in" aria-label="Zoom in" onClick={() => zoomBy(0.7)}>
               +
@@ -479,16 +489,6 @@ export default function ProductivityPage() {
           </span>
           <button className="pill" onClick={reload} title="Load the latest data from InfluxDB">
             ↻ Refresh
-          </button>
-          <button className="pill" onClick={() => runExport(exportExcel)} disabled={!shown.length || busy}>
-            Export Excel
-          </button>
-          <button
-            className="pill"
-            onClick={() => runExport(exportPowerPoint, true)}
-            disabled={!shown.length || busy}
-          >
-            Export PowerPoint
           </button>
         </div>
       </div>

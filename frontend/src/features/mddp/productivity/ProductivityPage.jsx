@@ -1,13 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { usePersistentState } from '../../../hooks/usePersistentState.js';
-import {
-  cardsUrl,
-  carriersUrl,
-  stripsUrl,
-  partsUrl,
-  useLoaded,
-  useLoadedMany,
-} from './useProductivityData.js';
+import { cardsUrl, partsUrl, useLoaded, useLoadedMany } from './useProductivityData.js';
 import { exportExcel, exportPowerPoint } from './exportReport.js';
 import PartChart from './PartChart.jsx';
 import {
@@ -275,17 +268,13 @@ export default function ProductivityPage() {
     [step1]
   );
   const rc = cards.some((c) => c.rc === pickRc) ? pickRc : (cards[cards.length - 1]?.rc ?? null);
-  const step2 = useLoaded(carriersUrl(rc), nonce);
-  const carrierNos = useMemo(
-    () => (step2.url ? (step2.data.carriers ?? []) : []).map((c) => c.carrier),
-    [step2]
-  );
+  const carrierList = useMemo(() => cards.find((c) => c.rc === rc)?.carriers ?? [], [cards, rc]);
+  const carrierNos = useMemo(() => carrierList.map((c) => c.carrier), [carrierList]);
   const carrierNo = carrierNos.includes(pickCarrier) ? pickCarrier : carrierNos[carrierNos.length - 1];
-  const step3 = useLoaded(stripsUrl(rc, carrierNo), nonce);
-  // the strips of the carrier; a set (one column) is one use of the carrier = a run of up to 3 consecutive strips
+  // the strips of the carrier come with the carriers; a set (one column) is one use of the carrier = a run of up to 3 consecutive strips
   const sets = useMemo(() => {
     const out = [];
-    for (const st of step3.url ? (step3.data.strips ?? []) : []) {
+    for (const st of carrierList.find((c) => c.carrier === carrierNo)?.strips ?? []) {
       const n = +st.replace(/\D/g, ''),
         last = out[out.length - 1];
       if (last && last.strips.length < STRIPS_PER_CARRIER && n === last.end + 1) {
@@ -294,7 +283,7 @@ export default function ProductivityPage() {
       } else out.push({ carrier: carrierNo, key: st, strips: [st], end: n });
     }
     return out;
-  }, [step3, carrierNo]);
+  }, [carrierList, carrierNo]);
   const chosen = pickSets ? sets.filter((c) => pickSets.includes(c.key)) : sets;
   const shown = chosen.length ? chosen : sets;
   const allSets = shown.length === sets.length;
@@ -367,7 +356,7 @@ export default function ProductivityPage() {
       document.removeEventListener('keydown', close);
     };
   }, []);
-  const err = step1.error || step2.error;
+  const err = step1.error;
 
   // pieces of the shown sets (loaded once per selection) -> per strip statistics for the carrier chart
   const many = useLoadedMany(

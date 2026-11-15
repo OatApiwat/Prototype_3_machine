@@ -7,7 +7,11 @@ const row = (carrier, strip_no, part, defect = 0) => ({ seq: 1, carrier, strip: 
 
 test('carriersOf lists the carriers of the run card as codes, in order; stripsOf the strip numbers of one carrier (all its uses)', () => {
   const rows = [row(1, 76, 1), row(1, 76, 2), row(1, 1, 1), row(7, 4, 1), row(1, 121, 1), { carrier: null, strip_no: 9 }];
-  assert.deepStrictEqual(carriersOf(rows), [{ carrier: 'CR-0001' }, { carrier: 'CR-0007' }]);
+  assert.deepStrictEqual(carriersOf(rows), [
+    { carrier: 'CR-0001', strips: [{ strip_no: 'Strip-1', pieces: 1, defective: 0 }, { strip_no: 'Strip-76', pieces: 2, defective: 0 }, { strip_no: 'Strip-121', pieces: 1, defective: 0 }] },
+    { carrier: 'CR-0007', strips: [{ strip_no: 'Strip-4', pieces: 1, defective: 0 }] },
+  ]);
+  assert.strictEqual(carriersOf([row(2, 5, 1, 1), row(2, 5, 2, 0)])[0].strips[0].defective, 1); // pieces with a defect
   assert.deepStrictEqual(stripsOf(rows, 'CR-0001'), ['Strip-1', 'Strip-76', 'Strip-121']);
   assert.deepStrictEqual(stripsOf(rows, 'CR-0007'), ['Strip-4']);
   assert.deepStrictEqual(stripsOf(rows, 'CR-9999'), []);

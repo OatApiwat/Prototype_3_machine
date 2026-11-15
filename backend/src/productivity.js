@@ -27,11 +27,24 @@ function rangeOf(from, to, tzMin, now = Date.now()) {
   return { from: f ?? hi - 24 * 3600 * 1000, to: hi };
 }
 
-/** carriers of a run card: [{ carrier: "CR-0005" }] in ascending order */
+/**
+ * Carriers of a run card with the summary of each of their strips, in ascending order:
+ * [{ carrier: "CR-0005", strips: [{ strip_no: "Strip-76", pieces: 20, defective: 3 }, ...] }]  (all uses of the carrier)
+ */
 function carriersOf(rows) {
-  const set = new Set();
-  for (const r of rows) if (r.carrier != null && r.strip_no != null) set.add(r.carrier);   // incomplete points cannot be placed on a carrier
-  return [...set].sort((a, b) => a - b).map((c) => ({ carrier: carrierName(c) }));
+  const by = new Map();
+  for (const r of rows) {
+    if (r.carrier == null || r.strip_no == null) continue; // incomplete point: cannot be placed on a carrier
+    if (!by.has(r.carrier)) by.set(r.carrier, new Map());
+    const st = by.get(r.carrier);
+    const e = st.get(r.strip_no) || { strip_no: stripName(r.strip_no), pieces: 0, defective: 0 };
+    e.pieces++;
+    if (r.defect > 0) e.defective++;
+    st.set(r.strip_no, e);
+  }
+  return [...by.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([carrier, st]) => ({ carrier: carrierName(carrier), strips: [...st.entries()].sort((a, b) => a[0] - b[0]).map((x) => x[1]) }));
 }
 
 /** Strip numbers of one carrier ("CR-0005") in a run card, in ascending order: ["Strip-1", "Strip-2", ...] (all uses of the carrier) */

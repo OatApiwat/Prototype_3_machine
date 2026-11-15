@@ -111,7 +111,10 @@ app.get('/api/mddp/runcards', async (req, res) => {
   if (!(from < to)) return res.json({ ...echo, runcards: [] });
   try {
     const runcards = await cached(`rcs:${Math.round(from / 1000)}:${Math.round(to / 1000)}`, cfg.pollMs, async () => (await influx.runCards(from, to)).map((c) => ({ rc: c.rc })).sort((a, b) => (a.rc < b.rc ? -1 : 1)));
-    res.json({ ...echo, runcards });
+    if (q.detail !== '1') return res.json({ ...echo, runcards });
+    // detail=1: Run Card -> Carrier -> Strip no in one answer (no piece data)
+    const full = await Promise.all(runcards.map(async (c) => ({ rc: c.rc, carriers: carriersOf(await cached('parts:' + c.rc, cfg.pollMs, () => influx.parts(c.rc))).map((k) => ({ carrier: k.carrier, strips: k.strips.map((x) => x.strip_no) })) })));
+    res.json({ ...echo, runcards: full });
   } catch (e) { fail(res, e); }
 });
 app.get('/api/mddp/carriers', async (req, res) => {

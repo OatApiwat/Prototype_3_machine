@@ -30,9 +30,12 @@ const row = (susp, defect) => ({
   accz: 1,
   defect,
 });
-// API 2 answer: carriers of the run card with their strip numbers (3 consecutive strips = one set)
-const carriers = () => ({ rc: 'RC-1-01', carriers: [{ carrier: 'CR-0007' }] });
-const strips = (...s) => ({ rc: 'RC-1-01', carrier: 'CR-0007', strips: s });
+// step 1 answer: run cards with their carriers and strip numbers (3 consecutive strips = one set)
+const runcards = (...s) => ({
+  dateStart: 'x',
+  dateEnd: 'x',
+  runcards: [{ rc: 'RC-1-01', carriers: [{ carrier: 'CR-0007', strips: s }] }],
+});
 const set1 = ['Strip-1', 'Strip-2', 'Strip-3'];
 const set2 = ['Strip-4', 'Strip-5', 'Strip-6'];
 
@@ -45,18 +48,14 @@ describe('Productivity dashboard', () => {
         calls.push(String(url));
         const u = String(url);
         const data = u.includes('runcards')
-          ? { dateStart: 'x', dateEnd: 'x', runcards: [{ rc: 'RC-1-01' }] }
-          : u.includes('carriers')
-            ? carriers()
-            : u.includes('/strips')
-              ? strips(...set1)
-              : {
-                  rc: 'RC-1-01',
-                  strips: [],
-                  pieces: Array.from({ length: 60 }, (_, i) =>
-                    row(i + 1, i === 4 ? 0b00001 : i === 30 ? 0b10000 : 0)
-                  ),
-                };
+          ? runcards(...set1)
+          : {
+              rc: 'RC-1-01',
+              strips: [],
+              pieces: Array.from({ length: 60 }, (_, i) =>
+                row(i + 1, i === 4 ? 0b00001 : i === 30 ? 0b10000 : 0)
+              ),
+            };
         return { ok: true, json: async () => data };
       })
     );
@@ -82,16 +81,12 @@ describe('Productivity dashboard', () => {
       vi.fn(async (url) => {
         const u = String(url);
         const data = u.includes('runcards')
-          ? { dateStart: 'x', dateEnd: 'x', runcards: [{ rc: 'RC-1-01' }] }
-          : u.includes('carriers')
-            ? carriers()
-            : u.includes('/strips')
-              ? strips(...set1, ...set2)
-              : {
-                  rc: 'RC-1-01',
-                  strips: [],
-                  pieces: Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : 0)),
-                };
+          ? runcards(...set1, ...set2)
+          : {
+              rc: 'RC-1-01',
+              strips: [],
+              pieces: Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : 0)),
+            };
         return { ok: true, json: async () => data };
       })
     );
@@ -108,12 +103,8 @@ describe('Productivity dashboard', () => {
       vi.fn(async (url) => {
         const u = String(url);
         const data = u.includes('runcards')
-          ? { dateStart: 'x', dateEnd: 'x', runcards: [{ rc: 'RC-1-01' }] }
-          : u.includes('carriers')
-            ? carriers()
-            : u.includes('/strips')
-              ? strips(...set1, ...set2)
-              : { rc: 'RC-1-01', strips: [], pieces: Array.from({ length: 60 }, (_, i) => row(i + 1, 0)) };
+          ? runcards(...set1, ...set2)
+          : { rc: 'RC-1-01', strips: [], pieces: Array.from({ length: 60 }, (_, i) => row(i + 1, 0)) };
         return { ok: true, json: async () => data };
       })
     );

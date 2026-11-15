@@ -70,7 +70,15 @@ describe('Productivity dashboard', () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(calls.length).toBe(n); // loaded once, no polling
   });
-  it('lets the user pick one strip of the carrier', async () => {
+  it('shows one column per set of 3 strips of a reused carrier, all or picked', async () => {
+    const second = {
+      ...carrier,
+      seq: 2,
+      strips: [4, 5, 6],
+      start: now + 100000,
+      defective: 0,
+      cnt: [0, 0, 0, 0, 0, 0],
+    };
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url) => {
@@ -78,18 +86,18 @@ describe('Productivity dashboard', () => {
         const data = u.includes('runcards')
           ? [{ rc: 'RC-1-01', pieces: 2700, defective: 100, first: now, last: now + 1000 }]
           : u.includes('carriers')
-            ? [carrier]
-            : Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : i === 30 ? 0b10000 : 0));
+            ? [carrier, second]
+            : Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : 0));
         return { ok: true, json: async () => data };
       })
     );
     const { container } = render(<ProductivityPage />);
-    await waitFor(() => expect(container.textContent).toContain('60 parts inspected'));
-    const sel = screen.getByLabelText(/Strip No/);
-    expect(sel.querySelectorAll('option')).toHaveLength(4); // all + 3 strips
-    fireEvent.change(sel, { target: { value: '2' } });
-    await waitFor(() => expect(container.textContent).toContain('20 parts inspected'));
-    expect(container.textContent).toContain('1 defects found');
+    await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(2));
+    expect(container.textContent).toContain('2 sets');
+    fireEvent.click(screen.getByLabelText(/Set 2/)); // untick set 2
+    await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(1));
+    fireEvent.click(screen.getByLabelText('All'));
+    await waitFor(() => expect(container.querySelectorAll('[data-testid="set-column"]')).toHaveLength(2));
   });
   it('explains an empty period', async () => {
     vi.stubGlobal(

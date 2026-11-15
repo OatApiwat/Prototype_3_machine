@@ -6,7 +6,6 @@ import PartChart from './PartChart.jsx';
 import {
   DEFECTS,
   DEFECT_COLORS,
-  PIECES_PER_RUN_CARD,
   STRIPS_PER_CARRIER,
   PARTS_PER_STRIP,
   SUSPENSIONS,
@@ -261,7 +260,10 @@ export default function ProductivityPage() {
   // loaded in steps (date range -> run cards -> carriers of the run card; the pieces are loaded by each set column), each once per selection
   const [nonce, setNonce] = useState(0);
   const step1 = useLoaded(cardsUrl(dateStart, dateEnd), nonce);
-  const cards = useMemo(() => [...(step1.url ? step1.data : [])].sort((a, b) => a.first - b.first), [step1]);
+  const cards = useMemo(
+    () => [...(step1.url ? step1.data : [])].sort((a, b) => (a.rc < b.rc ? -1 : 1)),
+    [step1]
+  );
   const rc = cards.some((c) => c.rc === pickRc) ? pickRc : (cards[cards.length - 1]?.rc ?? null);
   const step2 = useLoaded(carriersUrl(rc), nonce);
   const carriers = useMemo(() => (step2.url ? step2.data : []).filter((c) => c.carrier != null), [step2]);
@@ -427,8 +429,7 @@ export default function ProductivityPage() {
             >
               {cards.map((c) => (
                 <option key={c.rc} value={c.rc}>
-                  {c.rc} · {clock(c.first)} ({c.pieces.toLocaleString()} pcs
-                  {c.pieces >= PIECES_PER_RUN_CARD ? '' : ' · in progress'})
+                  {c.rc}
                 </option>
               ))}
             </select>

@@ -107,7 +107,7 @@ app.get('/api/mddp/runcards', async (req, res) => {
   if (byDate && (q.dateStart ?? q.dateEnd) > (q.dateEnd ?? q.dateStart)) return res.status(400).json({ error: 'dateStart must not be after dateEnd' });
   const { from, to } = range;
   if (!(from < to)) return res.json([]);
-  try { res.json(await cached(`rcs:${Math.round(from / 1000)}:${Math.round(to / 1000)}`, cfg.pollMs, () => influx.runCards(from, to))); } catch (e) { fail(res, e); }
+  try { res.json(await cached(`rcs:${Math.round(from / 1000)}:${Math.round(to / 1000)}`, cfg.pollMs, async () => (await influx.runCards(from, to)).map((c) => ({ rc: c.rc })).sort((a, b) => (a.rc < b.rc ? -1 : 1)))); } catch (e) { fail(res, e); }
 });
 app.get('/api/mddp/carriers', async (req, res) => {
   const rc = rcOf(req.query);

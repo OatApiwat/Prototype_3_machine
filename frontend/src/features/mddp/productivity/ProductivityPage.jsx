@@ -31,7 +31,6 @@ const AXES = [
   ['Y', '#d62728'],
   ['Z', '#1a9e6e'],
 ];
-const PCT_AXIS = { lo: 0, hi: 100, ticks: [0, 25, 50, 75, 100] };
 const RIGHT = { rightMax: 6, rightTicks: [0, 2, 4, 6], rightLabel: 'Defects found (count, by code)' };
 const X_LABEL = `Suspension No. (1 - ${SUSPENSIONS}) · 1 carrier = ${STRIPS_PER_CARRIER} strips × ${PARTS_PER_STRIP}`;
 
@@ -66,11 +65,6 @@ function Legend() {
 }
 
 /** One "set" = one visit of a carrier = 3 strips x 20 pieces; shown as one column of charts */
-const stripPctAt = (rows, i) => {
-  const k = Math.floor(i / PARTS_PER_STRIP),
-    made = rows.slice(k * PARTS_PER_STRIP, (k + 1) * PARTS_PER_STRIP).filter(Boolean);
-  return made.length ? (100 * made.filter((r) => r.defect > 0).length) / made.length : null;
-};
 /** tooltip lines of suspension i for every shown set at once (`linesOf(piece)` = the lines of that chart) */
 const peerTip = (peers, i, linesOf) =>
   peers.flatMap((p) => {
@@ -103,7 +97,7 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
   const defectTip = (i) =>
     peerTip(peers, i, (r, all) => [
       defectNames(r.defect),
-      `Strip: ${stripPctAt(all, i).toFixed(1)}% of its pieces defective`,
+      `Defective parts so far: ${all.slice(0, i + 1).filter((x) => x && x.defect > 0).length} of ${all.slice(0, i + 1).filter(Boolean).length}`,
     ]);
   // defect bars: one defect axis (same 0..N as the overview chart) in every chart, so the same defects look the same everywhere
   const stackMax = Math.max(
@@ -137,8 +131,12 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
       ylabel: v.unit,
     };
   };
-  // red line: % of defective pieces of each strip, as a step over its 20 suspensions
-  const stripPct = rows.map((_, i) => stripPctAt(rows, i));
+  // red line: defective pieces counted so far along the suspensions of the set (cumulative)
+  const cumDefective = rows.map((r, i) =>
+    r ? rows.slice(0, i + 1).filter((x) => x && x.defect > 0).length : null
+  );
+  const cumMax = Math.max(4, Math.ceil(Math.max(0, ...cumDefective.filter((x) => x != null)) / 4) * 4);
+  const cumAxis = { lo: 0, hi: cumMax, ticks: [0, 1, 2, 3, 4].map((k) => (k * cumMax) / 4) };
   const cur = (f, dec) => {
     const r = lastOf(rows);
     return r ? r[f].toFixed(dec) : '--';
@@ -170,10 +168,9 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
         height={200}
         draw={{
           ...common,
-          lines: [{ color: '#c0392b', values: stripPct }],
-          axis: PCT_AXIS,
-          leftFmt: (v) => v + '%',
-          ylabel: 'Defective parts of the strip (%)',
+          lines: [{ color: '#c0392b', values: cumDefective }],
+          axis: cumAxis,
+          ylabel: 'Defective parts so far (count)',
         }}
         tip={defectTip}
         hoverIndex={hoverI}

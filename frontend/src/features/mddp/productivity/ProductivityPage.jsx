@@ -174,7 +174,7 @@ function SetColumn({
       style={{ '--set': SET_COLORS[index % SET_COLORS.length] }}
     >
       <div className="card set-head">
-        <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ minHeight: '2.9em' }}>
           <b>
             Set {index + 1} · {carrierLabel(visit.carrier)}
           </b>{' '}

@@ -850,7 +850,9 @@ select.pill {
   padding: 6px 9px;
   font-size: 12px;
   line-height: 1.45;
-  white-space: nowrap;
+  white-space: normal;
+  width: max-content;
+  overflow-wrap: anywhere;
 }
 
 .multi {

@@ -129,9 +129,16 @@ export default function PartChart({
           className="ptip"
           style={{
             // open to the side of the slot that has room, so a wide tooltip stays inside the chart
+            // (max-width = the room on that side, so it never leaves the chart card or the viewport)
             ...(frac > 0.5
-              ? { right: `calc(64px + (1 - ${frac}) * ${PLOT} + 22px)` }
-              : { left: `calc(56px + ${frac} * ${PLOT} + 22px)` }),
+              ? {
+                  right: `calc(64px + (1 - ${frac}) * ${PLOT} + 22px)`,
+                  maxWidth: `calc(56px + ${frac} * ${PLOT} - 22px)`,
+                }
+              : {
+                  left: `calc(56px + ${frac} * ${PLOT} + 22px)`,
+                  maxWidth: `calc(64px + (1 - ${frac}) * ${PLOT} - 30px)`,
+                }),
             top: box ? Math.max(28, box.y - 10) : 40,
           }}
         >

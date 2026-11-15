@@ -135,7 +135,7 @@ export function drawPartChart(g, w, h, o) {
   g.textBaseline = 'top';
   const every = P.slot >= 16 ? 1 : P.slot >= 8 ? 2 : 5;
   for (let i = v0; i < v1; i++)
-    if (every === 1 || (i + 1) % every === 0 || i === v0)
+    if (every === 1 || (i + 1) % every === 0 || i === 0)
       g.fillText(String(i + 1), P.x + (i - v0 + 0.5) * P.slot, P.y + P.h + 4);
   g.fillText(o.xlabel, P.x + P.w / 2, h - 14);
   // axis titles

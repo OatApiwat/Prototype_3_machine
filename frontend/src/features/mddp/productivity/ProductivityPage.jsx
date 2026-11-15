@@ -99,11 +99,8 @@ function SetColumn({
     to: (k + 1) * PARTS_PER_STRIP,
     label: visit.strips[k] ? stripLabel(visit.strips[k]) : `Strip ${k + 1}`,
   }));
-  const partTip = (i) =>
-    peerTip(peers, i, (r) => [
-      ...PARAMS.map((p) => `${p.title}: ${r[p.f].toFixed(p.dec)} ${p.unit}`),
-      defectNames(r.defect),
-    ]);
+  const partTip = (p) => (i) =>
+    peerTip(peers, i, (r) => [`${p.title}: ${r[p.f].toFixed(p.dec)} ${p.unit}`, defectNames(r.defect)]);
   const vibTip = (v) => (i) =>
     peerTip(peers, i, (r) => [
       ...AXES.map(([a], k) => `${a}: ${r[v.f[k]].toFixed(2)} ${v.unit}`),
@@ -211,7 +208,7 @@ function SetColumn({
           right={cur(p.f, p.dec)}
           height={200}
           draw={lineChart(p)}
-          tip={partTip}
+          tip={partTip(p)}
           hoverIndex={hoverI}
           hoverId={hoverId}
           onHover={onHover}

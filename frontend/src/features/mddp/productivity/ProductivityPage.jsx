@@ -79,8 +79,21 @@ const peerTip = (peers, i, linesOf) =>
       : [`${p.label} · Suspension ${i + 1}`];
   });
 
-function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error, defectMax }) {
+function SetColumn({
+  visit,
+  index,
+  rows,
+  hoverI,
+  hoverId,
+  onHover,
+  view,
+  onZoom,
+  loading,
+  error,
+  defectMax,
+}) {
   const sm = summarize(rows);
+  const peers = [{ label: `Set ${index + 1}`, rows }]; // each chart's tooltip describes its own set
   const groups = Array.from({ length: STRIPS_PER_CARRIER }, (_, k) => ({
     from: k * PARTS_PER_STRIP,
     to: (k + 1) * PARTS_PER_STRIP,
@@ -113,6 +126,7 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
   );
   const common = {
     n: SUSPENSIONS,
+    view,
     groups,
     bars: bars(rows),
     xlabel: X_LABEL,
@@ -172,6 +186,7 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
         </div>
       )}
       <PartChart
+        id="defect"
         title={`Defective parts — ${carrierLabel(visit.carrier)} (Set ${index + 1})`}
         right={`${sm.n} pcs · ${sm.n ? ((100 * sm.defective) / sm.n).toFixed(1) : 0}% defective`}
         height={200}
@@ -184,30 +199,38 @@ function SetColumn({ visit, index, rows, peers, hoverI, onHover, loading, error,
         }}
         tip={defectTip}
         hoverIndex={hoverI}
+        hoverId={hoverId}
         onHover={onHover}
+        onZoom={onZoom}
       />
       {PARAMS.map((p) => (
         <PartChart
           key={p.f}
+          id={p.f}
           title={`${p.title} (${p.unit})`}
           right={cur(p.f, p.dec)}
           height={200}
           draw={lineChart(p)}
           tip={partTip}
           hoverIndex={hoverI}
+          hoverId={hoverId}
           onHover={onHover}
+          onZoom={onZoom}
         />
       ))}
       {VIBS.map((v) => (
         <PartChart
           key={v.title}
+          id={v.title}
           title={v.title}
           right={AXES.map(([a], k) => `${a} ${cur(v.f[k], 2)}`).join('  ')}
           height={200}
           draw={vibChart(v)}
           tip={vibTip(v)}
           hoverIndex={hoverI}
+          hoverId={hoverId}
           onHover={onHover}
+          onZoom={onZoom}
         />
       ))}
       <div className="card" style={{ padding: '6px 10px', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
@@ -230,6 +253,8 @@ export default function ProductivityPage() {
     [pickRc, setPickRc] = usePersistentState('prod.rc', null),
     [pickCarrier, setPickCarrier] = usePersistentState('prod.carrier', null),
     [hoverI, setHoverI] = useState(-1),
+    [hoverId, setHoverId] = useState(null),
+    [zoom, setZoom] = usePersistentState('prod.zoom', null),
     [pickSets, setPickSets] = usePersistentState('prod.sets', null); // null = all sets of the carrier, else a list of visit numbers
   const from = dayStart(dateStart),
     to = dayEnd(dateEnd),
@@ -255,6 +280,23 @@ export default function ProductivityPage() {
     const next = cur.includes(seq) ? cur.filter((x) => x !== seq) : [...cur, seq];
     setPickSets(next.length === 0 || next.length === sets.length ? null : next);
   };
+  // zoom window over the 60 suspensions, shared by every chart; anything invalid falls back to the full range
+  const view =
+    zoom &&
+    Number.isInteger(zoom.from) &&
+    Number.isInteger(zoom.to) &&
+    zoom.from >= 0 &&
+    zoom.to <= SUSPENSIONS &&
+    zoom.to - zoom.from >= 2
+      ? zoom
+      : null;
+  const zoomBy = (k) => {
+    const from = view ? view.from : 0,
+      to = view ? view.to : SUSPENSIONS,
+      span = Math.min(SUSPENSIONS, Math.max(6, Math.round((to - from) * k))),
+      f = Math.min(SUSPENSIONS - span, Math.max(0, Math.round((from + to - span) / 2)));
+    setZoom(span >= SUSPENSIONS ? null : { from: f, to: f + span });
+  };
   const reload = () => setNonce((n) => n + 1);
   // close the set dropdown when clicking anywhere else or pressing Esc
   useEffect(() => {
@@ -277,7 +319,6 @@ export default function ProductivityPage() {
     nonce
   );
   const rowsOf = shown.map((_, i) => carrierRows(many.data[i] || []));
-  const peers = shown.map((c, i) => ({ label: `Set ${sets.indexOf(c) + 1}`, rows: rowsOf[i] }));
   // one defect axis (0..N, N a multiple of 4) shared by the carrier chart and every piece chart
   const maxPiece = Math.max(
     0,
@@ -300,6 +341,17 @@ export default function ProductivityPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', flexWrap: 'wrap' }}>
           <b style={{ fontSize: 16 }}>Defect monitoring</b>
           <span style={{ flex: 1 }} />
+          <span className="zoombtns">
+            <button className="pill" title="Zoom in" aria-label="Zoom in" onClick={() => zoomBy(0.7)}>
+              +
+            </button>
+            <button className="pill" title="Zoom out" aria-label="Zoom out" onClick={() => zoomBy(1.4)}>
+              −
+            </button>
+            <button className="pill" title="Reset zoom" aria-label="Reset zoom" onClick={() => setZoom(null)}>
+              ⟲
+            </button>
+          </span>
           <Legend />
         </div>
         <div className="pselect-row">
@@ -425,9 +477,14 @@ export default function ProductivityPage() {
                 visit={c}
                 index={sets.indexOf(c)}
                 rows={rowsOf[i]}
-                peers={peers}
                 hoverI={hoverI}
-                onHover={setHoverI}
+                hoverId={hoverId}
+                onHover={(i, id) => {
+                  setHoverI(i);
+                  setHoverId(i >= 0 ? id : null);
+                }}
+                view={view}
+                onZoom={setZoom}
                 loading={many.loading}
                 error={many.error}
                 defectMax={defectMax}

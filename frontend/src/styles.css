@@ -921,3 +921,12 @@ select.pill {
   margin-bottom: 0;
   border: 1.5px solid var(--muted);
 }
+
+.zoombtns {
+  display: inline-flex;
+  gap: 4px;
+}
+.zoombtns .pill {
+  min-width: 30px;
+  cursor: pointer;
+}

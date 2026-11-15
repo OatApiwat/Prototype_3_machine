@@ -8,10 +8,18 @@ const L = 56,
 
 /** geometry shared by the drawing and the mouse hit test */
 export const plotBox = (w, h, n) => ({ x: L, y: T, w: w - L - R, h: h - T - B, n, slot: (w - L - R) / n });
-export const slotAt = (px, w, n) => {
-  const s = (w - L - R) / n,
-    i = Math.floor((px - L) / s);
-  return i >= 0 && i < n ? i : -1;
+/** visible window [from, to) of the n categories (zoom); the whole range by default */
+export const viewOf = (view, n) => ({ from: view ? view.from : 0, to: view ? view.to : n });
+export const slotAt = (px, w, n, view) => {
+  const { from, to } = viewOf(view, n),
+    s = (w - L - R) / (to - from),
+    i = from + Math.floor((px - L) / s);
+  return px >= L && i >= from && i < to ? i : -1;
+};
+/** x (relative to the plot's left edge, as a 0..1 fraction) of the centre of category i */
+export const fracOf = (i, n, view) => {
+  const { from, to } = viewOf(view, n);
+  return (i - from + 0.5) / (to - from);
 };
 
 /**
@@ -21,7 +29,8 @@ export const slotAt = (px, w, n) => {
  */
 export function drawPartChart(g, w, h, o) {
   const { n } = o,
-    P = plotBox(w, h, n),
+    { from: v0, to: v1 } = viewOf(o.view, n),
+    P = plotBox(w, h, v1 - v0),
     txt = css('--text'),
     mu = css('--muted'),
     line = css('--line');
@@ -49,23 +58,27 @@ export function drawPartChart(g, w, h, o) {
     g.fillText(o.rightFmt ? o.rightFmt(v) : String(v), P.x + P.w + 6, yR(v));
   }
   // hover column
-  if (o.hover != null && o.hover >= 0) {
+  if (o.hover != null && o.hover >= v0 && o.hover < v1) {
     g.fillStyle = line;
     g.globalAlpha = 0.5;
-    g.fillRect(P.x + o.hover * P.slot, P.y, P.slot, P.h);
+    g.fillRect(P.x + (o.hover - v0) * P.slot, P.y, P.slot, P.h);
     g.globalAlpha = 1;
   }
   // stacked defect bars (right axis, or the left axis when o.barsLeft)
   const yB = o.barsLeft ? yL : yR;
+  g.save();
+  g.beginPath();
+  g.rect(P.x, P.y, P.w, P.h);
+  g.clip();
   if (o.bars) {
     const bw = Math.max(1.5, P.slot * 0.6);
-    for (let i = 0; i < n; i++) {
+    for (let i = v0; i < v1; i++) {
       let acc = 0;
       o.bars.forEach((col, d) => {
         const c = col[i] || 0;
         if (!c) return;
         g.fillStyle = DEFECT_COLORS[d];
-        g.fillRect(P.x + i * P.slot + (P.slot - bw) / 2, yB(acc + c), bw, yB(acc) - yB(acc + c));
+        g.fillRect(P.x + (i - v0) * P.slot + (P.slot - bw) / 2, yB(acc + c), bw, yB(acc) - yB(acc + c));
         acc += c;
       });
     }
@@ -80,11 +93,11 @@ export function drawPartChart(g, w, h, o) {
       if (k > 0) {
         g.strokeStyle = mu;
         g.beginPath();
-        g.moveTo(P.x + gr.from * P.slot, P.y);
-        g.lineTo(P.x + gr.from * P.slot, P.y + P.h);
+        g.moveTo(P.x + (gr.from - v0) * P.slot, P.y);
+        g.lineTo(P.x + (gr.from - v0) * P.slot, P.y + P.h);
         g.stroke();
       }
-      g.fillText(gr.label, P.x + ((gr.from + gr.to) / 2) * P.slot, P.y + 3);
+      g.fillText(gr.label, P.x + ((gr.from + gr.to) / 2 - v0) * P.slot, P.y + 3);
     });
     g.setLineDash([]);
   }
@@ -100,29 +113,30 @@ export function drawPartChart(g, w, h, o) {
         pen = false;
         return;
       }
-      const x = P.x + (i + 0.5) * P.slot,
+      const x = P.x + (i - v0 + 0.5) * P.slot,
         y = o.lineRight ? yR(v) : yL(v);
       if (pen) g.lineTo(x, y);
       else g.moveTo(x, y);
       pen = true;
     });
     g.stroke();
-    const rad = n > 30 ? 1.6 : 2.6;
+    const rad = v1 - v0 > 30 ? 1.6 : 2.6;
     s.values.forEach((v, i) => {
       if (v == null) return;
       g.beginPath();
-      g.arc(P.x + (i + 0.5) * P.slot, o.lineRight ? yR(v) : yL(v), rad, 0, 6.3);
+      g.arc(P.x + (i - v0 + 0.5) * P.slot, o.lineRight ? yR(v) : yL(v), rad, 0, 6.3);
       g.fill();
     });
   }
+  g.restore();
   // x labels (all of them while they fit, otherwise every 5th)
   g.fillStyle = mu;
   g.textAlign = 'center';
   g.textBaseline = 'top';
   const every = P.slot >= 16 ? 1 : P.slot >= 8 ? 2 : 5;
-  for (let i = 0; i < n; i++)
-    if (every === 1 || (i + 1) % every === 0 || i === 0)
-      g.fillText(String(i + 1), P.x + (i + 0.5) * P.slot, P.y + P.h + 4);
+  for (let i = v0; i < v1; i++)
+    if (every === 1 || (i + 1) % every === 0 || i === v0)
+      g.fillText(String(i + 1), P.x + (i - v0 + 0.5) * P.slot, P.y + P.h + 4);
   g.fillText(o.xlabel, P.x + P.w / 2, h - 14);
   // axis titles
   g.save();

@@ -6,11 +6,12 @@ const getJson = async (url) => {
   return r.json();
 };
 
-/** Run card list and the pieces of the selected run card, refreshed every `ms` (the backend caches for its poll period). */
-export function useProductivityData(rc, ms = 5000) {
+/** Run card list and the pieces of the selected run card. Loaded once (and again on `reload()`): this is an analysis view, not a live one. */
+export function useProductivityData(rc) {
   const [cards, setCards] = useState(null),
     [parts, setParts] = useState({ rc: null, rows: [] }),
-    [error, setError] = useState(null);
+    [error, setError] = useState(null),
+    [nonce, setNonce] = useState(0);
   useEffect(() => {
     let dead = false;
     const load = () =>
@@ -18,12 +19,10 @@ export function useProductivityData(rc, ms = 5000) {
         .then((c) => !dead && (setCards(c.sort((a, b) => a.rc.localeCompare(b.rc))), setError(null)))
         .catch((e) => !dead && setError(String(e.message || e)));
     load();
-    const t = setInterval(load, ms);
     return () => {
       dead = true;
-      clearInterval(t);
     };
-  }, [ms]);
+  }, [nonce]);
   useEffect(() => {
     if (!rc) return undefined;
     let dead = false;
@@ -32,11 +31,9 @@ export function useProductivityData(rc, ms = 5000) {
         .then((rows) => !dead && setParts({ rc, rows }))
         .catch((e) => !dead && setError(String(e.message || e)));
     load();
-    const t = setInterval(load, ms);
     return () => {
       dead = true;
-      clearInterval(t);
     };
-  }, [rc, ms]);
-  return { cards, parts: parts.rc === rc ? parts.rows : [], error };
+  }, [rc, nonce]);
+  return { cards, parts: parts.rc === rc ? parts.rows : [], error, reload: () => setNonce((n) => n + 1) };
 }

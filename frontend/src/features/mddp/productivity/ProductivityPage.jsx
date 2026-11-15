@@ -52,9 +52,17 @@ export default function ProductivityPage() {
     [pickStrip, setPickStrip] = useState(null);
   const first = useProductivityData(null);
   const rc = pickRc || (first.cards && first.cards.length ? first.cards[first.cards.length - 1].rc : null);
-  const { cards, parts, error } = useProductivityData(rc);
+  const { cards, parts, error, reload } = useProductivityData(rc);
   const strips = useMemo(() => [...new Set(parts.map((r) => r.strip))].sort((a, b) => a - b), [parts]);
-  const strip = pickStrip && strips.includes(pickStrip) ? pickStrip : strips[strips.length - 1];
+  // default = the newest strip that is complete (all parts made); the strip still being made is only shown when picked
+  const complete = useMemo(
+    () => strips.filter((s) => parts.filter((r) => r.strip === s).length >= PARTS_PER_STRIP),
+    [parts, strips]
+  );
+  const strip =
+    pickStrip && strips.includes(pickStrip)
+      ? pickStrip
+      : (complete[complete.length - 1] ?? strips[strips.length - 1]);
   const rows = useMemo(
     () => (strip ? stripRows(parts, strip) : Array(PARTS_PER_STRIP).fill(null)),
     [parts, strip]
@@ -142,10 +150,14 @@ export default function ProductivityPage() {
             {strips.map((s) => (
               <option key={s} value={s}>
                 {stripLabel(s)}
+                {complete.includes(s) ? '' : ' (in progress)'}
               </option>
             ))}
           </select>
         </label>
+        <button className="pill" onClick={reload} title="Load the latest data from InfluxDB">
+          ↻ Refresh
+        </button>
         <span style={{ flex: 1 }} />
         <Legend />
       </div>
@@ -234,7 +246,7 @@ export default function ProductivityPage() {
         </span>
         <span>Top defect type: {sm.top}</span>
         <span style={{ marginLeft: 'auto', color: 'var(--muted)' }}>
-          Data from InfluxDB (mddp_part) · refreshed every 5 s
+          Data from InfluxDB (mddp_part) · press Refresh to load newer pieces
         </span>
       </div>
     </div>

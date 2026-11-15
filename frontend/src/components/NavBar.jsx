@@ -86,7 +86,7 @@ export default function NavBar({ loc, go, connected, paused, onPause, theme, onT
         <span className={'dot' + (connected ? ' on' : '')} />
         {connected ? 'live from InfluxDB' : 'reconnecting…'}
       </span>
-      {loc.m && (
+      {loc.m && loc.d === 'sensor' && (
         <button className="pill" onClick={onPause}>
           {paused ? '▶ Live' : '⏸ Pause'}
         </button>

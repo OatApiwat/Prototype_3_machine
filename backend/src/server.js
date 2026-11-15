@@ -114,7 +114,7 @@ both('/api/mddp/runcards', async (req, res) => {
   if (!(from < to)) return res.json({ ...echo, runcards: [] });
   try {
     const runcards = await cached(`rcs:${Math.round(from / 1000)}:${Math.round(to / 1000)}`, cfg.pollMs, async () => (await influx.runCards(from, to)).map((c) => ({ rc: c.rc })).sort((a, b) => (a.rc < b.rc ? -1 : 1)));
-    if (String(q.detail) !== '1') return res.json({ ...echo, runcards });
+    if (!['1', 'true'].includes(String(q.detail))) return res.json({ ...echo, runcards });
     // detail=1: Run Card -> Carrier -> Strip no in one answer (no piece data)
     const full = await Promise.all(runcards.map(async (c) => ({ rc: c.rc, carriers: carriersOf(await cached('parts:' + c.rc, cfg.pollMs, () => influx.parts(c.rc))).map((k) => ({ carrier: k.carrier, strips: groupStrips(k.strips.map((x) => x.strip_no)) })) })));
     res.json({ ...echo, runcards: full });

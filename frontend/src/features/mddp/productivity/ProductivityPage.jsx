@@ -31,7 +31,7 @@ const AXES = [
   ['Y', '#d62728'],
   ['Z', '#1a9e6e'],
 ];
-const RIGHT = { rightMax: 6, rightTicks: [0, 2, 4, 6], rightLabel: 'Defect count' };
+const RIGHT = { rightMax: 6, rightTicks: [0, 2, 4, 6], rightLabel: 'Defects of the piece (count)' };
 const X_LABEL = `Suspension No. (1 - ${SUSPENSIONS}) · 1 carrier = ${STRIPS_PER_CARRIER} strips × ${PARTS_PER_STRIP}`;
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -39,7 +39,10 @@ const dayStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDa
 const dayStart = (s) => new Date(s + 'T00:00:00').getTime();
 const dayEnd = (s) => new Date(s + 'T23:59:59.999').getTime();
 const fmtT = (t) => new Date(t).toLocaleString('sv-SE');
-const defectNames = (m) => DEFECTS.filter((_, i) => hasDefect(m, i)).join(', ') || 'No defect';
+const defectNames = (m) => {
+  const names = DEFECTS.filter((_, i) => hasDefect(m, i));
+  return names.length ? `${names.length} defect(s): ${names.join(', ')}` : 'No defect';
+};
 const bars = (rows) => DEFECTS.map((_, d) => rows.map((r) => (r ? hasDefect(r.defect, d) : 0)));
 const lastOf = (rows) => [...rows].reverse().find(Boolean);
 const range = (vals) => {

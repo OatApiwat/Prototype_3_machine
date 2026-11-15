@@ -10,7 +10,7 @@ Services (`docker compose up --build`):
 | nodered | http://localhost:1880 | simulator flow: writes every value into InfluxDB |
 
 ## Data path
-Node-RED (sim, ms timestamps, batch write every 250 ms) -> InfluxDB -> backend (one batched Flux query every `POLL_MS`=5 s, ring-buffer cache, WebSocket push) -> React (buffers rows, renders `RENDER_DELAY_MS`=8 s behind real time, interpolates between samples).
+Node-RED (sim, ms timestamps, batch write every 250 ms) -> InfluxDB -> backend (one batched Flux query every `POLL_MS`=5 s over a window ending `POLL_MARGIN_MS`=2 s in the past so late rows are not missed, ring-buffer cache, WebSocket push) -> React (buffers rows, renders `RENDER_DELAY_MS`=9 s behind real time, interpolates between samples).
 The browser never generates values; with no data it shows "No data".
 
 ## InfluxDB measurements (tag `machine=MDDP_184`)

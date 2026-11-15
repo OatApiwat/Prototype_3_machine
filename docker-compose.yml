@@ -13,7 +13,7 @@ services:
     volumes:
       - influx-data:/var/lib/influxdb2
     ports:
-      - "8086:8086"
+      - "127.0.0.1:8086:8086"
     healthcheck:
       test: ["CMD", "influx", "ping"]
       interval: 5s
@@ -35,7 +35,7 @@ services:
       - ./nodered/settings.js:/data/settings.js
       - ./nodered/sim:/data/sim:ro
     ports:
-      - "1880:1880"
+      - "127.0.0.1:1880:1880"
 
   backend:
     build: ./backend
@@ -48,16 +48,23 @@ services:
       INFLUX_BUCKET: ${INFLUX_BUCKET:-machines}
       INFLUX_TOKEN: ${INFLUX_TOKEN:-dev-token-change-me}
       POLL_MS: ${POLL_MS:-5000}
-      RENDER_DELAY_MS: ${RENDER_DELAY_MS:-8000}
+      RENDER_DELAY_MS: ${RENDER_DELAY_MS:-9000}
+      POLL_MARGIN_MS: ${POLL_MARGIN_MS:-2000}
       CACHE_SECONDS: ${CACHE_SECONDS:-120}
       CACHE_FAST_SECONDS: ${CACHE_FAST_SECONDS:-60}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
 
   frontend:
     build: ./frontend
     restart: unless-stopped
-    depends_on: [backend]
+    depends_on:
+      backend: { condition: service_healthy }
     ports:
       - "8080:80"
 

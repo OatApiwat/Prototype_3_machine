@@ -3,6 +3,7 @@ import Graph from './Graph.jsx';
 import { Stat, useTick, theme } from './Live.jsx';
 import { nowRender, sample, keysWith, rowsOf } from './store.js';
 import { fit } from './canvasUtil.js';
+import Hall3D from './Hall3D.jsx';
 
 const XS = 2650, XOV = 1900, SETPT = 160;   // drawing extents (mm) of the oven picture
 
@@ -38,6 +39,8 @@ export default function HallTab() {
   const [win, setWin] = useState(() => +(localStorage.getItem('hall.win') || 120));
   const winRef = useRef(win); winRef.current = win; const getWin = useMemo(() => () => winRef.current, []);
   useEffect(() => { localStorage.setItem('hall.win', win); }, [win]);
+  const [mode, setMode] = useState(() => localStorage.getItem('hall.mode') || '2d');
+  useEffect(() => { localStorage.setItem('hall.mode', mode); }, [mode]);
   useTick(1000);
   const c = (n) => theme(n), K = 'hall_oven|', t = nowRender();
   const G = (title, series, ymin, ymax, ticks, unit, dec = 2, extra = {}, key = K, h = 150) => <div className="card"><Graph title={title} series={series.map(([f, col, lab]) => ({ key, field: f, color: c(col), label: lab }))} ymin={ymin} ymax={ymax} ticks={ticks} unit={unit} dec={dec} win={getWin} height={h} {...extra} /></div>;
@@ -48,8 +51,8 @@ export default function HallTab() {
   return (
     <div>
       <h1>HAll_013 — convection oven</h1>
-      <div className="toolbar"><span>Window {win >= 60 ? (win / 60).toFixed(1) + ' min' : Math.round(win) + ' s'}</span><button className="pill" onClick={() => setWin((w) => Math.max(5, w / 1.5))}>＋</button><button className="pill" onClick={() => setWin((w) => Math.min(120, w * 1.5))}>－</button></div>
-      <div className="card"><Oven /></div>
+      <div className="toolbar"><span className="seg"><button className={mode === '2d' ? 'on' : ''} onClick={() => setMode('2d')}>2D</button><button className={mode === '3d' ? 'on' : ''} onClick={() => setMode('3d')}>3D</button></span><span>Window {win >= 60 ? (win / 60).toFixed(1) + ' min' : Math.round(win) + ' s'}</span><button className="pill" onClick={() => setWin((w) => Math.max(5, w / 1.5))}>＋</button><button className="pill" onClick={() => setWin((w) => Math.min(120, w * 1.5))}>－</button></div>
+      <div className="card">{mode === '3d' ? <Hall3D /> : <Oven />}</div>
       <div className="grid2">
         <div className="card"><div style={{ fontWeight: 700, marginBottom: 4 }}>Oven parameters</div><table className="t"><tbody>{P.map(([n, x]) => <tr key={n}><td>{n}</td><td>{x}</td></tr>)}</tbody></table></div>
         <div className="card"><div style={{ fontWeight: 700, marginBottom: 4 }}>Trays on the belt (12 carriers per tray, from CALUL_037)</div><table className="t"><thead><tr><th>Tray</th><th>Position (mm)</th></tr></thead><tbody>{trays.map((o) => <tr key={o.k}><td>#{o.k}</td><td>{o.x.toFixed(0)}</td></tr>)}</tbody></table></div>

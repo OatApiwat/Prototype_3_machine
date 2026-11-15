@@ -12,9 +12,10 @@ const cfg = {
   bucket: process.env.INFLUX_BUCKET || 'machines',
   token: process.env.INFLUX_TOKEN || 'dev-token-change-me',
   pollMs: +process.env.POLL_MS || 5000,
-  renderDelayMs: +process.env.RENDER_DELAY_MS || 8000,
+  renderDelayMs: +process.env.RENDER_DELAY_MS || 9000,
   cacheSec: +process.env.CACHE_SECONDS || 120,
   cacheFastSec: +process.env.CACHE_FAST_SECONDS || 60,
+  marginMs: +process.env.POLL_MARGIN_MS || 2000,
   historyTtlMs: +process.env.HISTORY_TTL_MS || 45000,
   port: +process.env.PORT || 3001
 };
@@ -40,7 +41,7 @@ async function poll() {
   if (polling) return; polling = true;
   try {
     // stop slightly in the past so rows still being written by Node-RED are never missed
-    const stop = Date.now() - 1000;
+    const stop = Date.now() - cfg.marginMs;
     if (stop > stopPrev) {
       const rows = await influx.query(stopPrev, stop);
       const by = new Map();
@@ -58,17 +59,20 @@ setInterval(poll, cfg.pollMs); poll();
 app.get('/api/config', (_q, res) => res.json({ pollMs: cfg.pollMs, renderDelayMs: cfg.renderDelayMs, cacheSec: cfg.cacheSec, cacheFastSec: cfg.cacheFastSec }));
 app.get('/api/health', (_q, res) => res.json({ ok: lastError === null, lastPollOk, lastError, clients: clients.size, measurements: cache.measurements() }));
 
-const hist = new Map();   // key -> { at, promise }  (TTL cache + request coalescing for ranges older than the ring buffer)
+const hist = new Map(), HIST_MAX = 64;   // key -> { at, promise }  (TTL cache + request coalescing for ranges older than the ring buffer)
 app.get('/api/history', async (req, res) => {
   const m = String(req.query.measurement || '').replace(/[^A-Za-z0-9_]/g, '');
   const sec = Math.min(+req.query.seconds || 60, 86400);
   if (!m) return res.status(400).json({ error: 'measurement required' });
+  if (cache.measurements().length && !cache.measurements().includes(m)) return res.status(404).json({ error: 'unknown measurement' });
   const t0 = Date.now() - sec * 1000, old = cache.oldest(m);
   if (old !== null && old <= t0 + 2000) return res.json({ source: 'cache', rows: cache.since(m, t0) });
   const key = m + ':' + Math.round(sec / 10);
   let h = hist.get(key);
   if (!h || Date.now() - h.at > cfg.historyTtlMs) {
-    h = { at: Date.now(), promise: influx.query(t0, Date.now() - 1000, m) }; hist.set(key, h);
+    for (const [k, v] of hist) if (Date.now() - v.at > cfg.historyTtlMs) hist.delete(k);
+    if (hist.size >= HIST_MAX) hist.delete(hist.keys().next().value);
+    h = { at: Date.now(), promise: influx.query(t0, Date.now() - cfg.marginMs, m) }; hist.set(key, h);
     h.promise.catch(() => hist.delete(key));
   }
   try { res.json({ source: 'influx', rows: await h.promise }); } catch (e) { res.status(502).json({ error: String(e.message || e) }); }
@@ -82,7 +86,9 @@ wss.on('connection', (ws) => {
   const t0 = Date.now() - cfg.cacheSec * 1000;
   for (const m of cache.measurements()) snap[m] = cache.since(m, t0);
   ws.send(JSON.stringify({ type: 'snapshot', serverNow: Date.now(), data: snap }));
+  ws.isAlive = true; ws.on('pong', () => { ws.isAlive = true; });
   ws.on('close', () => clients.delete(ws));
   ws.on('error', () => clients.delete(ws));
 });
+setInterval(() => { for (const ws of clients) { if (!ws.isAlive || ws.bufferedAmount > 20e6) { ws.terminate(); clients.delete(ws); continue; } ws.isAlive = false; ws.ping(); } }, 30000);
 server.listen(cfg.port, () => console.log('backend on :' + cfg.port, cfg));

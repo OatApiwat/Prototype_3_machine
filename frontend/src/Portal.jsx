@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTick, val, fmt } from './Live.jsx';
 import { fit, css } from './canvasUtil.js';
+import Portal3D from './Portal3D.jsx';
 
 // line layout from the legacy Portal (x0, x1 in reference-picture px); kinds only choose the drawing colour/height
 const X0 = 190, XT = 1695;
@@ -24,6 +25,8 @@ const INFO = {
 
 export default function Portal({ go }) {
   useTick(500);
+  const [mode, setMode] = useState(() => localStorage.getItem('portal.mode') || '2d');
+  useEffect(() => { localStorage.setItem('portal.mode', mode); }, [mode]);
   const ref = useRef(null), hov = useRef(-1), [tip, setTip] = useState(null);
   useEffect(() => {
     let raf;
@@ -45,14 +48,14 @@ export default function Portal({ go }) {
   const hit = (e) => { const r = ref.current.getBoundingClientRect(), s = r.width / (XT - X0 + 40), px = (e.clientX - r.left) / s + X0; return LINE.findIndex((m) => px >= m.a && px < m.b); };
   return (<div>
     <h1>Portal — Kagra · HVM_1010 Line A2202</h1>
-    <div className="card"><div style={{ fontWeight: 700, marginBottom: 6 }}>Step 8 · Milli PZT attachment — green frame = connected machine (click to open)</div>
-      <div style={{ position: 'relative' }}>
+    <div className="card"><div style={{ fontWeight: 700, marginBottom: 6 }}>Step 8 · Milli PZT attachment — green frame = connected machine (click to open) <span className="seg" style={{ marginLeft: 12 }}><button className={mode === '2d' ? 'on' : ''} onClick={() => setMode('2d')}>2D</button><button className={mode === '3d' ? 'on' : ''} onClick={() => setMode('3d')}>3D</button></span></div>
+      {mode === '3d' ? <Portal3D line={LINE} colors={COL} heights={HT} go={go} info={(k) => INFO[k]()} /> : <div style={{ position: 'relative' }}>
         <canvas ref={ref} style={{ cursor: 'default' }}
           onMouseMove={(e) => { const i = hit(e); hov.current = i; ref.current.style.cursor = i >= 0 && LINE[i].tab ? 'pointer' : 'default'; setTip(i >= 0 ? { i, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY } : null); }}
           onMouseLeave={() => { hov.current = -1; setTip(null); }}
           onClick={(e) => { const i = hit(e); if (i >= 0 && LINE[i].tab) go(LINE[i].tab); }} />
         {tip && <div className="mach" style={{ position: 'absolute', left: tip.x + 12, top: tip.y + 12, pointerEvents: 'none', textAlign: 'left', color: 'var(--text)' }}><b>{LINE[tip.i].n}</b><small>{LINE[tip.i].tab ? INFO[LINE[tip.i].tab]() + ' — click to open' : 'Not connected — no data'}</small></div>}
-      </div></div>
+      </div>}</div>
     <div className="card"><div style={{ fontWeight: 700, marginBottom: 6 }}>Kagra overall process</div>
       <div className="portal">{STEPS.map((n, i) => <div key={n} className={'mach' + (i === 7 ? ' live' : '')} style={{ minWidth: 120 }}>{i + 1}. {n}<small>{i === 7 ? 'this line (above)' : 'Not connected'}</small></div>)}</div></div>
   </div>);

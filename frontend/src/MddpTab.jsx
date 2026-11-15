@@ -78,10 +78,10 @@ export default function MddpTab() {
       <div style={{ textAlign: 'right', margin: '4px 6px 2px' }}><SpcBox /></div>
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}><Line2D /></div>
       <div className="g2c" style={{ marginTop: 6 }}>
-        {['L', 'R'].map((s) => <div className="card" key={'p' + s}><Graph title={side(s) + ' arm pressure'} series={[{ key: 'mddp_fast|' + s, field: 'p', color: cv(s === 'L' ? '--blue' : '--cyan'), label: '' }]} ymin={0} ymax={120} ticks={[0, 50, 100]} win={getWin} unit=" kPa" dec={1} height={112} /></div>)}
-        {['L', 'R'].map((s) => <div className="card" key={'d' + s}><Graph title="Dispense Time" series={[{ key: 'mddp_dispense|' + s, field: 'dur', color: cv(s === 'L' ? '--blue' : '--cyan'), label: '' }]} ymin={50} ymax={90} ticks={[60, 70, 80]} win={getWin} unit=" ms" dec={1} dots height={86} /></div>)}
-        {['L', 'R'].map((s) => <div className="card" key={'t' + s}><Graph title={side(s) + ' head epoxy temperature'} series={[{ key: 'mddp_arm|' + s, field: 'temp', color: cv('--amber'), label: '' }]} ymin={108} ymax={112} ticks={[108, 110, 112]} win={getWin} unit=" °C" dec={2} height={86} /></div>)}
-        {['L', 'R'].map((s) => <div className="card" key={'v' + s}>{AX.map(([f, nm, ymax, ticks, col]) => <Graph key={f} title={f === 'vx' ? side(s) + ' robot vibration X' : nm} series={[{ key: 'mddp_fast|' + s, field: f, color: cv(col), label: nm[0] }]} ymin={0} ymax={ymax} ticks={ticks} win={getWin} unit=" g" dec={3} height={58} noTime={f !== 'vz'} />)}</div>)}
+        {['L', 'R'].map((s) => <div className="card" key={'p' + s}><Graph title={side(s) + ' arm pressure'} series={[{ key: 'mddp_fast|' + s, field: 'p', color: cv(s === 'L' ? '--blue' : '--cyan'), label: '' }]} ymin={0} ymax={120} ticks={[0, 50, 100]} win={getWin} unit=" kPa" ylabel="Pressure (kPa)" dec={1} height={112} /></div>)}
+        {['L', 'R'].map((s) => <div className="card" key={'d' + s}><Graph title="Dispense Time" series={[{ key: 'mddp_dispense|' + s, field: 'dur', color: cv(s === 'L' ? '--blue' : '--cyan'), label: '' }]} ymin={50} ymax={90} ticks={[60, 70, 80]} win={getWin} unit=" ms" ylabel="Time (ms)" dec={1} dots height={86} /></div>)}
+        {['L', 'R'].map((s) => <div className="card" key={'t' + s}><Graph title={side(s) + ' head epoxy temperature'} series={[{ key: 'mddp_arm|' + s, field: 'temp', color: cv('--amber'), label: '' }]} ymin={108} ymax={112} ticks={[108, 110, 112]} win={getWin} unit=" °C" ylabel="Temp (°C)" dec={2} height={86} /></div>)}
+        {['L', 'R'].map((s) => <div className="card" key={'v' + s}>{AX.map(([f, nm, ymax, ticks, col]) => <Graph key={f} title={f === 'vx' ? side(s) + ' robot vibration X' : nm} series={[{ key: 'mddp_fast|' + s, field: f, color: cv(col), label: nm[0] }]} ymin={0} ymax={ymax} ticks={ticks} win={getWin} unit=" g" ylabel="g" dec={3} height={58} noTime={f !== 'vz'} />)}</div>)}
       </div>
       <RunCard />
       <div className="dock">

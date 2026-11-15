@@ -10,7 +10,7 @@ test('carriersOf groups by visit and counts defects per type', () => {
   const c = carriersOf(rows);
   assert.strictEqual(c.length, 3);
   assert.deepStrictEqual(c[0].strips, [1, 2]);
-  assert.deepStrictEqual(c[0].cnt, [1, 1, 0, 0, 0]);
+  assert.deepStrictEqual(c[0].cnt, [1, 1, 0, 0, 0, 0]);
   assert.strictEqual(c[0].defective, 1);
   assert.strictEqual(c[0].pieces, 2);
   assert.strictEqual(c[1].cnt[4], 1);

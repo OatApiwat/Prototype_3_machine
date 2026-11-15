@@ -72,7 +72,7 @@ const signals = {
     return out.join('\n');
   },
   // one row per finished piece (= 2 shots) with the process parameters of that piece and its defect bit mask
-  // (bit 0..4 = ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5). Defects are simulated: the further a piece's pressure,
+  // (bit 0..5 = ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5, MI). Defects are simulated: the further a piece's pressure,
   // dispense time or vibration is from nominal, the more likely it is defective (deterministic per piece).
   part(base, from, to) {
     const out = [];
@@ -97,8 +97,8 @@ const signals = {
           const zP = Math.min(1, Math.abs(peak - 90) / 4.5), zD = Math.min(1, Math.abs(dur - 70) / 7), zV = Math.min(1, ax / 0.9);
           let mask = 0;
           const seed = k * 7919 + (side === 'L' ? 0 : 3571) + j * 31;
-          for (let d = 0; d < 5; d++) {
-            const p = 0.006 + 0.07 * Math.max(0, zP - 0.6) + 0.07 * Math.max(0, zD - 0.6) + (d === 4 ? 0.05 * Math.max(0, zV - 0.5) : 0);
+          for (let d = 0; d < 6; d++) {
+            const p = 0.006 + 0.07 * Math.max(0, zP - 0.6) + 0.07 * Math.max(0, zD - 0.6) + (d === 5 ? 0.05 * Math.max(0, zV - 0.5) : 0);
             if (hash(seed + d * 101) < p) mask |= 1 << d;
           }
           const seq = ((k - 1) % RUN_CARRIERS) + 1, rc = 'RC-' + new Date(base).toISOString().slice(2, 16).replace(/[-:T]/g, '') + '-' + String(Math.floor((k - 1) / RUN_CARRIERS) + 1).padStart(2, '0');

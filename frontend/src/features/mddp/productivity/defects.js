@@ -1,6 +1,6 @@
 // Defect types (bit 0..5 of the `defect` field of mddp_part) and helpers for the Productivity Dashboard.
-export const DEFECTS = ['ASQ-LCM', 'ASQ-MCM', 'ASQ-PCM', 'ISAD-CM', 'LM-5'];
-export const DEFECT_COLORS = ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#b07aa1'];
+export const DEFECTS = ['ASQ-LCM', 'ASQ-MCM', 'ASQ-PCM', 'ISAD-CM', 'LM-5', 'MI'];
+export const DEFECT_COLORS = ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#b07aa1', '#edc948'];
 export const PARTS_PER_STRIP = 20;
 export const STRIPS_PER_CARRIER = 3;
 export const SUSPENSIONS = PARTS_PER_STRIP * STRIPS_PER_CARRIER; // per carrier

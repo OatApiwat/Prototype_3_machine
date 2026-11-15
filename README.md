@@ -30,7 +30,7 @@ Config: copy `.env.example` to `.env`.
 
 ## Productivity API (MDDP defect analysis)
 
-Source: measurement `mddp_part` (one row per finished piece; tags `side`, `rc` = run card). 1 run card = 45 carrier visits = 2,700 pieces; 1 carrier = 3 strips x 20 parts = 60 suspensions; carrier numbers are reused (visit `seq` is the key inside a run card). Defect = bit mask of 5 codes: ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5.
+Source: measurement `mddp_part` (one row per finished piece; tags `side`, `rc` = run card). 1 run card = 45 carrier visits = 2,700 pieces; 1 carrier = 3 strips x 20 parts = 60 suspensions; carrier numbers are reused (visit `seq` is the key inside a run card). Defect = bit mask of 6 codes: ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5, MI.
 
 - `GET /api/mddp/runcards?from=<ms>&to=<ms>` run cards with pieces in the period (default: last 24 h)
 - `GET /api/mddp/carriers?rc=<run card>` carrier visits: carrier number, strip numbers, pieces, defective, count per defect code

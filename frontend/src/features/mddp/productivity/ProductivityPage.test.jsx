@@ -37,7 +37,7 @@ const carrier = {
   end: now + 60000,
   pieces: 60,
   defective: 2,
-  cnt: [1, 0, 0, 0, 1],
+  cnt: [1, 0, 0, 0, 1, 0],
 };
 
 describe('Productivity dashboard', () => {
@@ -63,7 +63,7 @@ describe('Productivity dashboard', () => {
     expect(container.textContent).toContain('2 defective parts');
     expect(container.textContent).toContain('Date Start');
     expect(container.textContent).toContain('LM-5');
-    expect(container.textContent).not.toMatch(/\bMI\b/);
+    expect(container.textContent).toMatch(/\bMI\b/);
     expect(container.querySelectorAll('canvas')).toHaveLength(6);
     expect(calls.some((c) => c.includes('/api/mddp/parts?rc=RC-1-01&seq=1'))).toBe(true);
     const n = calls.length;

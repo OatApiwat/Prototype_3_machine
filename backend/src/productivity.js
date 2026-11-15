@@ -1,6 +1,6 @@
 'use strict';
 // Pure helpers for the MDDP productivity (defect) API. Rows are the `mddp_part` points of one run card.
-const DEFECTS = 5;   // bit 0..4 = ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5
+const DEFECTS = 6;   // bit 0..5 = ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5, MI
 
 const bit = (mask, i) => ((mask | 0) >> i) & 1;
 

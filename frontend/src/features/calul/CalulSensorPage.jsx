@@ -54,7 +54,7 @@ export default function CalulSensorPage() {
         unit={unit}
         dec={dec}
         win={getWin}
-        height={190}
+        height={235}
       />
     </div>
   );
@@ -265,7 +265,7 @@ export default function CalulSensorPage() {
                 unit=" °C"
                 dec={1}
                 win={getWin}
-                height={200}
+                height={245}
               />
             </div>
           ))}

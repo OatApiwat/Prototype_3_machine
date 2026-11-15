@@ -24,7 +24,7 @@ export default function HallSensorPage() {
   const c = (n) => theme(n),
     K = 'hall_oven|',
     t = nowRender();
-  const G = (title, series, ymin, ymax, ticks, unit, dec = 2, extra = {}, key = K, h = 170) => (
+  const G = (title, series, ymin, ymax, ticks, unit, dec = 2, extra = {}, key = K, h = 215) => (
     <div className="card">
       <Graph
         title={title}
@@ -194,7 +194,7 @@ export default function HallSensorPage() {
                 unit=" mm/s"
                 dec={3}
                 win={getWin}
-                height={82}
+                height={112}
                 noTime={f !== 'vz'}
               />
             ))}

@@ -177,10 +177,11 @@ export function drawGraph(g, w, h, p, st) {
       g.save();
       g.setLineDash([6, 4]);
       g.lineWidth = 1;
+      const labelYs = [];
       [
         ['UCL', m + 3 * sd, '--red'],
-        ['CL', m, '--green'],
         ['LCL', m - 3 * sd, '--red'],
+        ['CL', m, '--green'],
       ].forEach(([lab, v, c]) => {
         g.strokeStyle = css(c);
         g.fillStyle = css(c);
@@ -188,8 +189,11 @@ export function drawGraph(g, w, h, p, st) {
         g.moveTo(L, y(v));
         g.lineTo(L + pw, y(v));
         g.stroke();
-        g.textAlign = 'right';
-        g.fillText(`${lab} ${v.toFixed(dec)}`, L + pw - 2, y(v) - 6);
+        if (y(v) - 6 >= T && labelYs.every((ly) => Math.abs(ly - y(v)) > 12)) {
+          labelYs.push(y(v));
+          g.textAlign = 'right';
+          g.fillText(`${lab} ${v.toFixed(dec)}`, L + pw - 2, y(v) - 6);
+        }
       });
       g.restore();
       const vis = range(series[0].key, t0, tr);

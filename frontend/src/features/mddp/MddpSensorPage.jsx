@@ -39,7 +39,7 @@ export default function MddpSensorPage() {
               unit=" kPa"
               ylabel="Pressure (kPa)"
               dec={1}
-              height={112}
+              height={150}
             />
           </div>
         ))}
@@ -63,7 +63,7 @@ export default function MddpSensorPage() {
               ylabel="Time (ms)"
               dec={1}
               dots
-              height={86}
+              height={116}
             />
           </div>
         ))}
@@ -79,7 +79,7 @@ export default function MddpSensorPage() {
               unit=" °C"
               ylabel="Temp (°C)"
               dec={2}
-              height={86}
+              height={116}
             />
           </div>
         ))}
@@ -97,7 +97,7 @@ export default function MddpSensorPage() {
                 unit=" g"
                 ylabel="g"
                 dec={3}
-                height={58}
+                height={92}
                 noTime={f !== 'vz'}
               />
             ))}

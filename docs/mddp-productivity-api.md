@@ -8,7 +8,7 @@
 - Strip no ตอบเป็นข้อความ `"Strip-76"` (เรียงตามเลข: Strip-9 มาก่อน Strip-10)
 - ช่วงวันที่: 00:00:00.000 ของ `dateStart` ถึง 23:59:59.999 ของ `dateEnd` (รวมวันสุดท้าย) ตามโซนเวลาของหลังบ้าน (Asia/Bangkok); ไม่ส่ง `dateEnd` = เท่ากับ `dateStart`
 - **ทุก API ส่ง `machine_no` ไปด้วย (`"mddp_184"`) และตอบ `machine_no` กลับมา**; ค่าอื่นที่ไม่ใช่เครื่องนี้ → `400 {"error":"unknown machine_no"}`
-- **ทุก API ตอบค่าที่ส่งไปกลับมาด้วย** (echo) แล้วตามด้วยผลลัพธ์ ใน object เดียว
+- **ทุก API ยกเว้น `parts` ตอบค่าที่ส่งไปกลับมาด้วย** (echo) แล้วตามด้วยผลลัพธ์ ใน object เดียว; `parts` ตอบเฉพาะ `{"carriers":[...]}`
 - **ส่งค่าได้ 2 แบบ ได้คำตอบเหมือนกัน:**
   - **URL** (`GET` + query string) เช่น `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (หลาย Strip คั่นด้วย `,`)
   - **payload** (`POST` + JSON body, `Content-Type: application/json`) เช่น `POST /api/mddp_184/parts` body `{"machine_no":"mddp_184","rc":"RC-2611150750-01","strips":["Strip-76","Strip-77","Strip-78"]}` (หลาย Strip เป็น array)
@@ -52,11 +52,9 @@
 
 ## 1.4 ส่ง Strip no → ได้ข้อมูลของแต่ละ Strip
 **ส่งไป:** `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (ส่ง Strip no ได้หลายตัว คั่นด้วย `,`)
-**ได้กลับ:** ค่าที่ส่งไป (`rc`, `strips`) แล้วตามด้วยข้อมูลของแต่ละ Strip (Strip ละ 20 ชิ้น)
+**ได้กลับ:** ข้อมูลของแต่ละ Strip (ไม่มีการตอบค่าที่ส่งไปซ้ำ) (Strip ละ 20 ชิ้น)
 ```json
-{ "machine_no": "mddp_184", "rc": "RC-2611150750-01",
-  "strips": [ "Strip-76", "Strip-77", "Strip-78" ],
-  "carriers": [
+{ "carriers": [
     { "carrier": "CR-0001",
       "strips": [
         { "strip_no": "Strip-76",
@@ -150,11 +148,9 @@ payload: `POST /api/mddp_184/runcards` body `{"machine_no":"mddp_184","dateStart
 **ส่งไป:** Run Card ที่เลือก และ Strip no ที่ผู้ใช้เลือก (หลายตัวคั่นด้วย `,`)
 URL: `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78`
 payload: `POST /api/mddp_184/parts` body `{"machine_no":"mddp_184","rc":"RC-2611150750-01","strips":["Strip-76","Strip-77","Strip-78"]}`
-**ได้กลับ:** ค่าที่ส่งไป แล้วตามด้วยข้อมูลของ Strip เหล่านั้น Strip ละ 20 ชิ้น (Suspension No. 1–20)
+**ได้กลับ:** ข้อมูลของ Strip เหล่านั้น (ไม่มีการตอบค่าที่ส่งไปซ้ำ) Strip ละ 20 ชิ้น (Suspension No. 1–20)
 ```json
-{ "machine_no": "mddp_184", "rc": "RC-2611150750-01",
-  "strips": [ "Strip-76", "Strip-77", "Strip-78" ],
-  "carriers": [
+{ "carriers": [
     { "carrier": "CR-0001",
       "strips": [
         { "strip_no": "Strip-76",
@@ -198,11 +194,9 @@ GET /api/mddp_184/carriers?rc=RC-2611150750-01
 # ข้อมูลชิ้นงาน (ใช้ร่วมกันทุกแบบ) — เลือก Strip → ได้ข้อมูลไปวาดกราฟ
 
 **ส่งไป:** `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (ระบุได้หลาย Strip คั่นด้วย `,`)
-**ได้กลับ:** `rc` และ `strips` ที่ส่งไป ตามด้วย `carriers[] → strips[] → suspension[]` = ชิ้นงาน (Suspension) ของ Strip เหล่านั้น Strip ละ 20 ชิ้น เรียงตาม Carrier → Strip → `suspension_no`
+**ได้กลับ:** `carriers[] → strips[] → suspension[]` = ชิ้นงาน (Suspension) ของ Strip เหล่านั้น Strip ละ 20 ชิ้น เรียงตาม Carrier → Strip → `suspension_no`
 ```json
-{ "machine_no": "mddp_184", "rc": "RC-2611150750-01",
-  "strips": [ "Strip-76", "Strip-77", "Strip-78" ],
-  "carriers": [
+{ "carriers": [
     { "carrier": "CR-0001",
       "strips": [
         { "strip_no": "Strip-76",

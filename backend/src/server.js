@@ -108,7 +108,7 @@ app.use('/api/mddp_184', (req, res, next) => {
   const m = qOf(req).machine_no;
   if (m != null && String(m).toLowerCase() !== MACHINE_NO) return res.status(400).json({ error: 'unknown machine_no' });
   const json = res.json.bind(res);
-  res.json = (b) => json(b && !b.error ? { machine_no: MACHINE_NO, ...b } : b);
+  res.json = (b) => json(b && !b.error && !res.locals.bare ? { machine_no: MACHINE_NO, ...b } : b);
   next();
 });
 const both = (path, h) => { app.get(path, h); app.post(path, h); };
@@ -143,7 +143,8 @@ both('/api/mddp_184/parts', async (req, res) => {
   if (!rc || !strips.length) return res.status(400).json({ error: 'rc and strip required' });
   try {
     const pieces = partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), strips);
-    res.json({ rc, strips, carriers: nestParts(pieces, cfg.tzOffsetMin) });
+    res.locals.bare = true;   // parts answers only the data: no echo of machine_no / rc / strips
+    res.json({ carriers: nestParts(pieces, cfg.tzOffsetMin) });
   } catch (e) { fail(res, e); }
 });
 

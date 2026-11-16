@@ -36,6 +36,21 @@ const runcards = (...groups) => ({
   dateEnd: 'x',
   runcards: [{ rc: 'RC-1-01', carriers: [{ carrier: 'CR-0007', strips: groups }] }],
 });
+// the parts answer is carrier >> strip >> suspension; the fixtures above are flat rows
+const nestData = (d) => {
+  if (!d.suspension) return d;
+  const { suspension, ...rest } = d;
+  const strips = new Map();
+  for (const { strip_no, ...r } of suspension)
+    strips.set(strip_no, [...(strips.get(strip_no) || []), r]);
+  return {
+    ...rest,
+    date: '2026-11-15',
+    carriers: [
+      { carrier: 'CR-0007', strips: [...strips].map(([strip_no, s]) => ({ strip_no, suspension: s })) },
+    ],
+  };
+};
 const set1 = ['Strip-1', 'Strip-2', 'Strip-3'];
 const set2 = ['Strip-4', 'Strip-5', 'Strip-6'];
 
@@ -62,7 +77,7 @@ describe('Productivity dashboard', () => {
                 row(i + 1, i === 4 ? 0b00001 : i === 30 ? 0b10000 : 0)
               ),
             };
-        return { ok: true, json: async () => data };
+        return { ok: true, json: async () => nestData(data) };
       })
     );
     const { container } = render(<ProductivityPage />);
@@ -98,7 +113,7 @@ describe('Productivity dashboard', () => {
               strips: [],
               suspension: Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : 0)),
             };
-        return { ok: true, json: async () => data };
+        return { ok: true, json: async () => nestData(data) };
       })
     );
     const { container } = render(<ProductivityPage />);
@@ -120,7 +135,7 @@ describe('Productivity dashboard', () => {
         const data = u.includes('runcards')
           ? runcards(set1, set2)
           : { rc: 'RC-1-01', strips: [], suspension: Array.from({ length: 60 }, (_, i) => row(i + 1, 0)) };
-        return { ok: true, json: async () => data };
+        return { ok: true, json: async () => nestData(data) };
       })
     );
     localStorage.setItem('prod.sets', JSON.stringify(['Strip-4']));

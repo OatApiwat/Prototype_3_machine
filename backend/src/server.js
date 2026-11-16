@@ -5,7 +5,7 @@ const cors = require('cors');
 const { WebSocketServer } = require('ws');
 const { Cache } = require('./cache');
 const { makeInflux } = require('./influx');
-const { headOf, groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
+const { nestParts, headOf, groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
 
 const cfg = {
   url: process.env.INFLUX_URL || 'http://localhost:8086',
@@ -143,7 +143,7 @@ both('/api/mddp_184/parts', async (req, res) => {
   if (!rc || !strips.length) return res.status(400).json({ error: 'rc and strip required' });
   try {
     const pieces = partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), strips);
-    res.json({ rc, strips, ...headOf(pieces, cfg.tzOffsetMin), suspension: pieces });
+    res.json({ rc, strips, ...headOf(pieces, cfg.tzOffsetMin), carriers: nestParts(pieces) });
   } catch (e) { fail(res, e); }
 });
 

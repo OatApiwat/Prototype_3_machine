@@ -1,0 +1,93 @@
+services:
+  influxdb:
+    image: influxdb:2.7
+    restart: unless-stopped
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUX_USER:-admin}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD:-changeme123}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_ORG:-mpt}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUX_BUCKET:-machines}
+      DOCKER_INFLUXDB_INIT_RETENTION: ${INFLUX_RETENTION:-168h}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN:-dev-token-change-me}
+    volumes:
+      - influx-data:/var/lib/influxdb2
+    ports:
+      - "127.0.0.1:8086:8086"
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # applies INFLUX_RETENTION to the bucket on every start (the init setting above only counts for a brand-new volume)
+  influx-retention:
+    image: influxdb:2.7
+    restart: "no"
+    depends_on:
+      influxdb: { condition: service_healthy }
+    environment:
+      INFLUX_ORG: ${INFLUX_ORG:-mpt}
+      INFLUX_BUCKET: ${INFLUX_BUCKET:-machines}
+      INFLUX_TOKEN: ${INFLUX_TOKEN:-dev-token-change-me}
+      INFLUX_RETENTION: ${INFLUX_RETENTION:-168h}
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        ID=$$(influx bucket list --host http://influxdb:8086 --org "$$INFLUX_ORG" --token "$$INFLUX_TOKEN" --name "$$INFLUX_BUCKET" --hide-headers | cut -f1)
+        influx bucket update --host http://influxdb:8086 --token "$$INFLUX_TOKEN" --id "$$ID" --retention "$$INFLUX_RETENTION"
+        echo "retention of $$INFLUX_BUCKET set to $$INFLUX_RETENTION"
+
+  nodered:
+    image: nodered/node-red:3.1
+    restart: unless-stopped
+    depends_on:
+      influxdb: { condition: service_healthy }
+    environment:
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_ORG: ${INFLUX_ORG:-mpt}
+      INFLUX_BUCKET: ${INFLUX_BUCKET:-machines}
+      INFLUX_TOKEN: ${INFLUX_TOKEN:-dev-token-change-me}
+    volumes:
+      - ./nodered/flows.json:/data/flows.json
+      - ./nodered/settings.js:/data/settings.js
+      - ./nodered/sim:/data/sim:ro
+    ports:
+      - "127.0.0.1:1880:1880"
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      influxdb: { condition: service_healthy }
+    environment:
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_ORG: ${INFLUX_ORG:-mpt}
+      INFLUX_BUCKET: ${INFLUX_BUCKET:-machines}
+      INFLUX_TOKEN: ${INFLUX_TOKEN:-dev-token-change-me}
+      POLL_MS: ${POLL_MS:-5000}
+      RENDER_DELAY_MS: ${RENDER_DELAY_MS:-9000}
+      POLL_MARGIN_MS: ${POLL_MARGIN_MS:-2000}
+      CACHE_SECONDS: ${CACHE_SECONDS:-120}
+      TZ_OFFSET_MIN: ${TZ_OFFSET_MIN:-420}   # day boundaries of /api/mddp_184/runcards?dateStart&dateEnd (minutes east of UTC; 420 = Asia/Bangkok)
+      CACHE_FAST_SECONDS: ${CACHE_FAST_SECONDS:-60}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "127.0.0.1:3001:3001"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      backend: { condition: service_healthy }
+    ports:
+      - "8080:80"
+
+volumes:
+  influx-data:

@@ -50,3 +50,8 @@ test('headOf gives the carrier and the local date of the pieces', () => {
   assert.deepStrictEqual(headOf([{ carrier: 'CR-0001', t: Date.UTC(2026, 10, 15, 18, 0) }], 420), { carrier: 'CR-0001', date: '2026-11-16' });
   assert.deepStrictEqual(headOf([], 420), { carrier: null, date: null });
 });
+
+test('partsOf answers the defect as codes', () => {
+  const out = partsOf([row(1, 7, 1, 0b100101), row(1, 7, 2, 0)], ['Strip-7']);
+  assert.deepStrictEqual(out.map((x) => x.defect), [['ASQ-LCM', 'ASQ-PCM', 'MI'], []]);
+});

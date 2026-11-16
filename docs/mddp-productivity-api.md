@@ -56,10 +56,10 @@
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01",
   "strips": [ "Strip-76", "Strip-77", "Strip-78" ],
-  "pieces": [
+  "suspension": [
     { "t": 1794729306570, "side": "L", "carrier": "CR-0001", "strip_no": "Strip-76", "suspension_no": 1,
       "temp": 108.5, "peak": 89.9, "dur": 68.9,
-      "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": 0 },
+      "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": [] },
     { "...": "..." } ] }
 ```
 (แต่ละชิ้นระบุ `strip_no` ของตัวเอง; รายละเอียดฟิลด์อยู่ในหัวข้อ "ข้อมูลชิ้นงาน" ท้ายเอกสาร)
@@ -95,14 +95,14 @@ GET /api/mddp_184/runcards?dateStart=2026-11-15&dateEnd=2026-11-15&detail=2
         { "carrier": "CR-0001",
           "strips": [
             { "strip_no": "Strip-1",
-              "pieces": [
+              "suspension": [
                 { "suspension_no": 1, "t": 1794729054462, "side": "L",
                   "temp": 108.5, "peak": 89.9, "dur": 68.9,
                   "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1,
-                  "defect": 0 },
+                  "defect": [] },
                 { "suspension_no": 2, "...": "..." }
               ] },
-            { "strip_no": "Strip-2", "pieces": [ ... ] }
+            { "strip_no": "Strip-2", "suspension": [ ... ] }
           ] },
         { "carrier": "CR-0016", "strips": [ ... ] }
       ] },
@@ -150,10 +150,10 @@ payload: `POST /api/mddp_184/parts` body `{"machine_no":"mddp_184","rc":"RC-2611
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01",
   "strips": ["Strip-76", "Strip-77", "Strip-78"],
   "carrier": "CR-0001", "date": "2026-11-15",
-  "pieces": [
+  "suspension": [
     { "suspension_no": 1, "t": 1794729306570, "side": "L", "carrier": "CR-0001", "strip_no": "Strip-76",
       "temp": 108.5, "peak": 89.9, "dur": 68.9,
-      "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": 0 },
+      "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": [] },
     { "suspension_no": 2, "...": "..." } ] }
 ```
 
@@ -189,20 +189,20 @@ GET /api/mddp_184/carriers?rc=RC-2611150750-01
 # ข้อมูลชิ้นงาน (ใช้ร่วมกันทุกแบบ) — เลือก Strip → ได้ข้อมูลไปวาดกราฟ
 
 **ส่งไป:** `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (ระบุได้หลาย Strip คั่นด้วย `,`)
-**ได้กลับ:** `rc` และ `strips` ที่ส่งไป ตามด้วย `pieces` = ชิ้นงานของ Strip เหล่านั้น Strip ละ 20 ชิ้น เรียงตาม Strip แล้ว `suspension_no`
+**ได้กลับ:** `rc` และ `strips` ที่ส่งไป ตามด้วย `suspension` = ชิ้นงาน (Suspension) ของ Strip เหล่านั้น Strip ละ 20 ชิ้น เรียงตาม Strip แล้ว `suspension_no`
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01", "strips": ["Strip-76", "Strip-77", "Strip-78"],
   "carrier": "CR-0001", "date": "2026-11-15",
-  "pieces": [
+  "suspension": [
     { "t": 1794729306570, "side": "L", "carrier": "CR-0001", "strip_no": "Strip-76", "suspension_no": 1,
       "temp": 108.5, "peak": 89.9, "dur": 68.9,
       "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1,
-      "defect": 0 } ] }
+      "defect": [] } ] }
 ```
 - `carrier` รหัส Carrier ของ Strip ที่ขอ (ถ้า Strip มาจากหลาย Carrier จะเป็น array), `date` วันที่ของชิ้นงาน `YYYY-MM-DD` (โซนเวลาของหลังบ้าน)
 - `t` เวลาผลิต (epoch ms); `side` L/R ด้านหัวจ่าย; `suspension_no` Suspension No. 1–20 ใน Strip
 - `temp` °C (Epoxy head temperature), `peak` kPa (Dispense pressure), `dur` ms (Epoxy dispense time), `vel*` mm/s (Vibration velocity), `acc*` m/s² (Vibration acceleration)
-- `defect` = bitmask 6 บิต: บิต0 ASQ-LCM, 1 ASQ-MCM, 2 ASQ-PCM, 3 ISAD-CM, 4 LM-5, 5 MI (0 = ไม่มี; 1 ชิ้นมีได้หลายรหัส จำนวน defect ของชิ้น = จำนวนบิต 1)
+- `defect` = รหัส defect ของชิ้นนั้นเป็น array: `[]` = ไม่มี, ตัวอย่าง `["ASQ-LCM","MI"]`; รหัสที่เป็นไปได้ 6 ตัว: ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5, MI (1 ชิ้นมีได้หลายรหัส จำนวน defect ของชิ้น = จำนวนรหัสใน array)
 - ไม่ส่ง `rc` หรือ `strip` → `400 {"error":"rc and strip required"}`
 
 หน้าเว็บจัด Strip ที่เลขต่อกัน 3 ตัวเป็น 1 คอลัมน์ (60 ชิ้น) แล้วเรียก `parts` หนึ่งครั้งต่อคอลัมน์ ส่วน % ชิ้นเสียต่อ Strip, สรุป (parts inspected / defects found / defective parts / top defect code), tooltip และไฟล์ Export Excel/PowerPoint คำนวณฝั่งหน้าเว็บจากข้อมูลนี้

@@ -143,7 +143,7 @@ both('/api/mddp_184/parts', async (req, res) => {
   if (!rc || !strips.length) return res.status(400).json({ error: 'rc and strip required' });
   try {
     const pieces = partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), strips);
-    res.json({ rc, strips, ...headOf(pieces, cfg.tzOffsetMin), pieces });
+    res.json({ rc, strips, ...headOf(pieces, cfg.tzOffsetMin), suspension: pieces });
   } catch (e) { fail(res, e); }
 });
 

@@ -1,6 +1,9 @@
 'use strict';
 // Pure helpers for the MDDP productivity (defect) API. Rows are the `mddp_part` points of one run card.
 const DEFECTS = 6;   // bit 0..5 = ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5, MI
+const DEFECT_CODES = ['ASQ-LCM', 'ASQ-MCM', 'ASQ-PCM', 'ISAD-CM', 'LM-5', 'MI'];
+/** stored bitmask -> the defect codes of the piece: 0 -> [], 5 -> ["ASQ-LCM","ASQ-PCM"] */
+const codesOf = (mask) => DEFECT_CODES.filter((_, i) => (mask >> i) & 1);
 
 /** Strip no as the API shows it: "Strip-76" (stored as a number) */
 const stripName = (n) => 'Strip-' + n;
@@ -60,7 +63,7 @@ const partsOf = (rows, strips) => {
   return rows
     .filter((r) => want.has(stripName(r.strip_no)))
     .sort((a, b) => a.strip_no - b.strip_no || a.part - b.part)
-    .map(({ seq, strip, susp, part, ...r }) => ({ ...r, carrier: carrierName(r.carrier), strip_no: stripName(r.strip_no), suspension_no: part }));   // part = suspension no. 1..20 in the strip // eslint-disable-line no-unused-vars
+    .map(({ seq, strip, susp, part, ...r }) => ({ ...r, carrier: carrierName(r.carrier), strip_no: stripName(r.strip_no), suspension_no: part, defect: codesOf(r.defect) }));   // part = suspension no. 1..20 in the strip // eslint-disable-line no-unused-vars
 };
 
 /** "Strip-1","Strip-2","Strip-3","Strip-76",... (sorted) -> [["Strip-1","Strip-2","Strip-3"],["Strip-76",...]]: one group per use of the carrier (up to 3 consecutive strips) */
@@ -78,4 +81,4 @@ function headOf(pieces, tzMin) {
   const t = pieces.length ? Math.min(...pieces.map((p) => p.t)) : null;
   return { carrier: cs.length > 1 ? cs : (cs[0] ?? null), date: t == null ? null : new Date(t + tzMin * 60000).toISOString().slice(0, 10) };
 }
-module.exports = { headOf, groupStrips, stripName, carrierName, carriersOf, stripsOf, partsOf, rangeOf };
+module.exports = { codesOf, headOf, groupStrips, stripName, carrierName, carriersOf, stripsOf, partsOf, rangeOf };

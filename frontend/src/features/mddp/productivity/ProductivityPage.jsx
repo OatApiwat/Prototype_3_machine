@@ -353,9 +353,10 @@ export default function ProductivityPage() {
   // suspension 1..60 of a set = position of the strip in the set x 20 + part
   const rowsOf = active.map((c, i) =>
     carrierRows(
-      (many.data[i]?.pieces || [])
+      (many.data[i]?.suspension || [])
         .map((r) => ({
           ...r,
+          defect: DEFECTS.reduce((m, code, d) => (r.defect?.includes(code) ? m | (1 << d) : m), 0), // codes -> bitmask used by the charts
           strip: c.strips.indexOf(r.strip_no) + 1,
           susp: c.strips.indexOf(r.strip_no) * PARTS_PER_STRIP + r.suspension_no,
         }))

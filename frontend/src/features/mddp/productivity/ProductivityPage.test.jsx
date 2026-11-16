@@ -28,7 +28,7 @@ const row = (susp, defect) => ({
   accx: 6,
   accy: 0.8,
   accz: 1,
-  defect,
+  defect: ['ASQ-LCM', 'ASQ-MCM', 'ASQ-PCM', 'ISAD-CM', 'LM-5', 'MI'].filter((_, d) => (defect >> d) & 1),
 });
 // step 1 answer: run cards with their carriers and strip numbers (3 consecutive strips = one set)
 const runcards = (...groups) => ({
@@ -58,7 +58,7 @@ describe('Productivity dashboard', () => {
           : {
               rc: 'RC-1-01',
               strips: [],
-              pieces: Array.from({ length: 60 }, (_, i) =>
+              suspension: Array.from({ length: 60 }, (_, i) =>
                 row(i + 1, i === 4 ? 0b00001 : i === 30 ? 0b10000 : 0)
               ),
             };
@@ -96,7 +96,7 @@ describe('Productivity dashboard', () => {
           : {
               rc: 'RC-1-01',
               strips: [],
-              pieces: Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : 0)),
+              suspension: Array.from({ length: 60 }, (_, i) => row(i + 1, i === 4 ? 0b00001 : 0)),
             };
         return { ok: true, json: async () => data };
       })
@@ -119,7 +119,7 @@ describe('Productivity dashboard', () => {
         const u = String(url);
         const data = u.includes('runcards')
           ? runcards(set1, set2)
-          : { rc: 'RC-1-01', strips: [], pieces: Array.from({ length: 60 }, (_, i) => row(i + 1, 0)) };
+          : { rc: 'RC-1-01', strips: [], suspension: Array.from({ length: 60 }, (_, i) => row(i + 1, 0)) };
         return { ok: true, json: async () => data };
       })
     );

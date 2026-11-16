@@ -7,7 +7,7 @@
 - Carrier no ตอบเป็นรหัส เช่น `"CR-0005"` (ไม่ใช่เลข 1 2 3; รูปแบบรหัสเป็นค่าสมมติ ใช้รหัสจริงของ carrier ได้)
 - Strip no ตอบเป็นข้อความ `"Strip-76"` (เรียงตามเลข: Strip-9 มาก่อน Strip-10)
 - ช่วงวันที่: 00:00:00.000 ของ `dateStart` ถึง 23:59:59.999 ของ `dateEnd` (รวมวันสุดท้าย) ตามโซนเวลาของหลังบ้าน (Asia/Bangkok); ไม่ส่ง `dateEnd` = เท่ากับ `dateStart`
-- **ทุก API ส่ง `machine_no` ไปด้วย (`"mddp_184"`) และตอบ `machine_no` กลับมา**; ค่าอื่นที่ไม่ใช่เครื่องนี้ → `400 {"error":"unknown machine_no"}`
+- **ทุก API ส่ง `machine_no` ไปด้วย (`"mddp_184"`) และตอบ `machine_no` กลับมา (ยกเว้น `parts`)**; ค่าอื่นที่ไม่ใช่เครื่องนี้ → `400 {"error":"unknown machine_no"}`
 - **ทุก API ยกเว้น `parts` ตอบค่าที่ส่งไปกลับมาด้วย** (echo) แล้วตามด้วยผลลัพธ์ ใน object เดียว; `parts` ตอบเฉพาะ `{"carriers":[...]}`
 - **ส่งค่าได้ 2 แบบ ได้คำตอบเหมือนกัน:**
   - **URL** (`GET` + query string) เช่น `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (หลาย Strip คั่นด้วย `,`)

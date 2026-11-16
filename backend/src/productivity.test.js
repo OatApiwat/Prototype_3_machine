@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { dateOf, nestParts, groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
+const { partsAnswer, dateOf, nestParts, groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
 
 const row = (carrier, strip_no, part, defect = 0) => ({ seq: 1, carrier, strip: 1, strip_no, part, susp: part, defect, t: strip_no * 100 + part });
 
@@ -65,4 +65,13 @@ test('nestParts orders carrier >> strip >> suspension', () => {
   assert.strictEqual(out[0].strips[0].suspension[0].carrier, undefined);
   assert.deepStrictEqual(Object.keys(out[0].strips[0].suspension[0]).slice(0, 3), ['suspension_no', 'date', 't']);
   assert.strictEqual(out[0].strips[0].suspension[0].date, '1970-01-01');
+});
+
+test('partsAnswer is one carrier with its strips, or null for several carriers', () => {
+  const p = (carrier, strip_no, suspension_no) => ({ carrier, strip_no, suspension_no, t: 1 });
+  const one = partsAnswer([p('CR-0001', 'Strip-1', 1), p('CR-0001', 'Strip-2', 1)], 0);
+  assert.strictEqual(one.carrier, 'CR-0001');
+  assert.deepStrictEqual(one.strips.map((x) => x.strip_no), ['Strip-1', 'Strip-2']);
+  assert.strictEqual(partsAnswer([p('CR-0001', 'Strip-1', 1), p('CR-0002', 'Strip-5', 1)], 0), null);
+  assert.deepStrictEqual(partsAnswer([], 0), { carrier: null, strips: [] });
 });

@@ -5,7 +5,7 @@ const cors = require('cors');
 const { WebSocketServer } = require('ws');
 const { Cache } = require('./cache');
 const { makeInflux } = require('./influx');
-const { nestParts, groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
+const { partsAnswer, nestParts, groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
 
 const cfg = {
   url: process.env.INFLUX_URL || 'http://localhost:8086',
@@ -143,8 +143,10 @@ both('/api/mddp_184/parts', async (req, res) => {
   if (!rc || !strips.length) return res.status(400).json({ error: 'rc and strip required' });
   try {
     const pieces = partsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), strips);
+    const ans = partsAnswer(pieces, cfg.tzOffsetMin);
+    if (!ans) return res.status(400).json({ error: 'strips belong to several carriers' });
     res.locals.bare = true;   // parts answers only the data: no echo of machine_no / rc / strips
-    res.json({ carriers: nestParts(pieces, cfg.tzOffsetMin) });
+    res.json(ans);
   } catch (e) { fail(res, e); }
 });
 

@@ -95,4 +95,10 @@ function nestParts(pieces, tzMin = 0) {
       strips: [...st.entries()].sort((a, b) => num(a[0]) - num(b[0])).map(([strip_no, sus]) => ({ strip_no, suspension: sus.sort((a, b) => a.suspension_no - b.suspension_no) })),
     }));
 }
-module.exports = { dateOf, nestParts, codesOf, groupStrips, stripName, carrierName, carriersOf, stripsOf, partsOf, rangeOf };
+/** parts answer of strips of one carrier: { carrier, strips: [{ strip_no, suspension }] }; null when the strips belong to several carriers; no pieces -> carrier null */
+function partsAnswer(pieces, tzMin) {
+  const n = nestParts(pieces, tzMin);
+  if (n.length > 1) return null;
+  return n.length ? n[0] : { carrier: null, strips: [] };
+}
+module.exports = { partsAnswer, dateOf, nestParts, codesOf, groupStrips, stripName, carrierName, carriersOf, stripsOf, partsOf, rangeOf };

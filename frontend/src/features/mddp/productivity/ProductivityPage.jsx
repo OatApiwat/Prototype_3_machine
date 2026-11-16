@@ -353,11 +353,9 @@ export default function ProductivityPage() {
   // suspension 1..60 of a set = position of the strip in the set x 20 + part
   const rowsOf = active.map((c, i) =>
     carrierRows(
-      (many.data[i]?.carriers || [])
-        .flatMap((k) =>
-          k.strips.flatMap((st) =>
-            st.suspension.map((r) => ({ ...r, carrier: k.carrier, strip_no: st.strip_no }))
-          )
+      (many.data[i]?.strips || [])
+        .flatMap((st) =>
+          st.suspension.map((r) => ({ ...r, carrier: many.data[i].carrier, strip_no: st.strip_no }))
         )
         .map((r) => ({
           ...r,

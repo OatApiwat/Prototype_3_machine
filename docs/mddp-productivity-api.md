@@ -8,7 +8,7 @@
 - Strip no ตอบเป็นข้อความ `"Strip-76"` (เรียงตามเลข: Strip-9 มาก่อน Strip-10)
 - ช่วงวันที่: 00:00:00.000 ของ `dateStart` ถึง 23:59:59.999 ของ `dateEnd` (รวมวันสุดท้าย) ตามโซนเวลาของหลังบ้าน (Asia/Bangkok); ไม่ส่ง `dateEnd` = เท่ากับ `dateStart`
 - **ทุก API ส่ง `machine_no` ไปด้วย (`"mddp_184"`) และตอบ `machine_no` กลับมา (ยกเว้น `parts`)**; ค่าอื่นที่ไม่ใช่เครื่องนี้ → `400 {"error":"unknown machine_no"}`
-- **ทุก API ยกเว้น `parts` ตอบค่าที่ส่งไปกลับมาด้วย** (echo) แล้วตามด้วยผลลัพธ์ ใน object เดียว; `parts` ตอบเฉพาะ `{"carriers":[...]}`
+- **ทุก API ยกเว้น `parts` ตอบค่าที่ส่งไปกลับมาด้วย** (echo) แล้วตามด้วยผลลัพธ์ ใน object เดียว; `parts` ตอบเฉพาะ `{"carrier":…,"strips":[...]}`
 - **ส่งค่าได้ 2 แบบ ได้คำตอบเหมือนกัน:**
   - **URL** (`GET` + query string) เช่น `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (หลาย Strip คั่นด้วย `,`)
   - **payload** (`POST` + JSON body, `Content-Type: application/json`) เช่น `POST /api/mddp_184/parts` body `{"machine_no":"mddp_184","rc":"RC-2611150750-01","strips":["Strip-76","Strip-77","Strip-78"]}` (หลาย Strip เป็น array)
@@ -54,18 +54,17 @@
 **ส่งไป:** `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (ส่ง Strip no ได้หลายตัว คั่นด้วย `,`)
 **ได้กลับ:** ข้อมูลของแต่ละ Strip (ไม่มีการตอบค่าที่ส่งไปซ้ำ) (Strip ละ 20 ชิ้น)
 ```json
-{ "carriers": [
-    { "carrier": "CR-0001",
-      "strips": [
-        { "strip_no": "Strip-76",
-          "suspension": [
-            { "suspension_no": 1, "date": "2026-11-15", "t": 1794729306570, "side": "L",
-              "temp": 108.5, "peak": 89.9, "dur": 68.9,
-              "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": [] },
-            { "suspension_no": 2, "...": "..." } ] },
-        { "strip_no": "Strip-77", "suspension": [ "..." ] } ] } ] }
+{ "carrier": "CR-0001",
+  "strips": [
+    { "strip_no": "Strip-76",
+      "suspension": [
+        { "suspension_no": 1, "date": "2026-11-15", "t": 1794729306570, "side": "L",
+          "temp": 108.5, "peak": 89.9, "dur": 68.9,
+          "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": [] },
+        { "suspension_no": 2, "...": "..." } ] },
+    { "strip_no": "Strip-77", "suspension": [ "..." ] } ] }
 ```
-(จัดเป็นชั้น Carrier → Strip → Suspension เรียงตามลำดับ; รายละเอียดฟิลด์อยู่ในหัวข้อ "ข้อมูลชิ้นงาน" ท้ายเอกสาร)
+(จัดเป็นชั้น Carrier → Strip → Suspension เรียงตามลำดับ; Strip ที่ขอต้องอยู่ใน Carrier เดียวกัน ถ้าคนละ Carrier ได้ `400 {"error":"strips belong to several carriers"}`; รายละเอียดฟิลด์อยู่ในหัวข้อ "ข้อมูลชิ้นงาน" ท้ายเอกสาร)
 
 (รูปแบบข้อมูลชิ้นงานอยู่ในหัวข้อ "ข้อมูลชิ้นงาน" ท้ายเอกสาร)
 
@@ -150,16 +149,15 @@ URL: `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-
 payload: `POST /api/mddp_184/parts` body `{"machine_no":"mddp_184","rc":"RC-2611150750-01","strips":["Strip-76","Strip-77","Strip-78"]}`
 **ได้กลับ:** ข้อมูลของ Strip เหล่านั้น (ไม่มีการตอบค่าที่ส่งไปซ้ำ) Strip ละ 20 ชิ้น (Suspension No. 1–20)
 ```json
-{ "carriers": [
-    { "carrier": "CR-0001",
-      "strips": [
-        { "strip_no": "Strip-76",
-          "suspension": [
-            { "suspension_no": 1, "date": "2026-11-15", "t": 1794729306570, "side": "L",
-              "temp": 108.5, "peak": 89.9, "dur": 68.9,
-              "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": [] },
-            { "suspension_no": 2, "...": "..." } ] },
-        { "strip_no": "Strip-77", "suspension": [ "..." ] } ] } ] }
+{ "carrier": "CR-0001",
+  "strips": [
+    { "strip_no": "Strip-76",
+      "suspension": [
+        { "suspension_no": 1, "date": "2026-11-15", "t": 1794729306570, "side": "L",
+          "temp": 108.5, "peak": 89.9, "dur": 68.9,
+          "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": [] },
+        { "suspension_no": 2, "...": "..." } ] },
+    { "strip_no": "Strip-77", "suspension": [ "..." ] } ] }
 ```
 
 # แบบ 4 — 3 ขั้นตอน: Run Card → Carrier (พร้อมสรุปแต่ละ Strip) → ข้อมูลชิ้นงาน
@@ -194,20 +192,19 @@ GET /api/mddp_184/carriers?rc=RC-2611150750-01
 # ข้อมูลชิ้นงาน (ใช้ร่วมกันทุกแบบ) — เลือก Strip → ได้ข้อมูลไปวาดกราฟ
 
 **ส่งไป:** `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (ระบุได้หลาย Strip คั่นด้วย `,`)
-**ได้กลับ:** `carriers[] → strips[] → suspension[]` = ชิ้นงาน (Suspension) ของ Strip เหล่านั้น Strip ละ 20 ชิ้น เรียงตาม Carrier → Strip → `suspension_no`
+**ได้กลับ:** `carrier` (Carrier ของ Strip ที่ขอ) แล้ว `strips[] → suspension[]` = ชิ้นงาน (Suspension) ของ Strip เหล่านั้น Strip ละ 20 ชิ้น เรียงตาม Carrier → Strip → `suspension_no`
 ```json
-{ "carriers": [
-    { "carrier": "CR-0001",
-      "strips": [
-        { "strip_no": "Strip-76",
-          "suspension": [
-            { "suspension_no": 1, "date": "2026-11-15", "t": 1794729306570, "side": "L",
-              "temp": 108.5, "peak": 89.9, "dur": 68.9,
-              "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": [] },
-            { "suspension_no": 2, "...": "..." } ] },
-        { "strip_no": "Strip-77", "suspension": [ "..." ] } ] } ] }
+{ "carrier": "CR-0001",
+  "strips": [
+    { "strip_no": "Strip-76",
+      "suspension": [
+        { "suspension_no": 1, "date": "2026-11-15", "t": 1794729306570, "side": "L",
+          "temp": 108.5, "peak": 89.9, "dur": 68.9,
+          "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": [] },
+        { "suspension_no": 2, "...": "..." } ] },
+    { "strip_no": "Strip-77", "suspension": [ "..." ] } ] }
 ```
-- `carrier` อยู่ในระดับ `carriers[]`, `strip_no` อยู่ในระดับ `strips[]` , `date` อยู่ในแต่ละ suspension ต่อจาก `suspension_no` = วันที่ของชิ้นงาน `YYYY-MM-DD` (โซนเวลาของหลังบ้าน)
+- `carrier` อยู่ระดับบน, `strip_no` อยู่ในระดับ `strips[]` , `date` อยู่ในแต่ละ suspension ต่อจาก `suspension_no` = วันที่ของชิ้นงาน `YYYY-MM-DD` (โซนเวลาของหลังบ้าน)
 - `t` เวลาผลิต (epoch ms); `side` L/R ด้านหัวจ่าย; `suspension_no` Suspension No. 1–20 ใน Strip
 - `temp` °C (Epoxy head temperature), `peak` kPa (Dispense pressure), `dur` ms (Epoxy dispense time), `vel*` mm/s (Vibration velocity), `acc*` m/s² (Vibration acceleration)
 - `defect` = รหัส defect ของชิ้นนั้นเป็น array: `[]` = ไม่มี, ตัวอย่าง `["ASQ-LCM","MI"]`; รหัสที่เป็นไปได้ 6 ตัว: ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5, MI (1 ชิ้นมีได้หลายรหัส จำนวน defect ของชิ้น = จำนวนรหัสใน array)

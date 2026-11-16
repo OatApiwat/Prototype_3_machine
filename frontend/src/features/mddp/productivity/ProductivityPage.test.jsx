@@ -41,14 +41,11 @@ const nestData = (d) => {
   if (!d.suspension) return d;
   const { suspension, ...rest } = d;
   const strips = new Map();
-  for (const { strip_no, ...r } of suspension)
-    strips.set(strip_no, [...(strips.get(strip_no) || []), r]);
+  for (const { strip_no, ...r } of suspension) strips.set(strip_no, [...(strips.get(strip_no) || []), r]);
   return {
     ...rest,
-    date: '2026-11-15',
-    carriers: [
-      { carrier: 'CR-0007', strips: [...strips].map(([strip_no, s]) => ({ strip_no, suspension: s })) },
-    ],
+    carrier: 'CR-0007',
+    strips: [...strips].map(([strip_no, s]) => ({ strip_no, suspension: s })),
   };
 };
 const set1 = ['Strip-1', 'Strip-2', 'Strip-3'];

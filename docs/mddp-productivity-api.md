@@ -10,8 +10,8 @@
 - **ทุก API ส่ง `machine_no` ไปด้วย (`"mddp_184"`) และตอบ `machine_no` กลับมา**; ค่าอื่นที่ไม่ใช่เครื่องนี้ → `400 {"error":"unknown machine_no"}`
 - **ทุก API ตอบค่าที่ส่งไปกลับมาด้วย** (echo) แล้วตามด้วยผลลัพธ์ ใน object เดียว
 - **ส่งค่าได้ 2 แบบ ได้คำตอบเหมือนกัน:**
-  - **URL** (`GET` + query string) เช่น `GET /api/mddp/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (หลาย Strip คั่นด้วย `,`)
-  - **payload** (`POST` + JSON body, `Content-Type: application/json`) เช่น `POST /api/mddp/parts` body `{"machine_no":"mddp_184","rc":"RC-2611150750-01","strips":["Strip-76","Strip-77","Strip-78"]}` (หลาย Strip เป็น array)
+  - **URL** (`GET` + query string) เช่น `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (หลาย Strip คั่นด้วย `,`)
+  - **payload** (`POST` + JSON body, `Content-Type: application/json`) เช่น `POST /api/mddp_184/parts` body `{"machine_no":"mddp_184","rc":"RC-2611150750-01","strips":["Strip-76","Strip-77","Strip-78"]}` (หลาย Strip เป็น array)
   - ชื่อค่าใน payload: `runcards` = `dateStart`, `dateEnd`, `detail`; `carriers` = `rc`; `strips` = `rc`, `carrier`; `parts` = `rc`, `strips` (array; แบบ URL ใช้ `strip` คั่นด้วย `,`)
   - หน้าเว็บ Defect monitoring ส่งแบบ payload
 - ไม่มีข้อมูล = ผลลัพธ์เป็น array ว่าง (HTTP 200); วันที่ผิด → `400 {"error":"invalid date"}`; `dateStart` > `dateEnd` → `400 {"error":"dateStart must not be after dateEnd"}`
@@ -23,7 +23,7 @@
 # แบบ 1 — ทีละขั้นตามที่ผู้ใช้เลือก
 
 ## 1.1 เลือกวันที่ → ได้ Run Card
-**ส่งไป:** `GET /api/mddp/runcards?dateStart=2026-11-15&dateEnd=2026-11-15`
+**ส่งไป:** `GET /api/mddp_184/runcards?dateStart=2026-11-15&dateEnd=2026-11-15`
 **ได้กลับ:** รหัส Run Card เรียงตามรหัส
 ```json
 { "machine_no": "mddp_184", "dateStart": "2026-11-15", "dateEnd": "2026-11-15",
@@ -31,7 +31,7 @@
 ```
 
 ## 1.2 เลือก Run Card → ได้ Carrier
-**ส่งไป:** `GET /api/mddp/carriers?rc=RC-2611150750-01`
+**ส่งไป:** `GET /api/mddp_184/carriers?rc=RC-2611150750-01`
 **ได้กลับ:** หมายเลข Carrier ที่อยู่ใน Run Card นั้น เรียงตามหมายเลข
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01",
@@ -40,7 +40,7 @@
 ไม่ส่ง `rc` → `400 {"error":"rc required"}`
 
 ## 1.3 เลือก Carrier → ได้ Strip no ของ Carrier นั้น
-**ส่งไป:** `GET /api/mddp/strips?rc=RC-2611150750-01&carrier=CR-0001`
+**ส่งไป:** `GET /api/mddp_184/strips?rc=RC-2611150750-01&carrier=CR-0001`
 **ได้กลับ:** Strip no ทั้งหมดของ Carrier นั้นใน Run Card นั้น
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01", "carrier": "CR-0001",
@@ -49,7 +49,7 @@
 Carrier 1 ถูกใช้ 3 ครั้ง จึงมี 9 Strip ส่วน Carrier ที่ใช้ครั้งเดียวมี 3 Strip
 
 ## 1.4 ส่ง Strip no → ได้ข้อมูลของแต่ละ Strip
-**ส่งไป:** `GET /api/mddp/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (ส่ง Strip no ได้หลายตัว คั่นด้วย `,`)
+**ส่งไป:** `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (ส่ง Strip no ได้หลายตัว คั่นด้วย `,`)
 **ได้กลับ:** ค่าที่ส่งไป (`rc`, `strips`) แล้วตามด้วยข้อมูลของแต่ละ Strip (Strip ละ 20 ชิ้น)
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01",
@@ -81,7 +81,7 @@ Run Card
 
 **ส่งไป:**
 ```
-GET /api/mddp/runcards?dateStart=2026-11-15&dateEnd=2026-11-15&detail=2
+GET /api/mddp_184/runcards?dateStart=2026-11-15&dateEnd=2026-11-15&detail=2
 ```
 
 **ได้กลับ:** ค่าที่ส่งไป แล้วตามด้วยทุก Run Card ในช่วงวันที่นั้น (ย่อให้อ่านง่าย):
@@ -121,8 +121,8 @@ GET /api/mddp/runcards?dateStart=2026-11-15&dateEnd=2026-11-15&detail=2
 
 ## ขั้นที่ 1 เลือกวันที่ → ได้ Run Card, Carrier, Strip no (ยังไม่มีข้อมูลชิ้นงาน)
 **ส่งไป:**
-URL: `GET /api/mddp/runcards?dateStart=2026-11-15&dateEnd=2026-11-15&detail=1`
-payload: `POST /api/mddp/runcards` body `{"machine_no":"mddp_184","dateStart":"2026-11-15","dateEnd":"2026-11-15","detail":1}`
+URL: `GET /api/mddp_184/runcards?dateStart=2026-11-15&dateEnd=2026-11-15&detail=1`
+payload: `POST /api/mddp_184/runcards` body `{"machine_no":"mddp_184","dateStart":"2026-11-15","dateEnd":"2026-11-15","detail":1}`
 **ได้กลับ:** ค่าที่ส่งไป แล้วตามด้วยโครงสร้าง Run Card → Carrier → Strip no ของทุก Run Card ในช่วงวันที่นั้น
 ```json
 { "machine_no": "mddp_184", "dateStart": "2026-11-15", "dateEnd": "2026-11-15",
@@ -141,8 +141,8 @@ payload: `POST /api/mddp/runcards` body `{"machine_no":"mddp_184","dateStart":"2
 
 ## ขั้นที่ 2 เลือก Strip no → ส่ง Strip no ไป ได้ข้อมูลของแต่ละ Strip
 **ส่งไป:** Run Card ที่เลือก และ Strip no ที่ผู้ใช้เลือก (หลายตัวคั่นด้วย `,`)
-URL: `GET /api/mddp/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78`
-payload: `POST /api/mddp/parts` body `{"machine_no":"mddp_184","rc":"RC-2611150750-01","strips":["Strip-76","Strip-77","Strip-78"]}`
+URL: `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78`
+payload: `POST /api/mddp_184/parts` body `{"machine_no":"mddp_184","rc":"RC-2611150750-01","strips":["Strip-76","Strip-77","Strip-78"]}`
 **ได้กลับ:** ค่าที่ส่งไป แล้วตามด้วยข้อมูลของ Strip เหล่านั้น Strip ละ 20 ชิ้น (Suspension No. 1–20)
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01",
@@ -159,7 +159,7 @@ payload: `POST /api/mddp/parts` body `{"machine_no":"mddp_184","rc":"RC-26111507
 
 ## ขั้นที่ 1 เลือกวันที่ → ได้ Run Card
 ```
-GET /api/mddp/runcards?dateStart=2026-11-15&dateEnd=2026-11-15
+GET /api/mddp_184/runcards?dateStart=2026-11-15&dateEnd=2026-11-15
 ```
 ```json
 { "machine_no": "mddp_184", "dateStart": "2026-11-15", "dateEnd": "2026-11-15",
@@ -168,7 +168,7 @@ GET /api/mddp/runcards?dateStart=2026-11-15&dateEnd=2026-11-15
 
 ## ขั้นที่ 2 เลือก Run Card → ได้ Carrier และ Strip no ของแต่ละ Carrier พร้อมสรุป
 ```
-GET /api/mddp/carriers?rc=RC-2611150750-01
+GET /api/mddp_184/carriers?rc=RC-2611150750-01
 ```
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01",
@@ -180,13 +180,13 @@ GET /api/mddp/carriers?rc=RC-2611150750-01
 `pieces` = จำนวนชิ้นของ Strip, `defective` = จำนวนชิ้นเสีย
 
 ## ขั้นที่ 3 เลือก Strip no → ข้อมูลชิ้นงาน
-เหมือนขั้นที่ 2 ของแบบ 3 (`GET /api/mddp/parts?rc=...&strip=Strip-1,Strip-2,Strip-3`)
+เหมือนขั้นที่ 2 ของแบบ 3 (`GET /api/mddp_184/parts?rc=...&strip=Strip-1,Strip-2,Strip-3`)
 
 ---
 
 # ข้อมูลชิ้นงาน (ใช้ร่วมกันทุกแบบ) — เลือก Strip → ได้ข้อมูลไปวาดกราฟ
 
-**ส่งไป:** `GET /api/mddp/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (ระบุได้หลาย Strip คั่นด้วย `,`)
+**ส่งไป:** `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (ระบุได้หลาย Strip คั่นด้วย `,`)
 **ได้กลับ:** `rc` และ `strips` ที่ส่งไป ตามด้วย `pieces` = ชิ้นงานของ Strip เหล่านั้น Strip ละ 20 ชิ้น เรียงตาม Strip แล้ว `suspension_no`
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01", "strips": ["Strip-76", "Strip-77", "Strip-78"],

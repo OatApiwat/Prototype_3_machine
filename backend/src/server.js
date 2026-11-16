@@ -27,7 +27,7 @@ const cache = new Cache({ default: cfg.cacheSec, mddp_fast: cfg.cacheFastSec, [L
 const influx = makeInflux(cfg);
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '100kb' }));   // POST payloads of /api/mddp/*
+app.use(express.json({ limit: '100kb' }));   // POST payloads of /api/mddp_184/*
 
 let stopPrev = Date.now() - cfg.cacheSec * 1000;   // warm-up window: refill the cache once at start
 let polling = false, lastPollOk = null, lastError = null;
@@ -95,16 +95,16 @@ const cached = (key, ttl, fn) => {
   }
   return h.promise;
 };
-// GET /api/mddp/runcards?dateStart=YYYY-MM-DD&dateEnd=YYYY-MM-DD   run cards with pieces from 00:00 of dateStart to the end of dateEnd (TZ_OFFSET_MIN, default Asia/Bangkok);
+// GET /api/mddp_184/runcards?dateStart=YYYY-MM-DD&dateEnd=YYYY-MM-DD   run cards with pieces from 00:00 of dateStart to the end of dateEnd (TZ_OFFSET_MIN, default Asia/Bangkok);
 //     no dateEnd = dateStart; legacy from/to (epoch ms) still accepted; no parameters = last 24 h
-// GET /api/mddp/carriers?rc=<run card>          carriers of a run card
-// GET /api/mddp/strips?rc=<run card>&carrier=CR-0005   Strip numbers of that carrier
-// GET /api/mddp/parts?rc=<run card>&strip=Strip-76,Strip-77   the pieces (20 per strip) of the strips
+// GET /api/mddp_184/carriers?rc=<run card>          carriers of a run card
+// GET /api/mddp_184/strips?rc=<run card>&carrier=CR-0005   Strip numbers of that carrier
+// GET /api/mddp_184/parts?rc=<run card>&strip=Strip-76,Strip-77   the pieces (20 per strip) of the strips
 const rcOf = (q) => String(q.rc || '').replace(/[^A-Za-z0-9_-]/g, '');
 const fail = (res, e) => res.status(502).json({ error: String(e.message || e) });
 const qOf = (req) => ({ ...req.query, ...(req.body && typeof req.body === 'object' ? req.body : {}) });   // GET query string or POST JSON payload
 const MACHINE_NO = 'mddp_184';   // the machine this stack serves; callers send it as machine_no and the answer repeats it
-app.use('/api/mddp', (req, res, next) => {
+app.use('/api/mddp_184', (req, res, next) => {
   const m = qOf(req).machine_no;
   if (m != null && String(m).toLowerCase() !== MACHINE_NO) return res.status(400).json({ error: 'unknown machine_no' });
   const json = res.json.bind(res);
@@ -112,7 +112,7 @@ app.use('/api/mddp', (req, res, next) => {
   next();
 });
 const both = (path, h) => { app.get(path, h); app.post(path, h); };
-both('/api/mddp/runcards', async (req, res) => {
+both('/api/mddp_184/runcards', async (req, res) => {
   const q = qOf(req), byDate = q.dateStart != null || q.dateEnd != null;
   const range = rangeOf(byDate ? q.dateStart ?? q.dateEnd : q.from, byDate ? q.dateEnd ?? q.dateStart : q.to, cfg.tzOffsetMin);
   if (!range) return res.status(400).json({ error: 'invalid date' });
@@ -128,17 +128,17 @@ both('/api/mddp/runcards', async (req, res) => {
     res.json({ ...echo, runcards: full });
   } catch (e) { fail(res, e); }
 });
-both('/api/mddp/carriers', async (req, res) => {
+both('/api/mddp_184/carriers', async (req, res) => {
   const rc = rcOf(qOf(req));
   if (!rc) return res.status(400).json({ error: 'rc required' });
   try { res.json({ rc, carriers: carriersOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc))) }); } catch (e) { fail(res, e); }
 });
-both('/api/mddp/strips', async (req, res) => {
+both('/api/mddp_184/strips', async (req, res) => {
   const q = qOf(req), rc = rcOf(q), carrier = /^CR-\d+$/.test(q.carrier || '') ? q.carrier : '';
   if (!rc || !carrier) return res.status(400).json({ error: 'rc and carrier required' });
   try { res.json({ rc, carrier, strips: stripsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), carrier) }); } catch (e) { fail(res, e); }
 });
-both('/api/mddp/parts', async (req, res) => {
+both('/api/mddp_184/parts', async (req, res) => {
   const q = qOf(req), rc = rcOf(q), strips = (Array.isArray(q.strips) ? q.strips : String(q.strip || '').split(',')).filter((x) => /^Strip-\d+$/.test(x));
   if (!rc || !strips.length) return res.status(400).json({ error: 'rc and strip required' });
   try {

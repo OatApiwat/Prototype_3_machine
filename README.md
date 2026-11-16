@@ -32,8 +32,8 @@ Config: copy `.env.example` to `.env`.
 
 Source: measurement `mddp_part` (one row per finished piece; tags `side`, `rc` = run card). 1 run card = 45 carrier visits = 2,700 pieces; 1 carrier = 3 strips x 20 parts = 60 suspensions; carrier numbers are reused (visit `seq` is the key inside a run card). Defect = bit mask of 6 codes: ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5, MI.
 
-- `GET /api/mddp/runcards?from=<ms>&to=<ms>` run cards with pieces in the period (default: last 24 h)
-- `GET /api/mddp/carriers?rc=<run card>` carrier visits: carrier number, strip numbers, pieces, defective, count per defect code
-- `GET /api/mddp/parts?rc=<run card>&seq=<visit>` the 60 pieces of one carrier visit
+- `GET /api/mddp_184/runcards?from=<ms>&to=<ms>` run cards with pieces in the period (default: last 24 h)
+- `GET /api/mddp_184/carriers?rc=<run card>` carrier visits: carrier number, strip numbers, pieces, defective, count per defect code
+- `GET /api/mddp_184/parts?rc=<run card>&seq=<visit>` the 60 pieces of one carrier visit
 
 InfluxDB keeps `INFLUX_RETENTION` (default 168 h = 7 days) of data, so the Date Start / Date End pickers can find 7 days of history. The one-shot `influx-retention` service applies the value to the existing bucket on every `docker compose up`, so changing it in `.env` needs no volume reset. Disk use grows with the retention (`mddp_fast` alone is 2,000 rows/s): watch it with `docker system df -v`.

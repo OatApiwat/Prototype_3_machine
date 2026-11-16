@@ -78,7 +78,7 @@ describe('Productivity dashboard', () => {
     expect(
       calls.some(
         (c) =>
-          c.startsWith('POST /api/mddp/parts ') &&
+          c.startsWith('POST /api/mddp_184/parts ') &&
           JSON.parse(c.split(' ').slice(2).join(' ')).strips.join() === 'Strip-1,Strip-2,Strip-3'
       )
     ).toBe(true);

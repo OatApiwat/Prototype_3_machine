@@ -8,7 +8,7 @@ const stripName = (n) => 'Strip-' + n;
 const carrierName = (n) => 'CR-' + String(n).padStart(4, '0');
 
 /**
- * Query range of /api/mddp/runcards: calendar dates ("YYYY-MM-DD", from = start of that day, to = end of that day, in the time zone
+ * Query range of /api/mddp_184/runcards: calendar dates ("YYYY-MM-DD", from = start of that day, to = end of that day, in the time zone
  * `tzMin` minutes east of UTC) or epoch ms. Returns { from, to } in ms, or null when a value is not understood.
  */
 function rangeOf(from, to, tzMin, now = Date.now()) {

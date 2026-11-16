@@ -71,7 +71,7 @@ services:
       RENDER_DELAY_MS: ${RENDER_DELAY_MS:-9000}
       POLL_MARGIN_MS: ${POLL_MARGIN_MS:-2000}
       CACHE_SECONDS: ${CACHE_SECONDS:-120}
-      TZ_OFFSET_MIN: ${TZ_OFFSET_MIN:-420}   # day boundaries of /api/mddp/runcards?dateStart&dateEnd (minutes east of UTC; 420 = Asia/Bangkok)
+      TZ_OFFSET_MIN: ${TZ_OFFSET_MIN:-420}   # day boundaries of /api/mddp_184/runcards?dateStart&dateEnd (minutes east of UTC; 420 = Asia/Bangkok)
       CACHE_FAST_SECONDS: ${CACHE_FAST_SECONDS:-60}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]

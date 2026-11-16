@@ -103,6 +103,14 @@ const cached = (key, ttl, fn) => {
 const rcOf = (q) => String(q.rc || '').replace(/[^A-Za-z0-9_-]/g, '');
 const fail = (res, e) => res.status(502).json({ error: String(e.message || e) });
 const qOf = (req) => ({ ...req.query, ...(req.body && typeof req.body === 'object' ? req.body : {}) });   // GET query string or POST JSON payload
+const MACHINE_NO = 'mddp_184';   // the machine this stack serves; callers send it as machine_no and the answer repeats it
+app.use('/api/mddp', (req, res, next) => {
+  const m = qOf(req).machine_no;
+  if (m != null && String(m).toLowerCase() !== MACHINE_NO) return res.status(400).json({ error: 'unknown machine_no' });
+  const json = res.json.bind(res);
+  res.json = (b) => json(b && !b.error ? { machine_no: MACHINE_NO, ...b } : b);
+  next();
+});
 const both = (path, h) => { app.get(path, h); app.post(path, h); };
 both('/api/mddp/runcards', async (req, res) => {
   const q = qOf(req), byDate = q.dateStart != null || q.dateEnd != null;

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+export const MACHINE_NO = 'mddp_184';
+
 /** a request = { path, body }: the values asked for go in a JSON payload (POST) */
 const post = async ({ path, body }) => {
   const r = await fetch(path, {
@@ -49,7 +51,9 @@ export function useLoadedMany(reqs, nonce) {
 
 /** run cards (with their carriers and strip groups) of the dates (YYYY-MM-DD, whole days, end date included); null when the range is empty */
 export const cardsUrl = (dateStart, dateEnd) =>
-  dateStart <= dateEnd ? { path: '/api/mddp/runcards', body: { dateStart, dateEnd, detail: 1 } } : null;
+  dateStart <= dateEnd
+    ? { path: '/api/mddp/runcards', body: { machine_no: MACHINE_NO, dateStart, dateEnd, detail: 1 } }
+    : null;
 /** pieces of some strips ("Strip-76", ...) of a run card */
 export const partsUrl = (rc, strips) =>
-  rc && strips?.length ? { path: '/api/mddp/parts', body: { rc, strips } } : null;
+  rc && strips?.length ? { path: '/api/mddp/parts', body: { machine_no: MACHINE_NO, rc, strips } } : null;

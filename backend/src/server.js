@@ -136,7 +136,7 @@ both('/api/mddp_184/carriers', async (req, res) => {
 both('/api/mddp_184/strips', async (req, res) => {
   const q = qOf(req), rc = rcOf(q), carrier = /^CR-\d+$/.test(q.carrier || '') ? q.carrier : '';
   if (!rc || !carrier) return res.status(400).json({ error: 'rc and carrier required' });
-  try { res.json({ rc, carrier, strips: stripsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), carrier) }); } catch (e) { fail(res, e); }
+  try { res.json({ rc, carrier, strips: groupStrips(stripsOf(await cached('parts:' + rc, cfg.pollMs, () => influx.parts(rc)), carrier)) }); } catch (e) { fail(res, e); }
 });
 both('/api/mddp_184/parts', async (req, res) => {
   const q = qOf(req), rc = rcOf(q), strips = (Array.isArray(q.strips) ? q.strips : String(q.strip || '').split(',')).filter((x) => /^Strip-\d+$/.test(x));

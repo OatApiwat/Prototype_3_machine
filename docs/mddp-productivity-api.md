@@ -44,9 +44,11 @@
 **ได้กลับ:** Strip no ทั้งหมดของ Carrier นั้นใน Run Card นั้น
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01", "carrier": "CR-0001",
-  "strips": [ "Strip-1", "Strip-2", "Strip-3", "Strip-76", "Strip-77", "Strip-78", "Strip-121", "Strip-122", "Strip-123" ] }
+  "strips": [ ["Strip-1", "Strip-2", "Strip-3"],
+              ["Strip-76", "Strip-77", "Strip-78"],
+              ["Strip-121", "Strip-122", "Strip-123"] ] }
 ```
-Carrier 1 ถูกใช้ 3 ครั้ง จึงมี 9 Strip ส่วน Carrier ที่ใช้ครั้งเดียวมี 3 Strip
+`strips` แบ่งเป็นกลุ่มละ 3 Strip ต่อ 1 ครั้งที่ Carrier ถูกใช้ (CR-0001 ใช้ 3 ครั้ง = 3 กลุ่ม; Carrier ที่ใช้ครั้งเดียวมี 1 กลุ่ม)
 
 ## 1.4 ส่ง Strip no → ได้ข้อมูลของแต่ละ Strip
 **ส่งไป:** `GET /api/mddp_184/parts?rc=RC-2611150750-01&strip=Strip-76,Strip-77,Strip-78` (ส่ง Strip no ได้หลายตัว คั่นด้วย `,`)

@@ -107,11 +107,11 @@ GET /api/mddp_184/runcards?dateStart=2026-11-15&dateEnd=2026-11-15&detail=2
                   "defect": [] },
                 { "suspension_no": 2, "...": "..." }
               ] },
-            { "strip_no": "Strip-2", "suspension": [ ... ] }
+            { "strip_no": "Strip-2", "suspension": [ "..." ] }
           ] },
-        { "carrier": "CR-0016", "strips": [ ... ] }
+        { "carrier": "CR-0016", "strips": [ "..." ] }
       ] },
-    { "rc": "RC-2611151120-02", "carriers": [ ... ] }
+    { "rc": "RC-2611151120-02", "carriers": [ "..." ] }
   ] }
 ```
 
@@ -141,7 +141,7 @@ payload: `POST /api/mddp_184/runcards` body `{"machine_no":"mddp_184","dateStart
                       ["Strip-76", "Strip-77", "Strip-78"],
                       ["Strip-121", "Strip-122", "Strip-123"] ] },
         { "carrier": "CR-0016", "strips": [ ["Strip-46", "Strip-47", "Strip-48"] ] } ] },
-    { "rc": "RC-2611151120-02", "carriers": [ ... ] } ] }
+    { "rc": "RC-2611151120-02", "carriers": [ "..." ] } ] }
 ```
 `strips` แบ่งเป็นกลุ่มละ 3 Strip ต่อ 1 ครั้งที่ Carrier ถูกใช้ (1 กลุ่ม = 1 คอลัมน์บนหน้าเว็บ = 60 ชิ้น)
 ตอบเฉพาะรหัส ไม่มีข้อมูลชิ้นงาน จึงเล็กและเร็วกว่าแบบ 2 มาก (ตอบ Run Card เป็นสิบรายการได้สบาย)

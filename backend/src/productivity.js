@@ -75,21 +75,18 @@ function groupStrips(names, size = 3) {
   }
   return out.map((x) => x.g);
 }
-/** the date (YYYY-MM-DD in the time zone `tzMin` minutes east of UTC) of API pieces: carrier is one code, or a list when the strips belong to several carriers */
-function headOf(pieces, tzMin) {
-  const cs = [...new Set(pieces.map((p) => p.carrier))].sort();
-  const t = pieces.length ? Math.min(...pieces.map((p) => p.t)) : null;
-  return { date: t == null ? null : new Date(t + tzMin * 60000).toISOString().slice(0, 10) };
-}
+/** YYYY-MM-DD of an epoch ms in the time zone `tzMin` minutes east of UTC (null without a time) */
+const dateOf = (t, tzMin) => (t == null ? null : new Date(t + tzMin * 60000).toISOString().slice(0, 10));
 /** flat API pieces -> carrier >> strip >> suspension: [{ carrier, strips: [{ strip_no, suspension: [{ suspension_no, ... }] }] }], each level in ascending order */
-function nestParts(pieces) {
+function nestParts(pieces, tzMin = 0) {
   const num = (x) => +String(x).replace(/\D/g, '');
   const by = new Map();
   for (const { carrier, strip_no, ...r } of pieces) {
     if (!by.has(carrier)) by.set(carrier, new Map());
     const st = by.get(carrier);
     if (!st.has(strip_no)) st.set(strip_no, []);
-    st.get(strip_no).push(r);
+    const { suspension_no, ...rest } = r;
+    st.get(strip_no).push({ suspension_no, date: dateOf(r.t, tzMin), ...rest });   // date right after suspension_no
   }
   return [...by.entries()]
     .sort((a, b) => num(a[0]) - num(b[0]))
@@ -98,4 +95,4 @@ function nestParts(pieces) {
       strips: [...st.entries()].sort((a, b) => num(a[0]) - num(b[0])).map(([strip_no, sus]) => ({ strip_no, suspension: sus.sort((a, b) => a.suspension_no - b.suspension_no) })),
     }));
 }
-module.exports = { nestParts, codesOf, headOf, groupStrips, stripName, carrierName, carriersOf, stripsOf, partsOf, rangeOf };
+module.exports = { dateOf, nestParts, codesOf, groupStrips, stripName, carrierName, carriersOf, stripsOf, partsOf, rangeOf };

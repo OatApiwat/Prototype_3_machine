@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { nestParts, headOf, groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
+const { dateOf, nestParts, groupStrips, carriersOf, stripsOf, partsOf, rangeOf } = require('./productivity');
 
 const row = (carrier, strip_no, part, defect = 0) => ({ seq: 1, carrier, strip: 1, strip_no, part, susp: part, defect, t: strip_no * 100 + part });
 
@@ -46,9 +46,9 @@ test('groupStrips splits strips into groups of up to 3 consecutive numbers', () 
   );
 });
 
-test('headOf gives the carrier and the local date of the pieces', () => {
-  assert.deepStrictEqual(headOf([{ carrier: 'CR-0001', t: Date.UTC(2026, 10, 15, 18, 0) }], 420), { date: '2026-11-16' });
-  assert.deepStrictEqual(headOf([], 420), { date: null });
+test('dateOf gives the local date of a time', () => {
+  assert.strictEqual(dateOf(Date.UTC(2026, 10, 15, 18, 0), 420), '2026-11-16');
+  assert.strictEqual(dateOf(null, 420), null);
 });
 
 test('partsOf answers the defect as codes', () => {
@@ -63,4 +63,6 @@ test('nestParts orders carrier >> strip >> suspension', () => {
   assert.deepStrictEqual(out[0].strips.map((x) => x.strip_no), ['Strip-9', 'Strip-76']);
   assert.deepStrictEqual(out[0].strips[0].suspension.map((x) => x.suspension_no), [1, 2]);
   assert.strictEqual(out[0].strips[0].suspension[0].carrier, undefined);
+  assert.deepStrictEqual(Object.keys(out[0].strips[0].suspension[0]).slice(0, 3), ['suspension_no', 'date', 't']);
+  assert.strictEqual(out[0].strips[0].suspension[0].date, '1970-01-01');
 });

@@ -56,13 +56,12 @@
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01",
   "strips": [ "Strip-76", "Strip-77", "Strip-78" ],
-  "date": "2026-11-15",
   "carriers": [
     { "carrier": "CR-0001",
       "strips": [
         { "strip_no": "Strip-76",
           "suspension": [
-            { "suspension_no": 1, "t": 1794729306570, "side": "L",
+            { "suspension_no": 1, "date": "2026-11-15", "t": 1794729306570, "side": "L",
               "temp": 108.5, "peak": 89.9, "dur": 68.9,
               "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": [] },
             { "suspension_no": 2, "...": "..." } ] },
@@ -155,13 +154,12 @@ payload: `POST /api/mddp_184/parts` body `{"machine_no":"mddp_184","rc":"RC-2611
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01",
   "strips": [ "Strip-76", "Strip-77", "Strip-78" ],
-  "date": "2026-11-15",
   "carriers": [
     { "carrier": "CR-0001",
       "strips": [
         { "strip_no": "Strip-76",
           "suspension": [
-            { "suspension_no": 1, "t": 1794729306570, "side": "L",
+            { "suspension_no": 1, "date": "2026-11-15", "t": 1794729306570, "side": "L",
               "temp": 108.5, "peak": 89.9, "dur": 68.9,
               "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": [] },
             { "suspension_no": 2, "...": "..." } ] },
@@ -204,19 +202,18 @@ GET /api/mddp_184/carriers?rc=RC-2611150750-01
 ```json
 { "machine_no": "mddp_184", "rc": "RC-2611150750-01",
   "strips": [ "Strip-76", "Strip-77", "Strip-78" ],
-  "date": "2026-11-15",
   "carriers": [
     { "carrier": "CR-0001",
       "strips": [
         { "strip_no": "Strip-76",
           "suspension": [
-            { "suspension_no": 1, "t": 1794729306570, "side": "L",
+            { "suspension_no": 1, "date": "2026-11-15", "t": 1794729306570, "side": "L",
               "temp": 108.5, "peak": 89.9, "dur": 68.9,
               "velx": 29.9, "vely": 4.1, "velz": 5.7, "accx": 5.6, "accy": 0.8, "accz": 1.1, "defect": [] },
             { "suspension_no": 2, "...": "..." } ] },
         { "strip_no": "Strip-77", "suspension": [ "..." ] } ] } ] }
 ```
-- `carrier` อยู่ในระดับ `carriers[]`, `strip_no` อยู่ในระดับ `strips[]` , `date` วันที่ของชิ้นงาน `YYYY-MM-DD` (โซนเวลาของหลังบ้าน)
+- `carrier` อยู่ในระดับ `carriers[]`, `strip_no` อยู่ในระดับ `strips[]` , `date` อยู่ในแต่ละ suspension ต่อจาก `suspension_no` = วันที่ของชิ้นงาน `YYYY-MM-DD` (โซนเวลาของหลังบ้าน)
 - `t` เวลาผลิต (epoch ms); `side` L/R ด้านหัวจ่าย; `suspension_no` Suspension No. 1–20 ใน Strip
 - `temp` °C (Epoxy head temperature), `peak` kPa (Dispense pressure), `dur` ms (Epoxy dispense time), `vel*` mm/s (Vibration velocity), `acc*` m/s² (Vibration acceleration)
 - `defect` = รหัส defect ของชิ้นนั้นเป็น array: `[]` = ไม่มี, ตัวอย่าง `["ASQ-LCM","MI"]`; รหัสที่เป็นไปได้ 6 ตัว: ASQ-LCM, ASQ-MCM, ASQ-PCM, ISAD-CM, LM-5, MI (1 ชิ้นมีได้หลายรหัส จำนวน defect ของชิ้น = จำนวนรหัสใน array)
